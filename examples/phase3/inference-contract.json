@@ -1,0 +1,33 @@
+{
+  "task_id": "demo",
+  "objective": "Offline classification compatibility fixture",
+  "purpose": "research",
+  "budget_limit": 1000000,
+  "allowed_tools": [
+    "read_document",
+    "classify_document"
+  ],
+  "allowed_resources": [
+    "paper"
+  ],
+  "allowed_recipients": [
+    "offline-provider"
+  ],
+  "allowed_agents": [
+    "worker-1"
+  ],
+  "unknown_release": "DENY",
+  "policies": [],
+  "classification_restrictions": true,
+  "inference_egress": [
+    {
+      "provider": "offline-provider",
+      "resource": "paper",
+      "purpose": "research",
+      "labels": [
+        "PUBLIC",
+        "UNKNOWN"
+      ]
+    }
+  ]
+}

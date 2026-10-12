@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomicroot"
+version = "0.1.0"
+description = "Preventing stale authorization in concurrent multi-agent systems"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "pynacl>=1.5",
+    "z3-solver>=4.12",
+    "langgraph==1.2.12",
+    "langgraph-checkpoint-sqlite==3.1.1",
+    "openai==3.24.0",
+    "typesafe-sdk==0.7.2",
+    "pypdf==6.19.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7",
+    "pytest-asyncio>=0.21",
+    "httpx>=0.24",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["atomicroot/tests"]
+pythonpath = ["."]

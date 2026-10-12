@@ -1,0 +1,23 @@
+{
+  "policy_id": "review_large_payment",
+  "version": 1,
+  "scope": "task",
+  "applies_to": [
+    "transfer_funds"
+  ],
+  "when": {
+    "op": "const",
+    "value": true
+  },
+  "constraint": {
+    "op": "le",
+    "left": {
+      "op": "amount"
+    },
+    "right": {
+      "op": "const",
+      "value": 500000
+    }
+  },
+  "on_violation": "ESCALATE"
+}

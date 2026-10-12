@@ -1,0 +1,23 @@
+{
+  "policy_id": "per_transfer_small_amount",
+  "version": 1,
+  "scope": "task",
+  "applies_to": [
+    "transfer_funds"
+  ],
+  "when": {
+    "op": "const",
+    "value": true
+  },
+  "constraint": {
+    "op": "le",
+    "left": {
+      "op": "amount"
+    },
+    "right": {
+      "op": "const",
+      "value": 300
+    }
+  },
+  "on_violation": "DENY"
+}

@@ -1,0 +1,51 @@
+# Python environments, caches, test output, and packaging
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local credentials and runtime state
+.env
+.env.*
+!.env.example
+.runs/
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+signing.key
+*.pem
+*.key
+
+# Internal development instructions, roadmap, and generated reports
+AGENTS.md
+OLLAMA.md
+PROVIDERS.md
+PHASE*.md
+AtomicRoot-Prompt-*.md
+ATOMICROOT_MIGRASI_*.md
+PILOT_SCOPE_PROGRESS.md
+*_RESULTS.json
+*_BASELINE.log
+*_REGRESSION.xml
+*.log
+/wkwk.html
+/.publish/
+
+# Local editor and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

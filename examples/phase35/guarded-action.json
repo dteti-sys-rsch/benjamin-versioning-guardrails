@@ -1,0 +1,8 @@
+{
+  "kind": "action",
+  "tool": "read_document",
+  "args": {
+    "resource": "paper",
+    "digest": "sha256:03c6d9a516ca5c87d0ba3fc9b393f9efda6ddf873ff5d1d07f9354cf3a03e740"
+  }
+}

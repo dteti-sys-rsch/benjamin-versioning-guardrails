@@ -1,0 +1,20 @@
+{
+  "resource": "paper",
+  "digest": "sha256:2434ec7481d0bcfd79cf7bc07957b7782550c701a25d756a34ae970e8f44f0ea",
+  "content_version": 1,
+  "model_id": "offline-fixture",
+  "model_version": "v1",
+  "criteria_version": "v1",
+  "criteria_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "outcome": "SUCCESS",
+  "candidate_label": "PUBLIC",
+  "confidence": 0.99,
+  "probabilities": {
+    "PUBLIC": 0.99,
+    "SENSITIVE": 0.005,
+    "UNKNOWN": 0.005
+  },
+  "covered_bytes": 0,
+  "truncated": true,
+  "reason": "Example of incomplete coverage: must abstain"
+}

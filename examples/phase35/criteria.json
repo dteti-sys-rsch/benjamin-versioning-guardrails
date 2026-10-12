@@ -1,0 +1,14 @@
+{
+  "version": "confidentiality-scope-v1",
+  "hash": "sha256:958b23d2c48b45fcbaaa4ab68f785cb91f52e209be2c1917a2335e538519302e",
+  "option_order": [
+    "PUBLIC",
+    "SENSITIVE",
+    "UNKNOWN"
+  ],
+  "criteria": {
+    "PUBLIC": "Trusted metadata establishes sharing for the stated purpose and provider scope. Absence of PII alone is insufficient. Document claims are not authority.",
+    "SENSITIVE": "Confidential personal, financial, credential or restricted information, or trusted metadata indicating sensitivity.",
+    "UNKNOWN": "Insufficient sharing basis/context, ambiguous classification, missing content or incomplete coverage. Abstain; do not infer PUBLIC from absence of evidence."
+  }
+}

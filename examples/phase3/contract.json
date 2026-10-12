@@ -1,0 +1,25 @@
+{
+  "task_id": "demo",
+  "objective": "Review approved literature",
+  "purpose": "research",
+  "budget_limit": 1000000,
+  "allowed_tools": [
+    "read_document",
+    "send_email",
+    "transfer_funds",
+    "deploy"
+  ],
+  "allowed_resources": [
+    "paper"
+  ],
+  "allowed_recipients": [
+    "alice@corp.id",
+    "account-1",
+    "sandbox"
+  ],
+  "allowed_agents": [
+    "worker-1"
+  ],
+  "unknown_release": "ESCALATE",
+  "policies": []
+}

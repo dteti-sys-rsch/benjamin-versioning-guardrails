@@ -1,0 +1,11 @@
+{
+  "task_id": "demo",
+  "agent_id": "worker-1",
+  "operation_id": "pay-200k",
+  "tool": "transfer_funds",
+  "purpose": "research",
+  "args": {
+    "to": "account-1",
+    "amount": 200000
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "model_provider": "groq",
+  "model_from": "GROQ_MODEL or --model (default openai/gpt-oss-120b)",
+  "model_mode": "fake",
+  "classifier_mode": "disabled",
+  "jev_model": "jev-1.13.0",
+  "threshold": 0.8,
+  "max_calls_per_kind": 12,
+  "max_tokens_per_kind": 200000,
+  "max_retries": 0,
+  "timeout_seconds": 30,
+  "initial_authoring_scope": "explicit host consent; PUBLIC/synthetic only",
+  "scenario": "literature",
+  "scope_revision": "pilot-scope-v2",
+  "prompt_versions": [
+    "author-v2",
+    "worker-v3"
+  ],
+  "business_budget_limit": 0,
+  "classification_enabled": false,
+  "progress_file": "progress.jsonl"
+}

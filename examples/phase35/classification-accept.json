@@ -1,0 +1,9 @@
+{
+  "proposal_id": "classification-6c8088c15504482a9d9643eb497b6465",
+  "body": {
+    "task_id": "pilot",
+    "purpose": "research"
+  },
+  "expected_public_or_unknown_result": "DECLINED; proposal cannot authorize release",
+  "sensitive_only": "Explicit trusted owner may accept a restriction if reviewed contract enables it."
+}

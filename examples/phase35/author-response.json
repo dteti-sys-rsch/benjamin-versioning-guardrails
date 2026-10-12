@@ -1,0 +1,68 @@
+{
+  "kind": "contract",
+  "proposal": {
+    "task_id": "pilot",
+    "objective": "Summarize two synthetic papers and simulate emailing Alice",
+    "purpose": "research",
+    "budget_limit": 0,
+    "allowed_tools": [
+      "model_inference",
+      "read_document",
+      "send_email"
+    ],
+    "allowed_resources": [
+      "executor-context",
+      "paper",
+      "paper-2",
+      "reader-context"
+    ],
+    "allowed_recipients": [
+      "alice@corp.id",
+      "groq"
+    ],
+    "allowed_agents": [
+      "reader",
+      "executor"
+    ],
+    "unknown_release": "DENY",
+    "policies": [],
+    "classification_restrictions": false,
+    "inference_egress": [
+      {
+        "provider": "groq",
+        "resource": "executor-context",
+        "purpose": "research",
+        "labels": [
+          "PUBLIC",
+          "UNKNOWN"
+        ]
+      },
+      {
+        "provider": "groq",
+        "resource": "paper",
+        "purpose": "research",
+        "labels": [
+          "PUBLIC"
+        ]
+      },
+      {
+        "provider": "groq",
+        "resource": "paper-2",
+        "purpose": "research",
+        "labels": [
+          "PUBLIC"
+        ]
+      },
+      {
+        "provider": "groq",
+        "resource": "reader-context",
+        "purpose": "research",
+        "labels": [
+          "PUBLIC",
+          "UNKNOWN"
+        ]
+      }
+    ]
+  },
+  "unsupported": []
+}

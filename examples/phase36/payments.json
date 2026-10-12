@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "task_id": "payments-a",
+  "objective": "Simulate two bounded payments",
+  "purpose": "payments",
+  "resources": [],
+  "scope": [
+    {
+      "tool": "transfer_funds",
+      "resource": null,
+      "destination": "account-a",
+      "purpose": "payments",
+      "max_amount": 300
+    },
+    {
+      "tool": "transfer_funds",
+      "resource": null,
+      "destination": "account-b",
+      "purpose": "payments",
+      "max_amount": 300
+    }
+  ],
+  "budget_limit": 500,
+  "agents": [
+    {
+      "id": "payer-a",
+      "role": "First payment",
+      "scope": [
+        {
+          "tool": "transfer_funds",
+          "resource": null,
+          "destination": "account-a",
+          "purpose": "payments",
+          "max_amount": 300
+        }
+      ]
+    },
+    {
+      "id": "payer-b",
+      "role": "Second payment",
+      "scope": [
+        {
+          "tool": "transfer_funds",
+          "resource": null,
+          "destination": "account-b",
+          "purpose": "payments",
+          "max_amount": 300
+        }
+      ]
+    },
+    {
+      "id": "observer",
+      "role": "Observe task without protected tool privileges",
+      "scope": []
+    }
+  ],
+  "policies": [
+    {
+      "policy_id": "payment_limit",
+      "version": 1,
+      "scope": "task",
+      "applies_to": [
+        "transfer_funds"
+      ],
+      "when": {
+        "op": "const",
+        "value": true
+      },
+      "constraint": {
+        "op": "le",
+        "left": {
+          "op": "amount"
+        },
+        "right": {
+          "op": "const",
+          "value": 250
+        }
+      },
+      "on_violation": "DENY"
+    }
+  ],
+  "workflow": {
+    "nodes": [
+      {
+        "id": "first",
+        "agent": "payer-a",
+        "depends_on": []
+      },
+      {
+        "id": "second",
+        "agent": "payer-b",
+        "depends_on": []
+      },
+      {
+        "id": "join",
+        "agent": "observer",
+        "depends_on": [
+          "first",
+          "second"
+        ]
+      }
+    ]
+  },
+  "outputs": [],
+  "acceptance": [
+    {
+      "kind": "receipt",
+      "tool": "transfer_funds",
+      "destination": "account-a"
+    },
+    {
+      "kind": "receipt",
+      "tool": "transfer_funds",
+      "destination": "account-b"
+    }
+  ],
+  "provider": null,
+  "classifier": {
+    "mode": "disabled"
+  },
+  "limits": {
+    "max_steps": 12,
+    "max_in_flight": 3,
+    "inference": {
+      "max_calls": 12,
+      "max_tokens": 200000,
+      "max_output_tokens": 1600,
+      "max_retries": 0,
+      "timeout": 30
+    }
+  },
+  "unknown_release": "DENY"
+}
