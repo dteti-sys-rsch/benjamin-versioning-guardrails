@@ -148,6 +148,9 @@ approval. Execution endpoints require the task-owning trusted user.
 
 ## Source layout
 
+- [docs](docs/README.md): testing guide, phase notes, providers, roadmap, and design.
+- [CLI testing guide](docs/testing/CLI_TESTING.md): commands run from this repository root.
+- [reports](reports/README.md): historical verification artifacts and new test output.
 - `atomicroot/authority`, `gateway`, and `store`: authorization and versioned state.
 - `atomicroot/framework`: contracts, approvals, labels, task configuration, and outbox.
 - `atomicroot/integration`: guarded workflows, model providers, and classification.
