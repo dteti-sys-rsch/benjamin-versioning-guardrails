@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "task_id": "literature-a",
+  "objective": "Read two synthetic journals and simulate an email summary to Alice",
+  "purpose": "research",
+  "resources": [
+    {
+      "resource": "journal-a",
+      "digest": "sha256:ab6fcb6428e16c701ec85c086574fcfd526394b0f74c48509e9b2f28f7ab5cea",
+      "version": 1
+    },
+    {
+      "resource": "journal-b",
+      "digest": "sha256:60df1d4aae6b663e9132ed730e0a846a98620ff281fed171731f884e0c01ea52",
+      "version": 1
+    },
+    {
+      "resource": "reader-a-context",
+      "digest": "sha256:0193e2adf83f1b270317e30605cfc9e52ee0bebba5f9feb76973ebed0a9a1bb1",
+      "version": 1,
+      "binding": "host_context"
+    },
+    {
+      "resource": "reader-b-context",
+      "digest": "sha256:0193e2adf83f1b270317e30605cfc9e52ee0bebba5f9feb76973ebed0a9a1bb1",
+      "version": 1,
+      "binding": "host_context"
+    },
+    {
+      "resource": "writer-context",
+      "digest": "sha256:0193e2adf83f1b270317e30605cfc9e52ee0bebba5f9feb76973ebed0a9a1bb1",
+      "version": 1,
+      "binding": "host_context"
+    }
+  ],
+  "scope": [
+    {
+      "tool": "read_document",
+      "resource": "journal-a",
+      "destination": null,
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "read_document",
+      "resource": "journal-b",
+      "destination": null,
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "send_email",
+      "resource": null,
+      "destination": "alice@corp.id",
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "model_inference",
+      "resource": "reader-a-context",
+      "destination": "ollama",
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "model_inference",
+      "resource": "journal-a",
+      "destination": "ollama",
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "model_inference",
+      "resource": "reader-b-context",
+      "destination": "ollama",
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "model_inference",
+      "resource": "journal-b",
+      "destination": "ollama",
+      "purpose": "research",
+      "max_amount": 0
+    },
+    {
+      "tool": "model_inference",
+      "resource": "writer-context",
+      "destination": "ollama",
+      "purpose": "research",
+      "max_amount": 0
+    }
+  ],
+  "budget_limit": 0,
+  "agents": [
+    {
+      "id": "reader-a",
+      "role": "Read first journal",
+      "scope": [
+        {
+          "tool": "read_document",
+          "resource": "journal-a",
+          "destination": null,
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "reader-a-context",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "journal-a",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        }
+      ]
+    },
+    {
+      "id": "reader-b",
+      "role": "Read second journal",
+      "scope": [
+        {
+          "tool": "read_document",
+          "resource": "journal-b",
+          "destination": null,
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "reader-b-context",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "journal-b",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        }
+      ]
+    },
+    {
+      "id": "writer",
+      "role": "Summarize and simulate send",
+      "scope": [
+        {
+          "tool": "send_email",
+          "resource": null,
+          "destination": "alice@corp.id",
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "writer-context",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "journal-a",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        },
+        {
+          "tool": "model_inference",
+          "resource": "journal-b",
+          "destination": "ollama",
+          "purpose": "research",
+          "max_amount": 0
+        }
+      ]
+    }
+  ],
+  "policies": [],
+  "workflow": {
+    "nodes": [
+      {
+        "id": "read-a",
+        "agent": "reader-a",
+        "depends_on": []
+      },
+      {
+        "id": "read-b",
+        "agent": "reader-b",
+        "depends_on": []
+      },
+      {
+        "id": "summary",
+        "agent": "writer",
+        "depends_on": [
+          "read-a",
+          "read-b"
+        ]
+      }
+    ]
+  },
+  "outputs": [
+    {
+      "id": "summary",
+      "kind": "summary"
+    }
+  ],
+  "acceptance": [
+    {
+      "kind": "read",
+      "resource": "journal-a"
+    },
+    {
+      "kind": "read",
+      "resource": "journal-b"
+    },
+    {
+      "kind": "receipt",
+      "tool": "send_email",
+      "destination": "alice@corp.id"
+    },
+    {
+      "kind": "output",
+      "output": "summary"
+    }
+  ],
+  "provider": {
+    "destination": "ollama",
+    "model": "offline-script-v1"
+  },
+  "classifier": {
+    "mode": "disabled"
+  },
+  "limits": {
+    "max_steps": 12,
+    "max_in_flight": 3,
+    "inference": {
+      "max_calls": 12,
+      "max_tokens": 200000,
+      "max_output_tokens": 1600,
+      "max_retries": 0,
+      "timeout": 30
+    }
+  },
+  "unknown_release": "DENY"
+}

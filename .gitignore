@@ -43,6 +43,7 @@ PILOT_SCOPE_PROGRESS.md
 *.log
 /wkwk.html
 /.publish/
+CLI_TESTING.md
 
 # Local editor and operating system files
 .idea/

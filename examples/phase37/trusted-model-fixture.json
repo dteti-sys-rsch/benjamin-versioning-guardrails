@@ -1,0 +1,202 @@
+{
+  "resources": [
+    {
+      "resource": "journal-a",
+      "content": "Synthetic public journal A: bind authorization to versions.",
+      "label": "PUBLIC",
+      "purposes": [
+        "research"
+      ]
+    },
+    {
+      "resource": "journal-b",
+      "content": "Synthetic public journal B: commit must check freshness atomically.",
+      "label": "PUBLIC",
+      "purposes": [
+        "research"
+      ]
+    },
+    {
+      "resource": "reader-a-context",
+      "content": "Pending trusted runtime context",
+      "label": "UNKNOWN",
+      "purposes": [
+        "research"
+      ]
+    },
+    {
+      "resource": "reader-b-context",
+      "content": "Pending trusted runtime context",
+      "label": "UNKNOWN",
+      "purposes": [
+        "research"
+      ]
+    },
+    {
+      "resource": "writer-context",
+      "content": "Pending trusted runtime context",
+      "label": "UNKNOWN",
+      "purposes": [
+        "research"
+      ]
+    }
+  ],
+  "destinations": [
+    {
+      "destination": "alice@corp.id",
+      "kind": "recipient",
+      "purposes": [
+        "research"
+      ],
+      "endpoint": null,
+      "models": [],
+      "labels": []
+    },
+    {
+      "destination": "account-a",
+      "kind": "recipient",
+      "purposes": [
+        "payments"
+      ],
+      "endpoint": null,
+      "models": [],
+      "labels": []
+    },
+    {
+      "destination": "account-b",
+      "kind": "recipient",
+      "purposes": [
+        "payments"
+      ],
+      "endpoint": null,
+      "models": [],
+      "labels": []
+    },
+    {
+      "destination": "ollama",
+      "kind": "provider",
+      "purposes": [
+        "research"
+      ],
+      "endpoint": "http://localhost:11434/api",
+      "models": [
+        "offline-script-v1",
+        "qwen3:8b"
+      ],
+      "labels": [
+        "PUBLIC",
+        "UNKNOWN"
+      ]
+    }
+  ],
+  "entitlements": [
+    {
+      "task": "literature-a",
+      "subject": "local-user",
+      "rights": {
+        "scope": [
+          {
+            "tool": "read_document",
+            "resource": "journal-a",
+            "destination": null,
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "read_document",
+            "resource": "journal-b",
+            "destination": null,
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "send_email",
+            "resource": null,
+            "destination": "alice@corp.id",
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "model_inference",
+            "resource": "reader-a-context",
+            "destination": "ollama",
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "model_inference",
+            "resource": "journal-a",
+            "destination": "ollama",
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "model_inference",
+            "resource": "reader-b-context",
+            "destination": "ollama",
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "model_inference",
+            "resource": "journal-b",
+            "destination": "ollama",
+            "purpose": "research",
+            "max_amount": 0
+          },
+          {
+            "tool": "model_inference",
+            "resource": "writer-context",
+            "destination": "ollama",
+            "purpose": "research",
+            "max_amount": 0
+          }
+        ],
+        "budget_limit": 0,
+        "max_agents": 4,
+        "limits": {
+          "max_steps": 64,
+          "max_in_flight": 4,
+          "max_calls": 12,
+          "max_tokens": 200000,
+          "max_output_tokens": 1600,
+          "max_retries": 2,
+          "timeout": 120
+        }
+      }
+    },
+    {
+      "task": "payments-a",
+      "subject": "local-user",
+      "rights": {
+        "scope": [
+          {
+            "tool": "transfer_funds",
+            "resource": null,
+            "destination": "account-a",
+            "purpose": "payments",
+            "max_amount": 300
+          },
+          {
+            "tool": "transfer_funds",
+            "resource": null,
+            "destination": "account-b",
+            "purpose": "payments",
+            "max_amount": 300
+          }
+        ],
+        "budget_limit": 500,
+        "max_agents": 4,
+        "limits": {
+          "max_steps": 64,
+          "max_in_flight": 4,
+          "max_calls": 12,
+          "max_tokens": 200000,
+          "max_output_tokens": 1600,
+          "max_retries": 2,
+          "timeout": 120
+        }
+      }
+    }
+  ]
+}

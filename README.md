@@ -87,8 +87,64 @@ effects in the supplied demonstrations use simulated receivers.
 specifications against trusted catalogs and entitlements. Synthetic fixtures
 and specifications are in [examples/phase36](examples/phase36).
 
-This interface stores workflow and acceptance descriptors. It does not provide
-a general task executor or a goal-to-execution LLM planner.
+`phase37_cli.py` executes the approved configuration using the existing
+LangGraph and authorization core. It supports finite DAGs, configurable agents,
+bounded parallel ready workers, Broker review, durable staged operations, and
+completion evidence from actual reads, outputs, and receiver receipts.
+It does not provide a goal-to-execution LLM planner.
+
+### Execute configuration A
+
+Initialize a fresh synthetic fixture directory, then review and activate the
+configuration with `phase36_cli.py`. Copy the proposal/review IDs from preview:
+
+```powershell
+.\.venv\Scripts\python.exe phase36_cli.py --directory .runs/config-a init-fixture examples/phase36/trusted-fixture.json
+.\.venv\Scripts\python.exe phase36_cli.py --directory .runs/config-a preview examples/phase36/literature.json
+.\.venv\Scripts\python.exe phase36_cli.py --directory .runs/config-a decide REVIEW_ID approve
+.\.venv\Scripts\python.exe phase36_cli.py --directory .runs/config-a activate PROPOSAL_ID REVIEW_ID
+.\.venv\Scripts\python.exe phase37_cli.py --directory .runs/config-a --task literature-a --responses examples/phase37/literature-responses.json start
+.\.venv\Scripts\python.exe phase37_cli.py --directory .runs/config-a --task literature-a status
+```
+
+This example uses explicit **offline scripted** worker fixtures, with no model
+calls. The same executor accepts `payments.json` and `payments-responses.json`.
+For guarded fake model inference, use `examples/phase37/trusted-model-fixture.json`
+in a fresh directory, review `literature-fake-model.json`, and select
+`--worker-mode fake` with the same literature responses. The fixture labels
+come from the trusted local owner, not a classifier.
+
+For live local Ollama, review `literature-ollama.json` against the model fixture
+and select `--worker-mode live --authorize-live`. This sends the approved
+synthetic sources and contexts to `qwen3:8b` at the local Ollama endpoint. The
+model chooses worker actions; no author contract call is needed. Live execution
+is optional and is not established by offline test success.
+
+`resume` continues a pending Broker review after a trusted decision; it is not
+approval. `recover` continues a staged operation after invocation failure.
+Use the same directory, task, run ID and worker configuration on restart.
+Run/config/driver/schema/prompt/checkpoint bindings prevent incompatible replay.
+Failed invocations do not erase terminal run history.
+
+`SATISFIED` means the registered acceptance predicates have ledger evidence.
+Summary factual correctness is **NOT_EVALUATED**. `REFUSED`, `INCOMPLETE`,
+`REVIEW_WAIT`, `REVIEW_REJECTED`, `DELIVERY_UNKNOWN`, `TIMEOUT`, `UNSUPPORTED`,
+`RETRY_EXHAUSTED`, and `FAILED` are distinct outcomes. Email/transfers remain
+simulated; COMMITTED is distinct from RELEASED.
+
+Existing exact resource digest/version references remain pinned. Only a
+reviewed resource with `binding: "host_context"` permits trusted runtime context
+updates, exclusively for one agent's inference. Every new context still needs
+an immutable job binding, snapshot freshness, labels and source/provider scope.
+It cannot be used as a read/classification resource or a release permission.
+Optional classifier `before_nodes` runs before the selected nodes' first
+authorization; PUBLIC/error results cannot promote an official label. An
+approved conservative SENSITIVE restriction uses Label Manager atomically.
+
+The HTTP API adds `/tasks/{task}/runs/{run}` and
+`/tasks/{task}/runs/{run}/{start|resume|recover}`. The host must configure
+`executor_factory`; worker bodies cannot supply a driver, caller identity or
+approval. Execution endpoints require the task-owning trusted user.
 
 ## Source layout
 

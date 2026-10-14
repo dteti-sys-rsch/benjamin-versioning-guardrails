@@ -9,7 +9,14 @@ from atomicroot.framework.classification import ClassificationProposals
 from atomicroot.integration.memo import InferenceMemo, InferenceInProgress
 from atomicroot.integration.providers import CRITERIA, CRITERIA_VERSION, OPTIONS, Limits, validate_choice
 from atomicroot.integration.guarded import GuardedTools
-from atomicroot.integration.prompts import AUTHOR_VERSION, WORKER_VERSION, worker_response_schema
+from atomicroot.integration.prompts import AUTHOR_VERSION, WORKER_VERSION, CONFIG_WORKER_VERSION, worker_response_schema, config_response_schema
+
+
+class InferenceUnavailable(ValueError):
+    """Typed operational result; no provider exception body is exposed."""
+    def __init__(self, observation):
+        self.observation = observation
+        super().__init__("model egress blocked/unavailable: " + dumps(observation.json()))
 
 
 class InferenceReceiver:
@@ -101,12 +108,19 @@ class ModelBridge:
         return asyncio.run(self.memo.run(key, budget, "LLM", self.model.model, {"messages": messages, "provider": self.model.provider,
                                   "prompt_version": AUTHOR_VERSION}, self.llm_limits, lambda: self.model.generate(messages)))["output"]
 
-    def worker(self, key, budget, *, messages, sources, context_resource, principal, task, purpose):
+    def worker(self, key, budget, *, messages, sources, context_resource, principal, task, purpose, execution=None):
         context = {"messages": messages, "sources": sources, "provider": self.model.provider,
-                   "model": self.model.model, "prompt_version": WORKER_VERSION}
+                   "model": self.model.model, "prompt_version": CONFIG_WORKER_VERSION if execution else WORKER_VERSION}
+        if execution: context["execution"] = freeze_json(execution)
         if getattr(self.model, "structured_worker_output", False):
-            with self.runtime.store.snapshot() as snap: contract = snap.read(f"contract3:{task}")[1]
-            context["response_schema"] = worker_response_schema(contract)
+            with self.runtime.store.snapshot() as snap:
+                contract = snap.read(f"contract3:{task}")[1]
+                if execution:
+                    from atomicroot.framework.tasks import artifact
+                    active = artifact(snap, snap.read(f"taskresolved:{task}")[1])
+                    agent = snap.read(f"delegation:{task}:{principal.subject}")[1]
+                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"])
+                else: context["response_schema"] = worker_response_schema(contract)
         job = self.memo.job(key)
         if job:
             if job["context_hash"] != args_hash(context): raise ValueError("model node replay context changed")
@@ -114,13 +128,17 @@ class ModelBridge:
             owner = Principal("model-context-host", frozenset({"owner"}), resources=frozenset({context_resource}))
             content = dumps(context)
             doc = self.runtime.storage.ingest(context_resource, content, owner)
-            job = self.memo.save_job(key, {"task": task, "tool": "model_inference", "resource": context_resource,
-                "digest": doc["digest"], "version": doc["version"], "context_hash": args_hash(context), "budget": budget})
+            data = {"task": task, "tool": "model_inference", "resource": context_resource,
+                "digest": doc["digest"], "version": doc["version"], "context_hash": args_hash(context), "budget": budget}
+            if execution:
+                with self.runtime.store.snapshot() as snap: binding = snap.read(f"taskresolved:{task}")[1]
+                data.update(principal=principal.subject, resolved_binding=binding)
+            job = self.memo.save_job(key, data)
         request = self.tools.stage({"tool": "model_inference", "args": {"resource": job["resource"], "digest": job["digest"], "to": self.model.provider}},
                                   principal=principal, task=task, purpose=purpose, operation=key, host_inference=True)
         observation = self.tools.execute(request, principal)
         if observation.status != "COMMITTED" or observation.detail["delivery"] != "RELEASED":
-            raise ValueError("model egress blocked/unavailable: " + dumps(observation.json()))
+            raise InferenceUnavailable(observation)
         return observation.detail["receipt"]["result"]["output"]
 
     def classify(self, key, budget, *, resource, digest, version, principal, task, purpose, criteria=None,

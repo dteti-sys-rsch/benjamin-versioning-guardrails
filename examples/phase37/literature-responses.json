@@ -1,0 +1,49 @@
+{
+  "read-a": [
+    {
+      "kind": "action",
+      "tool": "read_document",
+      "args": {
+        "resource": "journal-a",
+        "digest": "sha256:ab6fcb6428e16c701ec85c086574fcfd526394b0f74c48509e9b2f28f7ab5cea"
+      }
+    },
+    {
+      "kind": "done",
+      "summary": "Explicit offline fixture finished"
+    }
+  ],
+  "read-b": [
+    {
+      "kind": "action",
+      "tool": "read_document",
+      "args": {
+        "resource": "journal-b",
+        "digest": "sha256:60df1d4aae6b663e9132ed730e0a846a98620ff281fed171731f884e0c01ea52"
+      }
+    },
+    {
+      "kind": "done",
+      "summary": "Explicit offline fixture finished"
+    }
+  ],
+  "summary": [
+    {
+      "kind": "output",
+      "output": "summary",
+      "content": "The synthetic observations describe bounded authorization and stale decisions."
+    },
+    {
+      "kind": "action",
+      "tool": "send_email",
+      "args": {
+        "to": "alice@corp.id",
+        "body": "Synthetic observations: bounded authorization and stale decisions."
+      }
+    },
+    {
+      "kind": "done",
+      "summary": "Explicit offline fixture finished"
+    }
+  ]
+}

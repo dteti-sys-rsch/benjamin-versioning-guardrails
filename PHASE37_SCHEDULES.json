@@ -1,0 +1,464 @@
+{
+  "exfil": {
+    "authorization_results": [
+      [
+        "op-96d7eb038426b863c6bf2b9d705a98da4b43a286",
+        "ALLOW"
+      ],
+      [
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7",
+        "ALLOW"
+      ],
+      [
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7",
+        "DENY"
+      ]
+    ],
+    "commit_results": [
+      [
+        "op-96d7eb038426b863c6bf2b9d705a98da4b43a286",
+        "COMMITTED"
+      ],
+      [
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7",
+        "STALE_TICKET"
+      ]
+    ],
+    "initial_state": {
+      "budget:t": [
+        0,
+        0
+      ],
+      "contract3:t": [
+        1,
+        {
+          "allowed_agents": [
+            "ag-35b89b70b0836356ff280463339f4119",
+            "ag-43b9791c59b7d9f9be089b945a0243da",
+            "ag-5bc27b7ea5c5adef351d99999710213a"
+          ],
+          "allowed_recipients": [
+            "alice@corp.id"
+          ],
+          "allowed_resources": [
+            "d1"
+          ],
+          "allowed_tools": [
+            "read_document",
+            "send_email"
+          ],
+          "budget_limit": 0,
+          "classification_restrictions": false,
+          "inference_egress": [],
+          "objective": "Read sources and send a simulated summary",
+          "policies": [],
+          "purpose": "research",
+          "task_binding": {
+            "digest": "sha256:e4f4c4378ead598479a36d734f5e42482a4408559889fbcb65b9ee9907506d0c",
+            "id": "resolved-74bad5bc563347958c680f2e9a46393f"
+          },
+          "task_id": "t",
+          "unknown_release": "DENY"
+        }
+      ],
+      "document:d1": [
+        1,
+        {
+          "content": "Synthetic source d1",
+          "digest": "sha256:e00cd6a36c6a6d6a5c1eff7bffb4976d6ac635def67c9cbc614e47babb259f74",
+          "factual_accuracy": "UNVERIFIED",
+          "instruction_trust": "UNTRUSTED",
+          "resource": "d1",
+          "source": "owner upload",
+          "stored_by": "owner",
+          "version": 1
+        }
+      ],
+      "exposure:t": [
+        0,
+        []
+      ],
+      "label:d1": [
+        3,
+        {
+          "digest": "sha256:e00cd6a36c6a6d6a5c1eff7bffb4976d6ac635def67c9cbc614e47babb259f74",
+          "label": "SENSITIVE",
+          "label_set_by": "owner",
+          "purposes": [
+            "research"
+          ],
+          "resource": "d1",
+          "source": "authenticated owner attestation",
+          "version": 1
+        }
+      ],
+      "policyset:t": [
+        1,
+        []
+      ],
+      "reserved:t": [
+        0,
+        0
+      ]
+    },
+    "scenario": "exfil",
+    "steps": [
+      [
+        "snapshot_authorization",
+        "op-96d7eb038426b863c6bf2b9d705a98da4b43a286"
+      ],
+      [
+        "snapshot_authorization",
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7"
+      ],
+      [
+        "ticket_issued",
+        "op-96d7eb038426b863c6bf2b9d705a98da4b43a286"
+      ],
+      [
+        "before_cas",
+        "op-96d7eb038426b863c6bf2b9d705a98da4b43a286"
+      ],
+      [
+        "ticket_issued",
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7"
+      ],
+      [
+        "before_cas",
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7"
+      ],
+      [
+        "after_commit",
+        "op-96d7eb038426b863c6bf2b9d705a98da4b43a286"
+      ],
+      [
+        "snapshot_authorization",
+        "op-c82ddffa9da4017c55243bb64a861d84cb5c00c7"
+      ]
+    ],
+    "task_spec": {
+      "acceptance": [
+        {
+          "kind": "read",
+          "resource": "d1"
+        },
+        {
+          "destination": "alice@corp.id",
+          "kind": "receipt",
+          "tool": "send_email"
+        }
+      ],
+      "agents": [
+        {
+          "id": "reader1",
+          "role": "Reader A",
+          "scope": [
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "d1",
+              "tool": "read_document"
+            }
+          ]
+        },
+        {
+          "id": "reader2",
+          "role": "Reader B",
+          "scope": [
+            {
+              "destination": "alice@corp.id",
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": null,
+              "tool": "send_email"
+            }
+          ]
+        },
+        {
+          "id": "sender",
+          "role": "Writer",
+          "scope": []
+        }
+      ],
+      "budget_limit": 0,
+      "classifier": {
+        "mode": "disabled"
+      },
+      "limits": {
+        "inference": {
+          "max_tokens": 200000
+        },
+        "max_in_flight": 3,
+        "max_steps": 8
+      },
+      "objective": "Read sources and send a simulated summary",
+      "outputs": [],
+      "policies": [],
+      "provider": null,
+      "purpose": "research",
+      "resources": [
+        {
+          "digest": "sha256:e00cd6a36c6a6d6a5c1eff7bffb4976d6ac635def67c9cbc614e47babb259f74",
+          "resource": "d1",
+          "version": 1
+        }
+      ],
+      "schema_version": 1,
+      "scope": [
+        {
+          "destination": null,
+          "max_amount": 0,
+          "purpose": "research",
+          "resource": "d1",
+          "tool": "read_document"
+        },
+        {
+          "destination": "alice@corp.id",
+          "max_amount": 0,
+          "purpose": "research",
+          "resource": null,
+          "tool": "send_email"
+        }
+      ],
+      "task_id": "t",
+      "unknown_release": "DENY",
+      "workflow": {
+        "nodes": [
+          {
+            "agent": "reader1",
+            "depends_on": [],
+            "id": "a"
+          },
+          {
+            "agent": "reader2",
+            "depends_on": [],
+            "id": "b"
+          },
+          {
+            "agent": "sender",
+            "depends_on": [
+              "a",
+              "b"
+            ],
+            "id": "join"
+          }
+        ]
+      }
+    }
+  },
+  "budget": {
+    "authorization_results": [
+      [
+        "op-82b09a17eb8c7af07d32520838a1addc33c4a233",
+        "ALLOW"
+      ],
+      [
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc",
+        "ALLOW"
+      ],
+      [
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc",
+        "DENY"
+      ]
+    ],
+    "commit_results": [
+      [
+        "op-82b09a17eb8c7af07d32520838a1addc33c4a233",
+        "COMMITTED"
+      ],
+      [
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc",
+        "STALE_TICKET"
+      ]
+    ],
+    "initial_state": {
+      "budget:payments": [
+        0,
+        0
+      ],
+      "contract3:payments": [
+        1,
+        {
+          "allowed_agents": [
+            "ag-5087c468fc02ce03ed0ae776853602cb",
+            "ag-90ba8c43c7c173d4133889c45b44b7d5",
+            "ag-fa3873dcab79516ed82a3859954634d0"
+          ],
+          "allowed_recipients": [
+            "account-1",
+            "account-2"
+          ],
+          "allowed_resources": [],
+          "allowed_tools": [
+            "transfer_funds"
+          ],
+          "budget_limit": 500,
+          "classification_restrictions": false,
+          "inference_egress": [],
+          "objective": "Read sources and send a simulated summary",
+          "policies": [],
+          "purpose": "payments",
+          "task_binding": {
+            "digest": "sha256:10e0e2cffbea0d604e4aab51d5190e1d3f27bbd19675f65c7adf3ebb21973076",
+            "id": "resolved-9c36b3969e1244c386e9501650f09621"
+          },
+          "task_id": "payments",
+          "unknown_release": "DENY"
+        }
+      ],
+      "exposure:payments": [
+        0,
+        []
+      ],
+      "policyset:payments": [
+        1,
+        []
+      ],
+      "reserved:payments": [
+        0,
+        0
+      ]
+    },
+    "scenario": "budget",
+    "steps": [
+      [
+        "snapshot_authorization",
+        "op-82b09a17eb8c7af07d32520838a1addc33c4a233"
+      ],
+      [
+        "snapshot_authorization",
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc"
+      ],
+      [
+        "ticket_issued",
+        "op-82b09a17eb8c7af07d32520838a1addc33c4a233"
+      ],
+      [
+        "before_cas",
+        "op-82b09a17eb8c7af07d32520838a1addc33c4a233"
+      ],
+      [
+        "ticket_issued",
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc"
+      ],
+      [
+        "before_cas",
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc"
+      ],
+      [
+        "after_commit",
+        "op-82b09a17eb8c7af07d32520838a1addc33c4a233"
+      ],
+      [
+        "snapshot_authorization",
+        "op-8e1072afcd8f5586c9982a78013e54c8608b28fc"
+      ]
+    ],
+    "task_spec": {
+      "acceptance": [
+        {
+          "destination": "account-1",
+          "kind": "receipt",
+          "tool": "transfer_funds"
+        },
+        {
+          "destination": "account-2",
+          "kind": "receipt",
+          "tool": "transfer_funds"
+        }
+      ],
+      "agents": [
+        {
+          "id": "reader1",
+          "role": "Reader A",
+          "scope": [
+            {
+              "destination": "account-1",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ]
+        },
+        {
+          "id": "reader2",
+          "role": "Reader B",
+          "scope": [
+            {
+              "destination": "account-2",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ]
+        },
+        {
+          "id": "sender",
+          "role": "Writer",
+          "scope": []
+        }
+      ],
+      "budget_limit": 500,
+      "classifier": {
+        "mode": "disabled"
+      },
+      "limits": {
+        "inference": {
+          "max_tokens": 200000
+        },
+        "max_in_flight": 3,
+        "max_steps": 8
+      },
+      "objective": "Read sources and send a simulated summary",
+      "outputs": [],
+      "policies": [],
+      "provider": null,
+      "purpose": "payments",
+      "resources": [],
+      "schema_version": 1,
+      "scope": [
+        {
+          "destination": "account-1",
+          "max_amount": 300,
+          "purpose": "payments",
+          "resource": null,
+          "tool": "transfer_funds"
+        },
+        {
+          "destination": "account-2",
+          "max_amount": 300,
+          "purpose": "payments",
+          "resource": null,
+          "tool": "transfer_funds"
+        }
+      ],
+      "task_id": "payments",
+      "unknown_release": "DENY",
+      "workflow": {
+        "nodes": [
+          {
+            "agent": "reader1",
+            "depends_on": [],
+            "id": "a"
+          },
+          {
+            "agent": "reader2",
+            "depends_on": [],
+            "id": "b"
+          },
+          {
+            "agent": "sender",
+            "depends_on": [
+              "a",
+              "b"
+            ],
+            "id": "join"
+          }
+        ]
+      }
+    }
+  }
+}

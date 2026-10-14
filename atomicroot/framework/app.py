@@ -32,7 +32,7 @@ class FrameworkRuntime:
         self.dispatcher = Dispatcher(self.store, self.receiver)
 
 
-def create_phase3_app(runtime, identity_resolver):
+def create_phase3_app(runtime, identity_resolver, *, executor_factory=None):
     """Resolver returns authenticated Principal from host context, never from body."""
     app = FastAPI(title="AtomicRoot Phase 3", version="0.3.0")
 
@@ -77,6 +77,28 @@ def create_phase3_app(runtime, identity_resolver):
     @app.get("/tasks/{task_id}")
     async def task_status(task_id: str, request: Request):
         return await run_in_threadpool(runtime.tasks.status, task_id, identity(request))
+
+    def execute_task(task, run, command, principal):
+        principal.require("user", task=task)
+        if executor_factory is None: raise ValueError("trusted executor driver not configured")
+        workflow = executor_factory(task, principal)
+        try:
+            if command == "status": return workflow.status(run)
+            # Return evidence/status metadata. Worker bytes remain in local
+            # checkpoints/ledger rather than the public progress response.
+            getattr(workflow, command)(run)
+            return workflow.status(run)
+        finally: workflow.close()
+
+    @app.get("/tasks/{task}/runs/{run}")
+    async def run_status(task: str, run: str, request: Request):
+        return await run_in_threadpool(execute_task, task, run, "status", identity(request))
+
+    @app.post("/tasks/{task}/runs/{run}/{command}")
+    async def run_command(task: str, run: str, command: str, body: dict, request: Request):
+        exact(body, set())
+        if command not in {"start", "resume", "recover"}: raise ValueError("unknown run command")
+        return await run_in_threadpool(execute_task, task, run, command, identity(request))
 
     @app.get("/catalog")
     async def catalog_status(request: Request):
