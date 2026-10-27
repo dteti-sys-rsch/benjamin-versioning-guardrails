@@ -2,6 +2,7 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Lock
 
 
 FIELDS = frozenset({"role", "model", "provider", "tool", "status", "delivery", "operation",
@@ -18,11 +19,15 @@ def emit(progress, event, **fields):
 class Progress:
     def __init__(self, path, *, quiet=False):
         self.path, self.quiet = Path(path), quiet
+        self._lock = Lock()
         self.sequence = 0
         if self.path.exists():
             with self.path.open(encoding="utf-8") as stream: self.sequence = sum(1 for _ in stream)
 
     def __call__(self, event, **fields):
+        with self._lock: self._write(event, **fields)
+
+    def _write(self, event, **fields):
         if not set(fields) <= FIELDS: raise ValueError("unsupported progress field")
         clean = {k: (str(v).replace("\n", " ").replace("\r", " ")[:128] if isinstance(v, str) else v)
                  for k, v in fields.items() if v is not None}

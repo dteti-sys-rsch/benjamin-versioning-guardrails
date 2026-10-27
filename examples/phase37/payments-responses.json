@@ -1,0 +1,36 @@
+{
+  "first": [
+    {
+      "kind": "action",
+      "tool": "transfer_funds",
+      "args": {
+        "to": "account-a",
+        "amount": 200
+      }
+    },
+    {
+      "kind": "done",
+      "summary": "Explicit offline fixture finished"
+    }
+  ],
+  "second": [
+    {
+      "kind": "action",
+      "tool": "transfer_funds",
+      "args": {
+        "to": "account-b",
+        "amount": 200
+      }
+    },
+    {
+      "kind": "done",
+      "summary": "Explicit offline fixture finished"
+    }
+  ],
+  "join": [
+    {
+      "kind": "done",
+      "summary": "Explicit offline fixture finished"
+    }
+  ]
+}

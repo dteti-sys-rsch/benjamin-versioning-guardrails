@@ -1,4 +1,4 @@
-"""Versioned explicit input for Phase 3.6; no executor or model authoring."""
+"""Versioned explicit input; finite plans and scoped host inference contexts."""
 from dataclasses import dataclass, fields
 import json
 import re
@@ -78,7 +78,8 @@ class TaskSpec:
         money_integer(data["budget_limit"])
         if type(data["unknown_release"]) is not str or data["unknown_release"] not in {"DENY", "ESCALATE"}: raise ValueError("invalid UNKNOWN rule")
         for ref in sequence(data["resources"]):
-            exact(ref, {"resource", "digest", "version"})
+            exact(ref, {"resource", "digest", "version"} | ({"binding"} if "binding" in ref else set()))
+            if "binding" in ref and ref["binding"] != "host_context": raise ValueError("unsupported content binding")
             valid_identity(ref["resource"])
             if type(ref["digest"]) is not str or not re.fullmatch(r"sha256:[0-9a-f]{64}", ref["digest"]):
                 raise ValueError("invalid resource digest")
@@ -92,6 +93,8 @@ class TaskSpec:
             if rule["resource"] is not None and rule["resource"] not in resource_ids:
                 raise ValueError("missing resource reference")
             if rule["max_amount"] > data["budget_limit"]: raise ValueError("operation exceeds task budget")
+            if any(r["resource"] == rule["resource"] and r.get("binding") == "host_context" for r in data["resources"]) and rule["tool"] != "model_inference":
+                raise ValueError("host context is exclusively an inference resource")
         if resource_ids != {r["resource"] for r in data["scope"] if r["resource"] is not None}:
             raise ValueError("resource references must match explicit task scope")
         for agent in sequence(data["agents"], nonempty=True):
@@ -139,6 +142,9 @@ class TaskSpec:
             else: raise ValueError("unsupported acceptance operator")
         for rule in data["scope"]:
             if not any(rule in a["scope"] for a in data["agents"]): raise ValueError("task rule has no delegated agent")
+        for ref in data["resources"]:
+            if ref.get("binding") == "host_context" and sum(any(r["resource"] == ref["resource"] for r in a["scope"]) for a in data["agents"]) != 1:
+                raise ValueError("host context requires one delegated agent")
         provider = data["provider"]
         if provider is not None:
             exact(provider, {"destination", "model"}); text(provider["destination"]); text(provider["model"])
@@ -146,7 +152,7 @@ class TaskSpec:
         classifier = data["classifier"]
         if classifier == {"mode": "disabled"}: pass
         else:
-            exact(classifier, {"mode", "destination", "model", "resources"})
+            exact(classifier, {"mode", "destination", "model", "resources"} | ({"before_nodes"} if "before_nodes" in classifier else set()))
             if classifier["mode"] != "jev": raise ValueError("unsupported classifier mode")
             text(classifier["destination"]); text(classifier["model"])
             sequence(classifier["resources"])
@@ -156,6 +162,10 @@ class TaskSpec:
                 if not any(r["tool"] == "classify_document" and r["resource"] == resource and
                            r["destination"] == classifier["destination"] for r in data["scope"]):
                     raise ValueError("classifier target outside scope")
+            if "before_nodes" in classifier:
+                sequence(classifier["before_nodes"], 32, nonempty=True)
+                if len(set(classifier["before_nodes"])) != len(classifier["before_nodes"]) or not set(classifier["before_nodes"]) <= {n["id"] for n in nodes}:
+                    raise ValueError("invalid classifier timing")
         for rule in data["scope"]:
             setting = provider if rule["tool"] == "model_inference" else classifier if rule["tool"] == "classify_document" else None
             if rule["tool"] in {"model_inference", "classify_document"} and (
@@ -184,8 +194,10 @@ def task_schema():
     result = schema()
     result["$defs"]["task_spec"] = obj({
         "schema_version": {"const": 1}, "task_id": IDENTITY, "objective": TEXT, "purpose": TEXT,
-        "resources": bounded(obj({"resource": IDENTITY, "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-                                  "version": {"type": "integer", "minimum": 1}})),
+        "resources": bounded({"oneOf": [obj({"resource": IDENTITY, "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+                                  "version": {"type": "integer", "minimum": 1}}), obj({"resource": IDENTITY,
+                                  "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "version": {"type": "integer", "minimum": 1},
+                                  "binding": {"const": "host_context"}})]}),
         "scope": bounded(rule, 12), "budget_limit": MONEY,
         "agents": bounded(obj({"id": IDENTITY, "role": TEXT, "scope": bounded(rule, 12)})),
         "policies": result["$defs"]["proposal"]["properties"]["policies"],
@@ -197,7 +209,8 @@ def task_schema():
             obj({"kind": {"const": "output"}, "output": IDENTITY})]}, 32),
         "provider": {"oneOf": [{"type": "null"}, settings]},
         "classifier": {"oneOf": [obj({"mode": {"const": "disabled"}}),
-            obj({"mode": {"const": "jev"}, "destination": TEXT, "model": TEXT, "resources": bounded(IDENTITY)})]},
+            *[obj({"mode": {"const": "jev"}, "destination": TEXT, "model": TEXT, "resources": bounded(IDENTITY),
+                   **({"before_nodes": bounded(IDENTITY, 32)} if timing else {})}) for timing in (False, True)]]},
         "limits": obj({"max_steps": {"type": "integer", "minimum": 1, "maximum": 64},
                        "max_in_flight": {"type": "integer", "minimum": 1, "maximum": 16},
                        "inference": {"type": "object", "additionalProperties": False, "properties": {

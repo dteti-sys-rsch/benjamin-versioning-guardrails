@@ -6,7 +6,7 @@ import re
 
 from atomicroot.authority.policy_engine import valid_identity
 from atomicroot.authority.ticket import freeze_json, args_hash
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 
 LABELS = frozenset({"PUBLIC", "SENSITIVE", "UNKNOWN"})
 MIN_CONFIDENCE = 0.8  # provisional abstention threshold, not a correctness guarantee
@@ -89,7 +89,7 @@ class ClassificationProposals:
             if (document["digest"], document["version"]) != (digest, content_version):
                 raise ValueError("stale classification input")
             proposal = ClassificationProposal(
-                proposal_id=uid("classification"), resource=resource, digest=digest, content_version=content_version,
+                proposal_id=self.store.new_id("classification"), resource=resource, digest=digest, content_version=content_version,
                 base_label_version=label_version, base_label_hash=args_hash(label), base_label=freeze_json(label),
                 model_id=model_id, model_version=model_version, criteria_version=criteria_version, criteria_hash=criteria_hash,
                 created_at=self.store._clock().isoformat(), submitted_by=principal.subject,

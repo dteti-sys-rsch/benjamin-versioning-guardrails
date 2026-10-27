@@ -3,7 +3,7 @@ import asyncio
 import json
 from time import perf_counter
 from atomicroot.authority.ticket import args_hash, freeze_json
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 from atomicroot.integration.progress import emit
 
 
@@ -26,6 +26,8 @@ class InferenceMemo:
                     status TEXT NOT NULL, usage TEXT, error TEXT,
                     reserved_tokens INTEGER NOT NULL, reserved_cost REAL NOT NULL);
             """)
+
+        if callback := getattr(store, "register_evaluation_tables", None): callback()
 
     def job(self, key):
         with self.store._lock:
@@ -67,7 +69,7 @@ class InferenceMemo:
                     raise ValueError("inference call/token/retry cap reached")
                 if limits.spend_cap_usd is not None and cost + price > limits.spend_cap_usd:
                     raise ValueError("inference spend cap reached")
-                attempt = uid("attempt")
+                attempt = self.store.new_id("attempt")
                 conn.execute("INSERT INTO inference_attempts VALUES (?,?,?,?,?,?,'STARTED',NULL,NULL,?,?)",
                              (attempt, key, budget, kind, model, self.store.now(), allowance, price))
             try:

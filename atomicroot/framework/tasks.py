@@ -8,7 +8,7 @@ from atomicroot.authority.policy_engine import (
 )
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.registry import TOOLS, SOURCES, RESOLUTION_RECORDS
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 from atomicroot.framework.task_spec import TaskSpec, exact, text, sequence, rules
 from atomicroot.framework.schema import schema
 
@@ -215,7 +215,7 @@ class TaskService:
                 # Reserve the managed namespace before review. This grants no worker rights.
                 self.store.put(conn, mode_key, {"owner": principal.subject})
             data["basis"][mode_key] = self.store.value(conn, mode_key)[0]
-            binding = {"id": uid("resolved"), "digest": args_hash(data)}
+            binding = {"id": self.store.new_id("resolved"), "digest": args_hash(data)}
             conn.execute("INSERT INTO resolved_tasks(id,task,digest,data) VALUES (?,?,?,?)",
                          (binding["id"], task, binding["digest"], dumps(data)))
         # A race between publishing and preview fails closed against the pinned basis.
@@ -249,7 +249,16 @@ class TaskService:
 def delegation_constraints(reader, request):
     task, agent = request["task_id"], request["agent_id"]
     mode = reader.read(f"taskmode:{task}")
-    active = artifact(reader.snapshot, reader.read(f"taskresolved:{task}"))
+    active_binding = reader.read(f"taskresolved:{task}")
+    active = artifact(reader.snapshot, active_binding)
+    if reader.snapshot._conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='execution_actions'").fetchone():
+        staged = reader.snapshot._conn.execute("SELECT a.data,r.config FROM execution_actions a JOIN execution_runs r "
+            "ON a.task=r.task AND a.run=r.run WHERE a.task=? AND a.operation=?", (task, request["operation_id"])).fetchone()
+        if staged:
+            incoming = {k: request[k] for k in ("task_id", "agent_id", "operation_id", "tool", "purpose")}
+            incoming["args"] = {k: request["args"][k] for k in TOOLS[request["tool"]].required}
+            if json.loads(staged[1])["resolved"] != active_binding or json.loads(staged[0]) != incoming:
+                raise ValueError("staged execution config/payload binding mismatch")
     reader.read(f"agents:{task}")
     delegation = reader.read(f"delegation:{task}:{agent}")
     entitlement = reader.read(f"entitlement:{task}:{mode['owner']}")
@@ -272,9 +281,18 @@ def delegation_constraints(reader, request):
     for resource in sorted(set(names)):
         doc = reader.read("document:" + resource)
         ref = resources.get(resource)
+        host_context = ref is not None and ref.get("binding") == "host_context" and request["tool"] == "model_inference" and resource == request["resource"]
+        if host_context:
+            # The approved exception pins identity/scope, while each immutable job
+            # pins new bytes/version/caller. Worker-created context bytes cannot qualify.
+            row = reader.snapshot._conn.execute("SELECT data FROM inference_jobs WHERE id=?", (request["operation_id"],)).fetchone()
+            job = json.loads(row[0]) if row else {}
+            if (job.get("task"), job.get("principal"), job.get("resource"), job.get("digest"), job.get("version"), job.get("resolved_binding")) != (
+                    task, agent, resource, doc["digest"], doc["version"], reader.read(f"taskresolved:{task}")):
+                raise ValueError("unbound host context")
         constraints.append(("resolved_resource:" + resource, And((Const(ref is not None),
-            Eq(Const(doc["digest"]), Const((ref or {}).get("digest", ""))),
-            Eq(Const(doc["version"]), Const((ref or {}).get("version", 0))))), "DENY"))
+            Eq(Const(doc["digest"]), Const(doc["digest"] if host_context else (ref or {}).get("digest", ""))),
+            Eq(Const(doc["version"]), Const(doc["version"] if host_context else (ref or {}).get("version", 0))))), "DENY"))
         if resource != request["resource"]:
             # Model sources require correlated inference scope for this agent and parent.
             for name, scope in (("source_agent_scope", delegation["scope"]), ("source_parent_scope", entitlement["scope"])):

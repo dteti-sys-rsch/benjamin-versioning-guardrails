@@ -41,8 +41,17 @@ PILOT_SCOPE_PROGRESS.md
 *_BASELINE.log
 *_REGRESSION.xml
 *.log
-/wkwk.html
+/docs/design/blueprint.html
 /.publish/
+CLI_TESTING.md
+
+# Generated reports stay local; preserve the three previously tracked phase 3.7 records.
+/reports/**
+!/reports/README.md
+!/reports/phase37/
+!/reports/phase37/PHASE37_BASELINE.xml
+!/reports/phase37/PHASE37_TARGETED.xml
+!/reports/phase37/PHASE37_SCHEDULES.json
 
 # Local editor and operating system files
 .idea/

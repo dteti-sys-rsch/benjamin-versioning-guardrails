@@ -10,6 +10,7 @@ from atomicroot.integration.pilot import PilotHost
 from atomicroot.integration.inference import ModelBridge
 from atomicroot.integration.workflow import AgentWorkflow
 from atomicroot.integration.progress import Progress, emit
+from atomicroot.integration.reporting import write_invocation_report
 from atomicroot.integration.prompts import AUTHOR_VERSION, WORKER_VERSION
 from atomicroot.integration.providers import live_model, model_configuration, discover_models, MODEL_PROVIDERS, JevClassifier, FakeClassifier, DisabledClassifier, ReplayModel, ReplayClassifier, Limits
 
@@ -58,7 +59,7 @@ def execute(args):
         except Exception as exc:
             report.update(LLM="NOT RUN", discovery="BLOCKED", error=type(exc).__name__)
             code = 2
-        (directory / "status.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        write_invocation_report(directory, report, [])
         print(dumps(report))
         return code
     try:
@@ -68,7 +69,7 @@ def execute(args):
         if args.provider == "9router":
             report["required_configuration"] = ["NINEROUTER_MODEL", "NINEROUTER_UPSTREAM_PROVIDER",
                 "NINEROUTER_RESPONSE_MODEL", "NINEROUTER_ROUTE_REVISION", "NINEROUTER_BASE_URL (loopback /v1)"]
-        (directory / "status.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        write_invocation_report(directory, report, [])
         print(dumps(report))
         return 2
     report["model_configuration"] = {k: config[k] for k in ("provider", "model", "endpoint")}
@@ -87,7 +88,7 @@ def execute(args):
         missing.append("TYPESAFE_API_KEY")
     if missing:
         report.update(LLM="BLOCKED" if args.model_mode == "live" else "NOT RUN", live="BELUM DIJALANKAN", missing=missing)
-        (directory / "status.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        write_invocation_report(directory, report, [])
         print(dumps(report))
         return 2
     limits = Limits(max_calls=args.max_calls, max_tokens=args.max_tokens, max_output_tokens=args.max_output_tokens,
@@ -197,9 +198,8 @@ def execute(args):
     finally:
         emit(bridge.progress, "WORKFLOW", status=report.get("workflow_status", report["LLM"]))
         report["attempts"] = bridge.memo.attempts()
-        (directory / "status.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-        (directory / "transcript.json").write_text(json.dumps(transcript, indent=2, ensure_ascii=False), encoding="utf-8")
-        if not model.live and hasattr(model, "calls"):
+        write_invocation_report(directory, report, transcript)
+        if not model.live and getattr(model, "calls", None):
             replay = {}
             from atomicroot.authority.ticket import args_hash
             for messages in model.calls:

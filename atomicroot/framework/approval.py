@@ -1,18 +1,21 @@
 """One-use durable reviews, with distinct contract and operation bindings."""
 import json
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 
 
 class ApprovalBroker:
     def __init__(self, store): self.store = store
 
+    def _decision_basis(self, conn, row, approve): pass
+
     def create(self, conn, kind, task, data, *, ttl=300):
         if kind not in {"contract", "operation"} or not 0 < ttl <= 3600:
             raise ValueError("invalid review kind/expiry")
-        review_id = uid("review")
+        review_id = self.store.new_id("review")
         data = {**data, "required_role": "approver", "task_id": task}
         conn.execute("INSERT INTO reviews(id,kind,task,status,expires,data) VALUES (?,?,?,'PENDING',?,?)",
                      (review_id, kind, task, self.store.now() + ttl, dumps(data)))
+        self.store.observe("review_created", review_id)
         return review_id
 
     def _get(self, conn, review_id):
@@ -51,6 +54,7 @@ class ApprovalBroker:
                 key = f"consent:{row['task']}:{data['operation_id']}"
                 # Infrastructure transition only: business Footprint stays pinned.
                 self.store.put(conn, key, {"status": status, "review_id": review_id})
+            self._decision_basis(conn, row, approve)
             self.store.audit(conn, "REVIEW_" + status, principal.subject, {"review_id": review_id, "kind": row["kind"]})
         return {"review_id": review_id, "status": status}
 
