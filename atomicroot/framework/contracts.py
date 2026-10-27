@@ -4,7 +4,7 @@ from atomicroot.authority.ticket import freeze_json, args_hash
 from atomicroot.authority.policy_engine import valid_identity, money_integer, finite_strings, MAX_STATE_BYTES
 from atomicroot.framework.registry import TOOLS, registry_preview
 from atomicroot.framework.dsl import compile_policy
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 
 
 FIELDS = frozenset({"task_id", "objective", "purpose", "budget_limit", "allowed_tools",
@@ -120,7 +120,7 @@ class ContractService:
             if attachment:
                 preview["resolved_task"] = attachment
             digest = args_hash({"proposal": data, "base_version": base, "preview": preview})
-        proposal_id = uid("proposal")
+        proposal_id = self.store.new_id("proposal")
         with self.store.transaction() as conn:
             if self.store.stale(conn, footprint): raise ValueError("preview basis changed; request new diff")
             review = self.broker.create(conn, "contract", task, {"digest": digest, "footprint": footprint,

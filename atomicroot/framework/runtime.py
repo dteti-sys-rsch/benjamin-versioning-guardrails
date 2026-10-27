@@ -12,7 +12,7 @@ from atomicroot.framework.registry import TOOLS, SOURCES
 from atomicroot.framework.dsl import builtin_constraints, evaluate
 from atomicroot.framework.contracts import policy_key
 from atomicroot.framework.labels import LabelManager
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 
 
 def validate_request(request, principal):
@@ -29,6 +29,10 @@ def validate_request(request, principal):
     if tool is None or type(args) is not dict or set(args) != tool.required:
         raise ValueError("tool arguments require concrete payload; body_ref and worker metadata unsupported")
     if tool.spending: money_integer(args["amount"])
+    if request["tool"] == "update_document":
+        from atomicroot.framework.labels import content_digest
+        content_digest(args["content"])
+        valid_identity(args["read_receipt"])
     for key in ("to", "body"):
         if key in args and (type(args[key]) is not str or not args[key] or len(args[key].encode("utf-8")) > (8192 if key == "body" else 256)):
             raise ValueError("invalid concrete text argument")
@@ -77,6 +81,19 @@ class RuntimeAuthority:
         self.verify_key = self._sk.verify_key
         self.harness = harness
 
+    def _managed(self, snapshot, reader, request):
+        if snapshot.read(f"taskmode:{request['task_id']}")[1] is None: return []
+        from atomicroot.framework.tasks import delegation_constraints
+        return delegation_constraints(reader, request)
+
+    def _constraints(self, request, managed): return builtin_constraints(request) + managed
+
+    def _include_policy(self, definition, request): return request["tool"] in definition["applies_to"]
+
+    def _additional_reads(self, reader): pass
+
+    def _expiry(self, now, principal): return now + timedelta(seconds=30)
+
     def _register_operation(self, request, digest):
         task, op = request["task_id"], request["operation_id"]
         with self.store.transaction() as conn:
@@ -87,6 +104,9 @@ class RuntimeAuthority:
                 if row["digest"] != digest or row["agent"] != request["agent_id"]:
                     raise ValueError("operation_id reused with different payload or identity")
             else:
+                if request["tool"] == "update_document":
+                    from atomicroot.framework.operations import read_basis
+                    self.store.put(conn, f"readbasis:{task}:{op}", read_basis(self.store, conn, request))
                 conn.execute("INSERT INTO operations(task,operation,agent,digest,request) VALUES (?,?,?,?,?)",
                              (task, op, request["agent_id"], digest, dumps(request)))
                 self.store.put(conn, f"operation:{task}:{op}", False, initial=True)
@@ -102,8 +122,11 @@ class RuntimeAuthority:
             if status["committed"]:
                 return {**status, "request_digest": digest, "idempotent_status": True}
             with self.store.snapshot() as snapshot:
-                if self.harness: self.harness.checkpoint("snapshot_authorization", action_id)
+                if self.harness:
+                    if self.store.coordinator.held_exclusively(): self.store.observe("snapshot_authorization", action_id)
+                    else: self.harness.checkpoint("snapshot_authorization", action_id)
                 reader = StatusReader(snapshot, SOURCES)
+                self._additional_reads(reader)
                 contract = reader.read(f"contract3:{task}")
                 members = reader.read(f"policyset:{task}")
                 reader.read(f"operation:{task}:{op}")
@@ -112,24 +135,24 @@ class RuntimeAuthority:
                 normalized = {**request, "args": {**request["args"], "amount": request["args"].get("amount", 0)},
                               "recipient": request["args"].get("to", ""), "resource": request["args"].get("resource", ""),
                               "unknown_release": contract["unknown_release"], "resolved_label": "PUBLIC"}
+                normalized["base_digest"] = request["args"].get("digest", "")
                 normalized["inference_egress"] = contract.get("inference_egress", [])
                 resource = None
                 if spec.resource:
-                    resource, label = LabelManager.resolve(reader, normalized["resource"], request["args"]["digest"], request["purpose"])
+                    digest = request["args"]["digest"]
+                    if request["tool"] == "update_document": digest = reader.read("document:" + normalized["resource"])["digest"]
+                    resource, label = LabelManager.resolve(reader, normalized["resource"], digest, request["purpose"])
                     normalized["resolved_label"] = label
                 if request["tool"] == "model_inference":
                     from atomicroot.integration.egress import validate_model_context
                     normalized["model_source_bindings"] = validate_model_context(reader, resource, normalized)
-                managed_constraints = []
-                if snapshot.read(f"taskmode:{task}")[1] is not None:
-                    from atomicroot.framework.tasks import delegation_constraints
-                    managed_constraints = delegation_constraints(reader, normalized)
+                managed_constraints = self._managed(snapshot, reader, normalized)
                 results = [(name, disposition, solve(name, expr, normalized, reader, []))
-                           for name, expr, disposition in builtin_constraints(normalized) + managed_constraints]
+                           for name, expr, disposition in self._constraints(normalized, managed_constraints)]
                 if type(members) is not list or len(members) > 8: raise EvaluationError("invalid policy set")
                 for member in members:
                     definition = reader.read(policy_key(member))
-                    if request["tool"] in definition["applies_to"]:
+                    if self._include_policy(definition, normalized):
                         result = evaluate({"definition": definition}, {"reader": reader}, normalized)
                         results.append((definition["policy_id"], definition["on_violation"], result))
                 footprint = reader.footprint(set())
@@ -139,7 +162,7 @@ class RuntimeAuthority:
                 if errors: return {"decision": "EVALUATION_ERROR", "policy": errors[0][0], "explanation": errors[0][1].explanation}
                 if hard:
                     name, result = hard[0]
-                    return {**asdict(result), "facts": review_facts(result.facts), "policy": name, "decision": "DENY"}
+                    return {**asdict(result), "footprint": footprint, "facts": review_facts(reader.values), "policy": name, "decision": "DENY"}
                 business_fp = {k: v for k, v in footprint.items() if k != f"consent:{task}:{op}"}
                 snapshot_facts = review_facts(reader.values)
                 plan = {"tool": request["tool"], "args": request["args"], "amount": normalized["args"]["amount"],
@@ -160,17 +183,20 @@ class RuntimeAuthority:
                     self.broker.validate_grant(conn, grant_id, "operation", task, digest,
                                                agent=request["agent_id"], operation=op, tool=request["tool"])
                     if self.store.stale(conn, footprint): raise ValueError("grant snapshot changed; new review required")
-            write_set = spec.write_set(task, op, grant_id)
-            ticket = create_ticket(task, request["agent_id"], request["tool"], envelope(request), footprint, write_set, self._sk)
+            write_set = spec.write_set(task, op, grant_id, resource=request["args"].get("resource"))
+            ticket = create_ticket(task, request["agent_id"], request["tool"], envelope(request), footprint, write_set,
+                                   self._sk, clock=self.store._clock, id_factory=self.store.new_id)
             now = self.store._clock()
             ticket.not_before = now.isoformat()
-            ticket.not_after = (now + timedelta(seconds=30)).isoformat()
+            ticket.not_after = self._expiry(now, principal).isoformat()
             ticket.sign(self._sk)
             with self.store.transaction() as conn:
                 conn.execute("INSERT INTO authorizations(ticket,task,operation,data) VALUES (?,?,?,?)",
                              (ticket.ticket_id, task, op, dumps({"request": request, "digest": digest,
                                 "grant_id": grant_id, "plan": plan, "ticket": ticket.to_dict()})))
-            if self.harness: self.harness.checkpoint("ticket_issued", action_id)
+            if self.harness:
+                if self.store.coordinator.held_exclusively(): self.store.observe("ticket_issued", action_id)
+                else: self.harness.checkpoint("ticket_issued", action_id)
             return {"decision": "ALLOW", "ticket": ticket.to_dict(), "commit_args": envelope(request), "request_digest": digest}
         except Exception as exc:
             return {"decision": "EVALUATION_ERROR", "explanation": str(exc)}
@@ -180,6 +206,8 @@ class IntentGateway:
     def __init__(self, store, broker, verify_key, harness=None):
         self.store, self.broker, self.verify_key, self.harness = store, broker, verify_key, harness
 
+    def _freshness(self, conn, footprint): return self.store.stale(conn, footprint)
+
     def commit(self, ticket_data, args, principal, *, action_id=None):
         try:
             ticket = Ticket.from_dict(freeze_json(ticket_data))
@@ -188,7 +216,9 @@ class IntentGateway:
             principal.require("worker", task=ticket.task_id)
             if ticket.agent_id != principal.subject: raise PermissionError("caller identity mismatch")
             if args_hash(args) != ticket.args_hash: raise ValueError("args hash mismatch")
-            if self.harness: self.harness.checkpoint("before_cas", action_id)
+            if self.harness:
+                if self.store.coordinator.held_exclusively(): self.store.observe("before_cas", action_id)
+                else: self.harness.checkpoint("before_cas", action_id)
             with self.store.transaction() as conn:
                 start = datetime.fromisoformat(ticket.not_before)
                 end = datetime.fromisoformat(ticket.not_after)
@@ -202,15 +232,17 @@ class IntentGateway:
                 task, op = row["task"], row["operation"]
                 if conn.execute("SELECT 1 FROM outbox WHERE task=? AND operation=?", (task, op)).fetchone():
                     return {"status": "OPERATION_ALREADY_COMMITTED", "operation_id": op, "use_status_endpoint": True}
-                stale = self.store.stale(conn, ticket.footprint)
+                stale = self._freshness(conn, ticket.footprint)
                 if stale: return {"status": "STALE_TICKET", "stale_keys": stale}
                 grant = authorization["grant_id"]
-                if ticket.write_set != TOOLS[ticket.tool].write_set(task, op, grant):
+                if ticket.write_set != TOOLS[ticket.tool].write_set(task, op, grant, resource=authorization["request"]["args"].get("resource")):
                     raise ValueError("tool registry write set mismatch")
                 if grant:
                     self.broker.validate_grant(conn, grant, "operation", task, authorization["digest"],
                                                agent=ticket.agent_id, operation=op, tool=ticket.tool)
                 plan = authorization["plan"]
+                from atomicroot.framework.operations import intent_facts
+                observed = intent_facts(self.store, conn, authorization["request"])
                 if TOOLS[ticket.tool].spending:
                     key = f"reserved:{task}"
                     value = money_integer(self.store.value(conn, key)[1])
@@ -219,18 +251,25 @@ class IntentGateway:
                     key = f"exposure:{task}"
                     exposure = self.store.value(conn, key)[1]
                     self.store.put(conn, key, sorted(set(exposure) | {plan["resolved_label"]}))
+                if ticket.tool == "update_document":
+                    from atomicroot.framework.labels import write_content
+                    plan["resource_update"] = write_content(self.store, conn, plan["args"]["resource"], plan["args"]["content"], ticket.agent_id,
+                                                          sensitive="SENSITIVE" in observed["exposure"])
                 self.store.put(conn, f"operation:{task}:{op}", True)
                 if grant:
                     self.broker.consume(conn, grant)
                     self.store.put(conn, f"consent:{task}:{op}", {"status": "CONSUMED", "review_id": grant})
                 conn.execute("INSERT INTO trace_events(event_id,task_id,agent_id,tool,args_hash,ticket_id,nonce,write_set,timestamp,args) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                             (uid("event"), task, ticket.agent_id, ticket.tool, ticket.args_hash, ticket.ticket_id,
+                             (self.store.new_id("event"), task, ticket.agent_id, ticket.tool, ticket.args_hash, ticket.ticket_id,
                               ticket.nonce, dumps(ticket.write_set), self.store._clock().isoformat(),
                               dumps({**authorization["request"]["args"], "operation_id": op,
+                                     "_intent_facts": observed,
                                      "_resolved_data_class": "sensitive" if plan["resolved_label"] == "SENSITIVE" else plan["resolved_label"]})))
                 conn.execute("INSERT INTO outbox(task,operation,ticket,agent,digest,payload,status,amount) VALUES (?,?,?,?,?,?,'PENDING',?)",
                              (task, op, ticket.ticket_id, ticket.agent_id, authorization["digest"], dumps(plan), plan["amount"]))
-            if self.harness: self.harness.checkpoint("after_commit", action_id)
+            if self.harness:
+                if self.store.coordinator.held_exclusively(): self.store.observe("after_commit", action_id)
+                else: self.harness.checkpoint("after_commit", action_id)
             return {"status": "COMMITTED", "operation_id": op, "delivery": "PENDING"}
         except Exception as exc:
             return {"status": "REJECTED", "reason": str(exc)}

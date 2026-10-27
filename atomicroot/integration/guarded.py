@@ -9,7 +9,7 @@ from atomicroot.framework.registry import TOOLS
 from atomicroot.framework.runtime import validate_request, operation_status
 from atomicroot.integration.progress import emit
 
-WORKER_TOOLS = frozenset({"read_document", "send_email", "transfer_funds", "deploy"})
+WORKER_TOOLS = frozenset({"read_document", "send_email", "transfer_funds", "deploy", "update_document"})
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,15 @@ class GuardedTools:
                 if review["effective_status"] != "APPROVED":
                     if review["effective_status"] == "REJECTED": return Observation("DENY", op, {"reason": "trusted review rejected"})
                     grant = None  # new server review, never silently reuse stale consent
-            auth = r.authority.authorize(request, principal, grant_id=grant, action_id=op)
+            fallback_result = None
+            if r.fallback is not None:
+                from atomicroot.framework.fallback import commit_fresh
+                fallback_result = commit_fresh(r, request, principal, grant=grant, config=r.fallback)
+                auth = fallback_result["authorization"]
+                if auth is None:
+                    return Observation("RETRY_EXHAUSTED", op, {k: v for k, v in fallback_result.items() if k not in {"authorization", "commit"}})
+            else:
+                auth = r.authority.authorize(request, principal, grant_id=grant, action_id=op)
             emit(self.progress, "INFERENCE_EGRESS" if request["tool"] == "model_inference" else "AUTHORIZATION", tool=request["tool"], operation=op,
                  status=auth.get("decision") or "ALREADY_COMMITTED")
             if auth.get("decision") == "ESCALATE":
@@ -61,7 +69,7 @@ class GuardedTools:
             if auth.get("decision") != "ALLOW" and not auth.get("idempotent_status"):
                 return Observation(auth.get("decision", "EVALUATION_ERROR"), op, {"reason": auth.get("explanation", "authorization failed"), "policy": auth.get("policy")})
             if auth.get("decision") == "ALLOW":
-                committed = r.gateway.commit(auth["ticket"], auth["commit_args"], principal, action_id=op)
+                committed = fallback_result["commit"] if fallback_result else r.gateway.commit(auth["ticket"], auth["commit_args"], principal, action_id=op)
                 if request["tool"] != "model_inference" or committed["status"] not in {"COMMITTED", "OPERATION_ALREADY_COMMITTED"}:
                     emit(self.progress, "COMMIT", tool=request["tool"], operation=op, status=committed["status"])
                 if committed["status"] == "STALE_TICKET":
@@ -87,6 +95,8 @@ class GuardedTools:
             if request["tool"] != "model_inference" or status["delivery"] != "RELEASED":
                 emit(self.progress, "DELIVERY", tool=request["tool"], operation=op, status=status["delivery"])
             detail = {"tool": request["tool"], "committed": True, "delivery": status["delivery"], "receipt": status["receipt"], "attempts": status["attempts"]}
+            if fallback_result:
+                detail["fallback"] = {k: v for k, v in fallback_result.items() if k not in {"authorization", "commit"}}
             if request["tool"] == "read_document" and status["receipt"]:
                 detail["source"] = {"resource": request["args"]["resource"], "digest": request["args"]["digest"]}
                 detail["instruction_trust"] = "UNTRUSTED"

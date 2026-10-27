@@ -8,7 +8,7 @@ from atomicroot.authority.policy_engine import (
 )
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.registry import TOOLS, SOURCES, RESOLUTION_RECORDS
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 from atomicroot.framework.task_spec import TaskSpec, exact, text, sequence, rules
 from atomicroot.framework.schema import schema
 
@@ -215,7 +215,7 @@ class TaskService:
                 # Reserve the managed namespace before review. This grants no worker rights.
                 self.store.put(conn, mode_key, {"owner": principal.subject})
             data["basis"][mode_key] = self.store.value(conn, mode_key)[0]
-            binding = {"id": uid("resolved"), "digest": args_hash(data)}
+            binding = {"id": self.store.new_id("resolved"), "digest": args_hash(data)}
             conn.execute("INSERT INTO resolved_tasks(id,task,digest,data) VALUES (?,?,?,?)",
                          (binding["id"], task, binding["digest"], dumps(data)))
         # A race between publishing and preview fails closed against the pinned basis.

@@ -3,7 +3,7 @@ import json
 from dataclasses import asdict
 
 from atomicroot.authority.ticket import args_hash, freeze_json
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.classification import ClassificationProposals
 from atomicroot.integration.memo import InferenceMemo, InferenceInProgress
@@ -56,7 +56,7 @@ class InferenceReceiver:
             if payload["args"]["to"] != self.classifier.provider or job["model"] != self.classifier.model:
                 raise ValueError("classifier provider/model changed; new intent required")
             result = await self._classify(operation, job, document)
-        receipt = {"outcome": "DELIVERED", "receipt_id": uid("receipt"), "result": result}
+        receipt = {"outcome": "DELIVERED", "receipt_id": store.new_id("receipt"), "result": result}
         with store.transaction() as conn:
             previous = store.row(conn, "SELECT * FROM receiver_receipts WHERE task=? AND operation=?", (task, operation))
             if previous: return json.loads(previous["receipt"])
@@ -119,7 +119,11 @@ class ModelBridge:
                     from atomicroot.framework.tasks import artifact
                     active = artifact(snap, snap.read(f"taskresolved:{task}")[1])
                     agent = snap.read(f"delegation:{task}:{principal.subject}")[1]
-                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"])
+                    completed = []
+                    for output, digest, raw in snap._conn.execute("SELECT id,digest,data FROM execution_outputs WHERE task=? AND run=?", (task, execution["run"])):
+                        record = json.loads(raw)
+                        if args_hash(record) == digest and record["binding"] == execution["binding"]: completed.append(output)
+                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"], completed)
                 else: context["response_schema"] = worker_response_schema(contract)
         job = self.memo.job(key)
         if job:

@@ -19,7 +19,7 @@ from atomicroot.authority.ticket import freeze_json, args_hash
 from atomicroot.authority.policy_engine import valid_identity
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.storage import dumps, uid
-from atomicroot.integration.guarded import GuardedTools
+from atomicroot.integration.guarded import GuardedTools, WORKER_TOOLS
 from atomicroot.integration.prompts import config_messages, config_response_schema, CONFIG_WORKER_VERSION
 from atomicroot.integration.progress import emit
 
@@ -155,7 +155,7 @@ class ConfigWorkflow:
             driver["classifier"].update(criteria_version=CRITERIA_VERSION, criteria_hash=args_hash(CRITERIA))
             if not bridge.receiver.classifier.live and driver["classifier"]["fixture"] is None:
                 raise ValueError("offline classifier requires explicit fixture binding")
-        self.binding_data = {"resolved": active["binding"], "driver": driver, "executor": "config-executor-v1",
+        self.binding_data = {"resolved": active["binding"], "driver": driver, "executor": "config-executor-v3",
             "checkpoint": str(self.path), "prompt": CONFIG_WORKER_VERSION,
             "schemas": {a["id"]: config_response_schema(a, self.spec["outputs"]) for a in self.agents.values()}}
         self.binding = args_hash(self.binding_data)
@@ -176,6 +176,7 @@ class ConfigWorkflow:
                 CREATE TABLE IF NOT EXISTS execution_history(seq INTEGER PRIMARY KEY AUTOINCREMENT,task TEXT NOT NULL,
                     run TEXT NOT NULL,status TEXT NOT NULL,evidence TEXT NOT NULL,timestamp REAL NOT NULL);
             """)
+        if callback := getattr(runtime.store, "register_evaluation_tables", None): callback()
         graph = StateGraph(ConfigState)
         for name in ("schedule", "decide", "stage", "effect", "wait", "finish"):
             graph.add_node(name, getattr(self, "_" + name))
@@ -204,7 +205,8 @@ class ConfigWorkflow:
 
     def _invoke(self, run, mode):
         config = self.config(run)
-        invocation = uid("invocation")
+        invocation = self.runtime.store.new_id("invocation")
+        self.runtime.store.observe("checkpoint_" + mode, run)
         try:
             with invocation_lock(self.path.parent / (args_hash({"task": self.task, "run": run}).split(":")[1] + ".lock")):
                 current = self.runtime.tasks.status(self.task, self.caller)
@@ -228,6 +230,7 @@ class ConfigWorkflow:
                             "repairs": 0, "review_retries": 0, "classified": False} for n in self.plan}, "status": "RUNNING"}
                     else: input_value = Command(resume=True) if mode == "resume" and state.interrupts else None
                 with tracing_context(enabled=False): result = self.graph.invoke(input_value, config, durability="sync")
+                self.runtime.store.observe("checkpoint_saved", run)
                 status = "REVIEW_WAIT" if result.get("__interrupt__") and result["status"] == "REVIEW_WAIT" else result["status"]
             self._invocation(invocation, run, status)
             return result
@@ -256,6 +259,7 @@ class ConfigWorkflow:
             "nodes": {n: {k: v for k, v in data.items() if k in {"step", "phase", "review", "review_retries", "reason"}} for n, data in state.values.get("nodes", {}).items()}}
 
     def _checkpoint(self, stage, node):
+        self.runtime.store.observe("workflow_" + stage, node)
         if self.hook: self.hook(stage, node)
 
     def _schedule(self, s):
@@ -281,9 +285,65 @@ class ConfigWorkflow:
         visit(node)
         return [ob for name in self.plan if name in ancestors for ob in s["nodes"][name]["observations"]]
 
+    def _node_progress(self, s, node):
+        scope = self.agents[self.plan[node]["agent"]]["scope"]
+        business = {r["tool"] for r in scope} & WORKER_TOOLS
+        criteria = [c for c in self.spec["acceptance"] if
+            (c["kind"] == "read" and any(r["tool"] == "read_document" and r["resource"] == c["resource"] for r in scope)) or
+            (c["kind"] == "receipt" and any(r["tool"] == c["tool"] and r["destination"] == c["destination"] for r in scope))]
+        if business - {"read_document"} and not any(node in n["depends_on"] for n in self.plan.values()):
+            criteria += [c for c in self.spec["acceptance"] if c["kind"] == "output"]
+        proof = self.completion(s["run"], criteria=criteria, node=node)
+        # Only an unambiguous read-only delegation can be closed automatically.
+        # Generic write/spending workers still decide actions; scope is not a goal.
+        read_only = business == {"read_document"} and bool(criteria) and sum(
+            n["agent"] == self.plan[node]["agent"] for n in self.plan.values()) == 1
+        return {"criteria": proof["criteria"], "remaining": [e["criterion"] for e in proof["criteria"] if not e["satisfied"]],
+                "satisfied": proof["satisfied"], "finish_on_read_receipts": read_only}
+
+    def _finish_evidence(self, s, node, data):
+        progress = self._node_progress(s, node)
+        scope = self.agents[self.plan[node]["agent"]]["scope"]
+        business = {r["tool"] for r in scope} & WORKER_TOOLS
+        if business and not any(node in n["depends_on"] for n in self.plan.values()) and self.completion(s["run"])["satisfied"]:
+            # Registered task evidence is complete. Do not ask a leaf worker to
+            # propose another effect merely to obtain a model-generated done.
+            data.update(phase="DONE", reason="registered_acceptance_satisfied")
+            emit(self.progress, "NODE_DONE", role=self.plan[node]["agent"], step=data["step"], status="ACCEPTANCE_SATISFIED")
+            return data
+        if not progress["finish_on_read_receipts"] or not progress["satisfied"]: return data
+        observed = {ob.get("operation_id") for ob in data["observations"]}
+        delivered_to_node = all(any(e["operation"] in observed for e in c["evidence"]) for c in progress["criteria"])
+        if delivered_to_node:
+            data.update(phase="DONE", reason="required_reads_delivered")
+            emit(self.progress, "NODE_DONE", role=self.plan[node]["agent"], step=data["step"], status="READS_DELIVERED")
+        return data
+
+    def _previous_read(self, s, node, request):
+        """Repeat feedback requires real receipts and the same current content version.
+
+        It grants no read permission and returns no new bytes. A changed document
+        follows normal authorization; old checkpoint claims cannot qualify.
+        """
+        with self.runtime.store.snapshot() as snap:
+            if snap.read("taskresolved:" + self.task)[1] != self.active["binding"]: return None
+            doc = snap.read("document:" + request["args"]["resource"])[1]
+            rows = snap._conn.execute("SELECT a.operation,b.payload,b.receipt,r.receipt FROM execution_actions a "
+                "JOIN outbox b ON b.task=a.task AND b.operation=a.operation JOIN receiver_receipts r ON r.task=a.task AND r.operation=a.operation "
+                "WHERE a.task=? AND a.run=? AND a.node=? AND b.status='RELEASED'", (self.task, s["run"], node)).fetchall()
+            for op, raw, receipt, proof in rows:
+                payload = json.loads(raw)
+                if payload["tool"] != "read_document" or payload["args"] != request["args"] or not receipt or receipt != proof: continue
+                delivered = payload["resource_snapshot"]
+                if doc and (doc["digest"], doc["version"]) == (delivered["digest"], delivered["version"]) and json.loads(receipt)["outcome"] == "DELIVERED":
+                    return op
+        return None
+
     def _decide_one(self, s, node):
         data = deepcopy(s["nodes"][node])
         step, agent_id = data["step"], self.plan[node]["agent"]
+        self._finish_evidence(s, node, data)
+        if data["phase"] == "DONE": return data
         if step >= self.spec["limits"]["max_steps"]: return {**data, "phase": "RETRY_EXHAUSTED"}
         observations = self._observations(s, node)
         try:
@@ -313,7 +373,7 @@ class ConfigWorkflow:
                     source = ob.get("detail", {}).get("source")
                     if source and source not in sources: sources.append(source)
                 response = self.bridge.worker(self.operation(s, node, step, "inference"), self.task + ":" + s["run"],
-                    messages=config_messages(self.spec, self.agents[agent_id], node, step, observations, catalog, counters), sources=sources,
+                    messages=config_messages(self.spec, self.agents[agent_id], node, step, observations, catalog, counters, self._node_progress(s, node)), sources=sources,
                     context_resource=self.contexts[agent_id], principal=self.principals[agent_id], task=self.task, purpose=self.spec["purpose"],
                     execution={"run": s["run"], "binding": self.binding, "node": node, "step": step, "agent": agent_id})
             else: response = self.worker(freeze_json(view))
@@ -360,6 +420,15 @@ class ConfigWorkflow:
                     if kind != "action" or set(response) != {"kind", "tool", "args"}: raise ValueError("invalid action proposal")
                     pending = self.tools.stage({"tool": response["tool"], "args": response["args"]}, principal=self.principals[self.plan[node]["agent"]],
                         task=self.task, purpose=self.spec["purpose"], operation=self.operation(s, node, data["step"], "action"))
+                    previous_read = self._previous_read(s, node, pending) if pending["tool"] == "read_document" else None
+                    if previous_read:
+                        count = data.get("repeat_reads", 0) + 1
+                        data.update(step=data["step"] + 1, repeat_reads=count,
+                            phase="RETRY_EXHAUSTED" if count >= 3 else "READY", reason="repeated_read_without_progress")
+                        data["observations"].append({"status": "ALREADY_OBSERVED", "node": node, "detail": {
+                            "previous_operation": previous_read, "reason": "Source/version already delivered. Use its content and choose a remaining criterion or done."}})
+                        emit(self.progress, "ACTION", role=self.plan[node]["agent"], step=data["step"], status="ALREADY_OBSERVED")
+                        continue
                 op = self.operation(s, node, data["step"], "action")
                 with self.runtime.store.transaction() as conn:
                     previous = self.runtime.store.row(conn, "SELECT operation,data FROM execution_actions WHERE task=? AND run=? AND node=? AND step=?",
@@ -410,6 +479,7 @@ class ConfigWorkflow:
         phase = {"DENY": "REFUSED", "EVALUATION_ERROR": "FAILED", "RETRY_EXHAUSTED": "RETRY_EXHAUSTED", "REJECTED": "UNSUPPORTED"}.get(status, "READY")
         if status == "COMMITTED" and observation["detail"]["delivery"] == "FAILED": phase = "FAILED"
         data.update(phase=phase, step=data["step"] + 1, grant=None, pending={})
+        if phase == "READY": self._finish_evidence(s, node, data)
         return data
 
     def _effect(self, s):
@@ -443,20 +513,20 @@ class ConfigWorkflow:
         batch = [n for n, d in nodes.items() if d["phase"] in {"STAGED", "DELIVERY_WAIT"}]
         return {"nodes": nodes, "batch": batch, "route": "effect" if batch else "schedule", "status": "RUNNING"}
 
-    def completion(self, run):
+    def completion(self, run, *, criteria=None, node=None):
         """Registered existence/delivery predicates, not a factual-quality oracle."""
         evidence = []
         with self.runtime.store.snapshot() as snap:
             rows = snap._conn.execute("SELECT a.operation,a.data,b.status,b.payload,b.receipt,r.receipt FROM execution_actions a "
                 "JOIN outbox b ON b.task=a.task AND b.operation=a.operation JOIN receiver_receipts r ON r.task=b.task AND r.operation=b.operation "
-                "WHERE a.task=? AND a.run=?", (self.task, run)).fetchall()
+                "WHERE a.task=? AND a.run=? AND (? IS NULL OR a.node=?)", (self.task, run, node, node)).fetchall()
             delivered = []
             for op, action, status, payload, receipt, proof in rows:
                 if status != "RELEASED" or not receipt or receipt != proof: continue
                 receipt, action, payload = json.loads(receipt), json.loads(action), json.loads(payload)
                 if receipt["outcome"] != "DELIVERED" or action.get("tool") != payload["tool"] or action.get("args") != payload["args"]: continue
                 delivered.append((op, action, receipt, payload))
-            for criterion in self.spec["acceptance"]:
+            for criterion in self.spec["acceptance"] if criteria is None else criteria:
                 matches = []
                 if criterion["kind"] in {"read", "receipt"}:
                     for op, action, receipt, payload in delivered:

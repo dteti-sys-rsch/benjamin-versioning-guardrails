@@ -145,6 +145,7 @@ def create_ticket(
     write_set: list[str],
     signing_key: SigningKey,
     ttl_seconds: int = 30,
+    *, clock=None, id_factory=None,
 ) -> Ticket:
     """
     Build and sign a new ticket.
@@ -154,16 +155,16 @@ def create_ticket(
     ttl_seconds : int
         Validity window.  Default 30 s (matches the brief's example).
     """
-    now = datetime.now(timezone.utc)
+    now = clock() if clock else datetime.now(timezone.utc)
     ticket = Ticket(
-        ticket_id=f"tk-{uuid.uuid4().hex[:8]}",
+        ticket_id=id_factory("tk") if id_factory else f"tk-{uuid.uuid4().hex}",
         task_id=task_id,
         agent_id=agent_id,
         tool=tool,
         args_hash=args_hash(args),
         footprint=footprint,
         write_set=write_set,
-        nonce=f"n-{uuid.uuid4().hex[:12]}",
+        nonce=id_factory("n") if id_factory else f"n-{uuid.uuid4().hex}",
         not_before=now.isoformat(timespec="seconds"),
         not_after=(now + timedelta(seconds=ttl_seconds)).isoformat(timespec="seconds"),
     )

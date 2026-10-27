@@ -1,10 +1,12 @@
 """Phase 3 tables share the existing Trace Store SQLite database and lock."""
 from contextlib import contextmanager
 import uuid
+from threading import local
 
 from atomicroot.store.trace_store import TraceStore, Snapshot
 from atomicroot.authority.ticket import canonical_json_bytes
 from atomicroot.authority.policy_engine import MAX_STATE_BYTES
+from atomicroot.framework.contention import coordinator_for
 
 
 def dumps(value):
@@ -16,7 +18,11 @@ def uid(prefix):
 
 
 class FrameworkStore(TraceStore):
-    def __init__(self, db_path=":memory:", **kwargs):
+    def __init__(self, db_path=":memory:", *, id_factory=None, harness=None, **kwargs):
+        self.coordinator = coordinator_for(db_path)
+        self.new_id = id_factory or uid
+        self.harness = harness
+        self._instrumentation = local()
         super().__init__(db_path, **kwargs)
         self._conn.executescript("""
             CREATE TABLE IF NOT EXISTS proposals (
@@ -59,14 +65,62 @@ class FrameworkStore(TraceStore):
 
     @contextmanager
     def transaction(self):
-        with self._lock:
+        # Admission always precedes the connection lock; fallback never upgrades
+        # from a transaction. Every framework writer uses this same boundary.
+        with self.coordinator.acquire(), self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
+            self._instrumentation.events = []
             try:
                 yield self._conn
                 self._conn.execute("COMMIT")
             except BaseException:
                 self._conn.execute("ROLLBACK")
+                self._instrumentation.events = []
                 raise
+            finally:
+                events = self._instrumentation.events
+                self._instrumentation.events = None
+        for stage, action in events: self.observe(stage, action)
+
+    def observe(self, stage, action=None):
+        if self.harness is None: return
+        events = getattr(self._instrumentation, "events", None)
+        if events is not None:
+            events.append((stage, action))
+        elif self.coordinator.held_exclusively():
+            pending = getattr(self._instrumentation, "deferred", None)
+            if pending is None: self._instrumentation.deferred = pending = []
+            pending.append((stage, action))
+        else:
+            self.harness.checkpoint(stage, action)
+
+    def flush_observations(self):
+        pending = getattr(self._instrumentation, "deferred", [])
+        self._instrumentation.deferred = []
+        for stage, action in pending:
+            callback = getattr(self.harness, "deferred_checkpoint", None)
+            if callback: callback(stage, action)
+            else: self.observe(stage, action)
+
+    def set_state(self, key, value):
+        with self.transaction() as conn:
+            row = conn.execute("SELECT value FROM conflict_keys WHERE key=?", (key,)).fetchone()
+            if row is None or row[0] != dumps(value): self.put(conn, key, value)
+
+    def initialize_state(self, key, value):
+        with self.transaction() as conn: self.put(conn, key, value, initial=True)
+
+    def set_version(self, key, version):
+        with self.coordinator.acquire(): super().set_version(key, version)
+
+    def ensure_key(self, key, initial_version=0):
+        with self.coordinator.acquire(): super().ensure_key(key, initial_version)
+
+    def register_task_state(self, task_id, budget_cap):
+        with self.coordinator.acquire(): super().register_task_state(task_id, budget_cap)
+
+    def commit(self, *args, **kwargs):
+        with self.coordinator.acquire(): return super().commit(*args, **kwargs)
 
     def now(self):
         return self._clock().timestamp()
@@ -75,16 +129,17 @@ class FrameworkStore(TraceStore):
     def value(conn, key):
         return Snapshot(conn).read(key)
 
-    @staticmethod
-    def put(conn, key, value, *, initial=False):
+    def put(self, conn, key, value, *, initial=False):
         encoded = dumps(value)
         if len(encoded.encode("utf-8")) > MAX_STATE_BYTES:
             raise ValueError("fact exceeds state size limit")
         if initial:
-            conn.execute("INSERT OR IGNORE INTO conflict_keys(key,version,value) VALUES (?,0,?)", (key, encoded))
+            inserted = conn.execute("INSERT OR IGNORE INTO conflict_keys(key,version,value) VALUES (?,0,?)", (key, encoded))
+            if inserted.rowcount == 0: return
         else:
             conn.execute("INSERT INTO conflict_keys(key,version,value) VALUES (?,1,?) "
                          "ON CONFLICT(key) DO UPDATE SET version=version+1,value=excluded.value", (key, encoded))
+        self.observe("mutation:" + key.split(":", 1)[0], key)
 
     @staticmethod
     def stale(conn, footprint):
@@ -93,6 +148,7 @@ class FrameworkStore(TraceStore):
     def audit(self, conn, kind, actor, data):
         conn.execute("INSERT INTO service_events(kind,actor,data,timestamp) VALUES (?,?,?,?)",
                      (kind, actor, dumps(data), self.now()))
+        self.observe("service:" + kind, actor)
 
     @staticmethod
     def row(conn, sql, args=()):

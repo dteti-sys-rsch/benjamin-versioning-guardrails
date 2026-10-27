@@ -17,8 +17,9 @@ from atomicroot.framework.tasks import TaskService, TrustedCatalog
 
 
 class FrameworkRuntime:
-    def __init__(self, path=":memory:", *, signing_key=None, clock=None, harness=None):
-        self.store = FrameworkStore(path, clock=clock)
+    def __init__(self, path=":memory:", *, signing_key=None, clock=None, harness=None, id_factory=None, fallback=None):
+        self.store = FrameworkStore(path, clock=clock, harness=harness, id_factory=id_factory)
+        self.fallback = fallback
         self.broker = ApprovalBroker(self.store)
         self.contracts = ContractService(self.store, self.broker)
         self.catalog = TrustedCatalog(self.store)
@@ -34,6 +35,7 @@ class FrameworkRuntime:
 
 def create_phase3_app(runtime, identity_resolver, *, executor_factory=None):
     """Resolver returns authenticated Principal from host context, never from body."""
+    if getattr(runtime, "evaluation_only", False): raise ValueError("unsafe evaluation runtime cannot be exposed as a service")
     app = FastAPI(title="AtomicRoot Phase 3", version="0.3.0")
 
     def identity(request):

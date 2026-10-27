@@ -3,7 +3,7 @@ import json
 
 from atomicroot.authority.ticket import args_hash, freeze_json
 from atomicroot.authority.policy_engine import money_integer
-from atomicroot.framework.storage import dumps, uid
+from atomicroot.framework.storage import dumps
 from atomicroot.framework.registry import TOOLS
 
 
@@ -22,7 +22,7 @@ class SimulatedReceiver:
                 if row["digest"] != digest: raise ValueError("receiver operation payload mismatch")
                 return json.loads(row["receipt"])
             if (task, operation) in self.definite_failures:
-                receipt = {"outcome": "FAILED", "absence_proven": True, "receipt_id": uid("receipt")}
+                receipt = {"outcome": "FAILED", "absence_proven": True, "receipt_id": self.store.new_id("receipt")}
             else:
                 tool, args = payload["tool"], payload["args"]
                 simulator = TOOLS[tool].effect_class
@@ -41,6 +41,9 @@ class SimulatedReceiver:
                     key = f"read:{task}:{operation}"
                     result = {"content": payload["resource_snapshot"]["content"], "digest": args["digest"],
                               "instruction_trust": "UNTRUSTED", "factual_accuracy": "UNVERIFIED"}
+                elif simulator == "update":
+                    key = f"update:{task}:{operation}"
+                    result = payload["resource_update"]
                 elif simulator == "classification":
                     key = f"inference:{task}:{operation}"
                     result = {"provider": args["to"], "resource": args["resource"], "digest": args["digest"],
@@ -49,9 +52,15 @@ class SimulatedReceiver:
                     raise ValueError("receiver has no registered simulator")
                 conn.execute("INSERT INTO receiver_state(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
                              (key, dumps(result)))
-                receipt = {"outcome": "DELIVERED", "receipt_id": uid("receipt"), "result": result}
+                receipt = {"outcome": "DELIVERED", "receipt_id": self.store.new_id("receipt"), "result": result}
+                if simulator == "read":
+                    accepted = self.store.row(conn, "SELECT agent FROM outbox WHERE task=? AND operation=?", (task, operation))
+                    if accepted is not None:
+                        receipt["read_binding"] = {"task": task, "agent": accepted["agent"], "operation": operation,
+                            "resource": args["resource"], "version": payload["resource_snapshot"]["version"], "digest": args["digest"]}
             conn.execute("INSERT INTO receiver_receipts(task,operation,digest,receipt) VALUES (?,?,?,?)",
                          (task, operation, digest, dumps(receipt)))
+            self.store.observe("receiver_apply", operation)
         return receipt
 
 
@@ -70,9 +79,10 @@ class Dispatcher:
             where, params = ("", ()) if task is None else (" AND task=? AND operation=?", (task, operation))
             row = self.store.row(conn, "SELECT * FROM outbox WHERE status IN ('PENDING','UNKNOWN')" + where + " ORDER BY rowid LIMIT 1", params)
             if row is None: return None
-            lease = uid("lease")
+            lease = self.store.new_id("lease")
             conn.execute("UPDATE outbox SET status='RELEASING',lease=?,lease_until=?,attempts=attempts+1 WHERE task=? AND operation=?",
                          (lease, now + self.lease_seconds, row["task"], row["operation"]))
+            self.store.observe("outbox_claim", row["operation"])
             return {**row, "lease": lease, "status": "RELEASING", "attempts": row["attempts"] + 1}
 
     def finish(self, claim, receipt=None, *, error=None):
@@ -85,6 +95,7 @@ class Dispatcher:
             if not delivered and not absent:
                 conn.execute("UPDATE outbox SET status='UNKNOWN',lease=NULL,lease_until=NULL,error=? WHERE task=? AND operation=?",
                              (error or "ambiguous receiver outcome", row["task"], row["operation"]))
+                self.store.observe("ack_unknown", row["operation"])
                 return {"status": "UNKNOWN"}
             # Only receipts committed by the registered receiver can settle the ledger.
             proof = conn.execute("SELECT receipt FROM receiver_receipts WHERE task=? AND operation=?", (row["task"], row["operation"])).fetchone()
@@ -104,6 +115,7 @@ class Dispatcher:
                          (status, dumps(receipt), row["task"], row["operation"]))
             self.store.audit(conn, "SETTLEMENT", "Dispatcher", {"task": row["task"], "operation": row["operation"],
                                                                   "amount": amount, "status": status, "receipt": receipt["receipt_id"]})
+            self.store.observe("ack_result", row["operation"])
             return {"status": status, "receipt": receipt}
 
     def dispatch_once(self, *, lose_ack=False):
