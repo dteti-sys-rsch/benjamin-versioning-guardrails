@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "modes": [
+    {
+      "mode": "no_guard",
+      "policy": "none",
+      "history": false,
+      "scope": "none",
+      "signature": "signed mechanism envelope in all modes; reusable mode additionally verifies reusable subject/scope/expiry grant",
+      "single_use": "mechanism ticket/nonce yes; reusable grant no",
+      "freshness": "none",
+      "approval": "shared Broker if an escalation is produced; no approval claim for omitted policies",
+      "outbox": true,
+      "db_operation_uniqueness": true,
+      "simulated_receiver_dedupe": true,
+      "fallback": false,
+      "provider_egress": "PROHIBITED in this harness",
+      "executor_A": "same ConfigWorkflow and GuardedTools with scripted worker; mechanism replay uses explicit protocol-boundary manifests",
+      "unsupported": [
+        "history-dependent custom rules",
+        "exposure",
+        "cumulative budget",
+        "read freshness"
+      ]
+    },
+    {
+      "mode": "stateless_per_action",
+      "policy": "static/request plus delegation; history policies unsupported",
+      "history": false,
+      "scope": "Phase 3.6 current relations",
+      "signature": "signed mechanism envelope in all modes; reusable mode additionally verifies reusable subject/scope/expiry grant",
+      "single_use": "mechanism ticket/nonce yes; reusable grant no",
+      "freshness": "none",
+      "approval": "shared Broker if an escalation is produced; no approval claim for omitted policies",
+      "outbox": true,
+      "db_operation_uniqueness": true,
+      "simulated_receiver_dedupe": true,
+      "fallback": false,
+      "provider_egress": "PROHIBITED in this harness",
+      "executor_A": "same ConfigWorkflow and GuardedTools with scripted worker; mechanism replay uses explicit protocol-boundary manifests",
+      "unsupported": [
+        "history-dependent custom rules",
+        "exposure",
+        "cumulative budget",
+        "read freshness"
+      ]
+    },
+    {
+      "mode": "reusable_capability",
+      "policy": "frozen scope/static amount",
+      "history": false,
+      "scope": "signed frozen relation",
+      "signature": "signed mechanism envelope in all modes; reusable mode additionally verifies reusable subject/scope/expiry grant",
+      "single_use": "mechanism ticket/nonce yes; reusable grant no",
+      "freshness": "none",
+      "approval": "shared Broker if an escalation is produced; no approval claim for omitted policies",
+      "outbox": true,
+      "db_operation_uniqueness": true,
+      "simulated_receiver_dedupe": true,
+      "fallback": false,
+      "provider_egress": "PROHIBITED in this harness",
+      "executor_A": "same ConfigWorkflow and GuardedTools with scripted worker; mechanism replay uses explicit protocol-boundary manifests",
+      "unsupported": [
+        "history-dependent custom rules",
+        "exposure",
+        "cumulative budget",
+        "read freshness"
+      ]
+    },
+    {
+      "mode": "stateful_non_atomic",
+      "policy": "all applicable Z3",
+      "history": true,
+      "scope": "Phase 3.6 current relations",
+      "signature": "signed mechanism envelope in all modes; reusable mode additionally verifies reusable subject/scope/expiry grant",
+      "single_use": "mechanism ticket/nonce yes; reusable grant no",
+      "freshness": "none",
+      "approval": "shared Broker if an escalation is produced; no approval claim for omitted policies",
+      "outbox": true,
+      "db_operation_uniqueness": true,
+      "simulated_receiver_dedupe": true,
+      "fallback": false,
+      "provider_egress": "PROHIBITED in this harness",
+      "executor_A": "same ConfigWorkflow and GuardedTools with scripted worker; mechanism replay uses explicit protocol-boundary manifests",
+      "unsupported": []
+    },
+    {
+      "mode": "global_version_atomicroot",
+      "policy": "all applicable Z3",
+      "history": true,
+      "scope": "Phase 3.6 current relations",
+      "signature": "signed mechanism envelope in all modes; reusable mode additionally verifies reusable subject/scope/expiry grant",
+      "single_use": "mechanism ticket/nonce yes; reusable grant no",
+      "freshness": "global policy version",
+      "approval": "shared Broker if an escalation is produced; no approval claim for omitted policies",
+      "outbox": true,
+      "db_operation_uniqueness": true,
+      "simulated_receiver_dedupe": true,
+      "fallback": true,
+      "provider_egress": "PROHIBITED in this harness",
+      "executor_A": "same ConfigWorkflow and GuardedTools with scripted worker; mechanism replay uses explicit protocol-boundary manifests",
+      "unsupported": []
+    },
+    {
+      "mode": "atomicroot",
+      "policy": "all applicable Z3",
+      "history": true,
+      "scope": "Phase 3.6 current relations",
+      "signature": "signed mechanism envelope in all modes; reusable mode additionally verifies reusable subject/scope/expiry grant",
+      "single_use": "mechanism ticket/nonce yes; reusable grant no",
+      "freshness": "concrete footprint CAS",
+      "approval": "shared Broker if an escalation is produced; no approval claim for omitted policies",
+      "outbox": true,
+      "db_operation_uniqueness": true,
+      "simulated_receiver_dedupe": true,
+      "fallback": true,
+      "provider_egress": "PROHIBITED in this harness",
+      "executor_A": "same ConfigWorkflow and GuardedTools with scripted worker; mechanism replay uses explicit protocol-boundary manifests",
+      "unsupported": []
+    }
+  ],
+  "shared_constraints": "schema, host identity, immutable operation/payload registration, adapter receipt validity, SQLite uniqueness, outbox and receiver dedupe remain enabled; these can protect unsafe baselines"
+}

@@ -62,6 +62,7 @@ def schema():
                   "properties": {k: {"type": ["integer", "null"], "minimum": 0} for k in ("input_tokens", "output_tokens")}},
         "extraction": {"type": ["object", "null"]}})
     arguments = {"to": TEXT, "body": {"type": "string", "minLength": 1, "maxLength": 8192},
+                 "content": {"type": "string", "maxLength": 8192}, "read_receipt": IDENTITY,
                  "amount": MONEY, "resource": IDENTITY, "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}
     requests = [obj({"task_id": IDENTITY, "agent_id": IDENTITY, "operation_id": IDENTITY,
                      "purpose": TEXT, "tool": {"const": name}, "args": obj({k: arguments[k] for k in sorted(tool.required)})})

@@ -205,7 +205,7 @@ def task_schema():
                                                "depends_on": bounded(IDENTITY, 32)}), 32)}),
         "outputs": bounded(obj({"id": IDENTITY, "kind": {"enum": ["summary", "artifact"]}})),
         "acceptance": bounded({"oneOf": [obj({"kind": {"const": "read"}, "resource": IDENTITY}),
-            obj({"kind": {"const": "receipt"}, "tool": {"enum": list(TOOLS)}, "destination": TEXT}),
+            obj({"kind": {"const": "receipt"}, "tool": {"enum": list(TOOLS)}, "destination": {"type": ["string", "null"], "maxLength": 256}}),
             obj({"kind": {"const": "output"}, "output": IDENTITY})]}, 32),
         "provider": {"oneOf": [{"type": "null"}, settings]},
         "classifier": {"oneOf": [obj({"mode": {"const": "disabled"}}),

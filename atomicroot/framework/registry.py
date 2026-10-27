@@ -47,6 +47,8 @@ FACT_REGISTRY = MappingProxyType({f.fact_id: f for f in (
     fact("approval", "str", "consent", "review record", "ApprovalBroker/Gateway", ["NONE -> APPROVED -> CONSUMED", "REJECTED"], "operation review", "status", "operation"),
     fact("operation_committed", "bool", "operation", "committed intent", "Gateway", ["false -> true"], scope="operation"),
     fact("agent_members", "set", "agents", "activated resolved task", "ContractService", ["reviewed task revision"], "exact proposal"),
+    fact("read_version", "int", "readbasis", "delivered server read receipt", "RuntimeAuthority", ["bind immutable receipt"], field="version", scope="operation"),
+    fact("read_digest", "str", "readbasis", "delivered server read receipt", "RuntimeAuthority", ["bind immutable receipt"], field="digest", scope="operation"),
 )})
 SOURCES = MappingProxyType({name: f.source_descriptor() for name, f in FACT_REGISTRY.items()})
 
@@ -73,15 +75,17 @@ class ToolDefinition:
     writes: tuple[str, ...] = ()
     updater: str = "Gateway"
 
-    def write_set(self, task, operation, grant):
+    def write_set(self, task, operation, grant, *, resource=None):
         return ([f"operation:{task}:{operation}"] + [f"{prefix}:{task}" for prefix in self.writes]
-                + ([f"consent:{task}:{operation}"] if grant else []))
+                + ([f"consent:{task}:{operation}"] if grant else [])
+                + ([f"document:{resource}", f"label:{resource}"] if self.name == "update_document" else []))
 
     @property
     def read_facts(self):
         common = ("budget_limit", "budget_used", "budget_reserved", "allowed_tools", "allowed_agents", "purpose", "exposure", "unknown_release", "operation_committed", "approval")
         return (common + (("allowed_recipients",) if self.external else ())
-                + (("document_version", "document_digest", "label", "allowed_resources") if self.resource else ()))
+                + (("document_version", "document_digest", "label", "allowed_resources") if self.resource else ())
+                + (("read_version", "read_digest") if self.name == "update_document" else ()))
 
 
 TOOLS = MappingProxyType({t.name: t for t in (
@@ -91,6 +95,7 @@ TOOLS = MappingProxyType({t.name: t for t in (
     ToolDefinition("deploy", "deploy", True, False, True, frozenset({"resource", "digest", "to"})),
     ToolDefinition("classify_document", "classification", True, False, True, frozenset({"resource", "digest", "to"})),
     ToolDefinition("model_inference", "inference", True, False, True, frozenset({"resource", "digest", "to"})),
+    ToolDefinition("update_document", "update", False, False, True, frozenset({"resource", "digest", "content", "read_receipt"})),
 )})
 
 

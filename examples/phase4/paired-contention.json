@@ -1,0 +1,36 @@
+{
+  "workload_digest": "sha256:6f4479850f62cb6c40d92784790d052b5b9614056c7739f6b571f99ce259f8af",
+  "same_outcome": false,
+  "schedules": [
+    [
+      {
+        "tick": 0,
+        "ready": [
+          "execute"
+        ],
+        "chosen": "execute"
+      }
+    ],
+    [
+      {
+        "tick": 0,
+        "ready": [
+          "execute"
+        ],
+        "chosen": "execute"
+      }
+    ]
+  ],
+  "divergence": [
+    [],
+    []
+  ],
+  "blocked": [
+    [],
+    []
+  ],
+  "schedule_differences": [],
+  "observation_differences": [
+    "execute"
+  ]
+}

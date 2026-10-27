@@ -238,7 +238,7 @@ runtimes cannot be exposed as HTTP services or call model providers.
 .\.venv\Scripts\python.exe examples/phase5/generate.py
 ```
 
-See [Phase 5 policy semantics, mode matrix, oracle and limits](docs/phases/policy-evaluation.md)
+See [Phase 5 policy semantics, mode matrix, oracle and limits](examples/phase5/README.md)
 and [finite scenario results](examples/phase5/validation.json). These are mechanism
 fixtures, not a full benchmark or formal proof. All effects remain simulated.
 

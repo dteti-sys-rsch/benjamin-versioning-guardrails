@@ -1,0 +1,595 @@
+{
+  "schema_version": 1,
+  "pairing_digest": "sha256:05a536d1c24307a644303446c37f06c650cf35baeb47b8d39336b58e1698ab33",
+  "scenario": "lost_ack",
+  "modes": [
+    {
+      "mode": "no_guard",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "crash"
+          ],
+          "chosen": "crash"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "restart"
+          ],
+          "chosen": "restart"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "claim"
+          ],
+          "chosen": "claim"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "apply",
+            "other-claim"
+          ],
+          "chosen": "other-claim"
+        },
+        {
+          "tick": 6,
+          "ready": [
+            "apply"
+          ],
+          "chosen": "apply"
+        },
+        {
+          "tick": 7,
+          "ready": [
+            "lost"
+          ],
+          "chosen": "lost"
+        },
+        {
+          "tick": 8,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [
+          "lost"
+        ],
+        "attempted_logical_operations": 1
+      }
+    },
+    {
+      "mode": "stateless_per_action",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "crash"
+          ],
+          "chosen": "crash"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "restart"
+          ],
+          "chosen": "restart"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "claim"
+          ],
+          "chosen": "claim"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "apply",
+            "other-claim"
+          ],
+          "chosen": "other-claim"
+        },
+        {
+          "tick": 6,
+          "ready": [
+            "apply"
+          ],
+          "chosen": "apply"
+        },
+        {
+          "tick": 7,
+          "ready": [
+            "lost"
+          ],
+          "chosen": "lost"
+        },
+        {
+          "tick": 8,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [
+          "lost"
+        ],
+        "attempted_logical_operations": 1
+      }
+    },
+    {
+      "mode": "reusable_capability",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "crash"
+          ],
+          "chosen": "crash"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "restart"
+          ],
+          "chosen": "restart"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "claim"
+          ],
+          "chosen": "claim"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "apply",
+            "other-claim"
+          ],
+          "chosen": "other-claim"
+        },
+        {
+          "tick": 6,
+          "ready": [
+            "apply"
+          ],
+          "chosen": "apply"
+        },
+        {
+          "tick": 7,
+          "ready": [
+            "lost"
+          ],
+          "chosen": "lost"
+        },
+        {
+          "tick": 8,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [
+          "lost"
+        ],
+        "attempted_logical_operations": 1
+      }
+    },
+    {
+      "mode": "stateful_non_atomic",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "crash"
+          ],
+          "chosen": "crash"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "restart"
+          ],
+          "chosen": "restart"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "claim"
+          ],
+          "chosen": "claim"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "apply",
+            "other-claim"
+          ],
+          "chosen": "other-claim"
+        },
+        {
+          "tick": 6,
+          "ready": [
+            "apply"
+          ],
+          "chosen": "apply"
+        },
+        {
+          "tick": 7,
+          "ready": [
+            "lost"
+          ],
+          "chosen": "lost"
+        },
+        {
+          "tick": 8,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [
+          "lost"
+        ],
+        "attempted_logical_operations": 1
+      }
+    },
+    {
+      "mode": "global_version_atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "crash"
+          ],
+          "chosen": "crash"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "restart"
+          ],
+          "chosen": "restart"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "claim"
+          ],
+          "chosen": "claim"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "apply",
+            "other-claim"
+          ],
+          "chosen": "other-claim"
+        },
+        {
+          "tick": 6,
+          "ready": [
+            "apply"
+          ],
+          "chosen": "apply"
+        },
+        {
+          "tick": 7,
+          "ready": [
+            "lost"
+          ],
+          "chosen": "lost"
+        },
+        {
+          "tick": 8,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [
+          "lost"
+        ],
+        "attempted_logical_operations": 1
+      }
+    },
+    {
+      "mode": "atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "crash"
+          ],
+          "chosen": "crash"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "restart"
+          ],
+          "chosen": "restart"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "claim"
+          ],
+          "chosen": "claim"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "apply",
+            "other-claim"
+          ],
+          "chosen": "other-claim"
+        },
+        {
+          "tick": 6,
+          "ready": [
+            "apply"
+          ],
+          "chosen": "apply"
+        },
+        {
+          "tick": 7,
+          "ready": [
+            "lost"
+          ],
+          "chosen": "lost"
+        },
+        {
+          "tick": 8,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [
+          "lost"
+        ],
+        "attempted_logical_operations": 1
+      }
+    }
+  ]
+}

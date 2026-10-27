@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "provider": "openai",
+  "model": "offline-script-v1",
+  "prompt_version": "phase4-example-v1",
+  "records": {
+    "sha256:cbec6f2d0956b692aebe1609fde7a33dc6d418d0f34935e6874fd22fb4205352": {
+      "binding": {
+        "tape_schema": 1,
+        "provider": "openai",
+        "model": "offline-script-v1",
+        "prompt_version": "phase4-example-v1",
+        "context_digest": "sha256:019e8b426e5cb0b9719397a8bea2500c6422da8357f8c2150c4bd23d8c664bc1",
+        "response_schema": null,
+        "schema_digest": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "messages": [
+          {
+            "content": "Synthetic public request",
+            "role": "user"
+          }
+        ],
+        "ordinal": 0
+      },
+      "response": {
+        "actual_model": "offline-script-v1",
+        "output": {
+          "kind": "done",
+          "summary": "Synthetic public result"
+        },
+        "usage": null
+      },
+      "response_digest": "sha256:5c74c019b3697eb0c4f51b98dee7f64689a8a59b5c9b1da54b6da0dcec24a864"
+    }
+  },
+  "origin": "OFFLINE_FAKE"
+}

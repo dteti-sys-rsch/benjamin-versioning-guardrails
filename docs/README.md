@@ -9,7 +9,7 @@ dan ledger/checkpoint di `.runs/` tetap memakai lokasi yang sama.
 | [testing/CLI_TESTING.md](testing/CLI_TESTING.md) | Perintah test, demo, konfigurasi, executor, dan cara membaca output |
 | [phases/](phases/) | Catatan implementasi, audit, dan batas verifikasi setiap fase |
 | [phases/scheduler-replay.md](phases/scheduler-replay.md) | Fase 4: audit fondasi, scheduler/replay, fallback dan coverage writer |
-| [phases/policy-evaluation.md](phases/policy-evaluation.md) | Fase 5: katalog policy, six-mode matrix, guarded update dan oracle independen |
+| [../examples/phase5/README.md](../examples/phase5/README.md) | Fase 5: katalog policy, six-mode matrix, guarded update dan oracle independen |
 | [providers/PROVIDERS.md](providers/PROVIDERS.md) | Konfigurasi provider dan status integrasi |
 | [providers/OLLAMA.md](providers/OLLAMA.md) | Konfigurasi serta hasil historis Ollama |
 | [roadmap/AtomicRoot-Prompt-Fase-3.6-6-Revisi.md](roadmap/AtomicRoot-Prompt-Fase-3.6-6-Revisi.md) | Prompt lanjutan yang menjadi konteks roadmap |

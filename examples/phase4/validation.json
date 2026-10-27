@@ -1,0 +1,260 @@
+{
+  "command": ".\\.venv\\Scripts\\python.exe examples/phase4/generate.py",
+  "environment": {
+    "python": "3.12.3",
+    "dependencies": {
+      "z3-solver": "5.1.0.0",
+      "PyNaCl": "1.6.2",
+      "langgraph": "1.2.12",
+      "langgraph-checkpoint-sqlite": "3.1.1"
+    },
+    "registry_digest": "sha256:555c055bbead2c92dd511b826895151da62e3b4d16b9b03383ca81eb993beef1",
+    "policy_encoding": "facts-and-not-constraints-v1",
+    "prompt_version": "config-worker-v3",
+    "replay_host_version": 1
+  },
+  "scenarios": [
+    {
+      "scenario": "budget-double-allow",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "exfil-double-allow",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "ticket-replay",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "ticket-forged",
+      "terminal": "COMPLETED",
+      "steps": 2,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "payload-substitution",
+      "terminal": "COMPLETED",
+      "steps": 2,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "operation-substitution",
+      "terminal": "COMPLETED",
+      "steps": 2,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-contract",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-policyset",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-delegation",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-recipient",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-resource",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-membership",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-label",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "mutation-content",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "classification-false-public",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "classification-failure",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "classification-abstention",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "classification-restriction",
+      "terminal": "COMPLETED",
+      "steps": 7,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "classification-stale-content",
+      "terminal": "COMPLETED",
+      "steps": 5,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "classification-stale-label",
+      "terminal": "COMPLETED",
+      "steps": 5,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "approval-before",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "approval-after",
+      "terminal": "COMPLETED",
+      "steps": 5,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "approval-replay",
+      "terminal": "COMPLETED",
+      "steps": 5,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "approval-forged",
+      "terminal": "COMPLETED",
+      "steps": 2,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "worker-admin",
+      "terminal": "COMPLETED",
+      "steps": 2,
+      "exact_replay": true,
+      "effect_count": 0
+    },
+    {
+      "scenario": "recovery-before-intent",
+      "terminal": "COMPLETED",
+      "steps": 9,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "recovery-after-intent",
+      "terminal": "COMPLETED",
+      "steps": 6,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "recovery-lost-ack",
+      "terminal": "COMPLETED",
+      "steps": 9,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "recovery-lease",
+      "terminal": "COMPLETED",
+      "steps": 11,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "rollback-intent",
+      "terminal": "COMPLETED",
+      "steps": 6,
+      "exact_replay": true,
+      "effect_count": 1
+    },
+    {
+      "scenario": "independent-keys",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 2
+    },
+    {
+      "scenario": "workflow-checkpoint",
+      "terminal": "COMPLETED",
+      "steps": 3,
+      "exact_replay": true,
+      "effect_count": 2
+    },
+    {
+      "scenario": "workflow-review",
+      "terminal": "COMPLETED",
+      "steps": 4,
+      "exact_replay": true,
+      "effect_count": 3
+    },
+    {
+      "scenario": "fallback-contention",
+      "terminal": "COMPLETED",
+      "steps": 1,
+      "exact_replay": true,
+      "effect_count": 0
+    }
+  ],
+  "fallback_replay": true,
+  "live_calls": 0,
+  "effects": "simulated",
+  "validation_elapsed_seconds": 8.791
+}

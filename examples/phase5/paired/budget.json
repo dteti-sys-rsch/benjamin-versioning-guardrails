@@ -1,0 +1,521 @@
+{
+  "schema_version": 1,
+  "pairing_digest": "sha256:1dea49d74f726d8748f5ca5a10f094f5eafc954b5a84aa337b8b74846f83ff6d",
+  "scenario": "budget",
+  "modes": [
+    {
+      "mode": "no_guard",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth-first",
+            "auth-second"
+          ],
+          "chosen": "auth-first"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth-second"
+          ],
+          "chosen": "auth-second"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "commit-first"
+          ],
+          "chosen": "commit-first"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit-second"
+          ],
+          "chosen": "commit-second"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "dispatch-again"
+          ],
+          "chosen": "dispatch-again"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "payments-a:op-second",
+            "policies": [
+              "budget_monotone"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "stateless_per_action",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth-first",
+            "auth-second"
+          ],
+          "chosen": "auth-first"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth-second"
+          ],
+          "chosen": "auth-second"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "commit-first"
+          ],
+          "chosen": "commit-first"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit-second"
+          ],
+          "chosen": "commit-second"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "dispatch-again"
+          ],
+          "chosen": "dispatch-again"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "payments-a:op-second",
+            "policies": [
+              "budget_monotone"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "reusable_capability",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth-first",
+            "auth-second"
+          ],
+          "chosen": "auth-first"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth-second"
+          ],
+          "chosen": "auth-second"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "commit-first"
+          ],
+          "chosen": "commit-first"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit-second"
+          ],
+          "chosen": "commit-second"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "dispatch-again"
+          ],
+          "chosen": "dispatch-again"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "payments-a:op-second",
+            "policies": [
+              "budget_monotone"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "stateful_non_atomic",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth-first",
+            "auth-second"
+          ],
+          "chosen": "auth-first"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth-second"
+          ],
+          "chosen": "auth-second"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "commit-first"
+          ],
+          "chosen": "commit-first"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit-second"
+          ],
+          "chosen": "commit-second"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "dispatch-again"
+          ],
+          "chosen": "dispatch-again"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "payments-a:op-second",
+            "policies": [
+              "budget_monotone"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "payments-a:op-second": [
+            "budget_monotone"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "global_version_atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth-first",
+            "auth-second"
+          ],
+          "chosen": "auth-first"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth-second"
+          ],
+          "chosen": "auth-second"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "commit-first"
+          ],
+          "chosen": "commit-first"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit-second"
+          ],
+          "chosen": "commit-second"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "dispatch-again"
+          ],
+          "chosen": "dispatch-again"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "auth-first",
+            "auth-second"
+          ],
+          "chosen": "auth-first"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth-second"
+          ],
+          "chosen": "auth-second"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "commit-first"
+          ],
+          "chosen": "commit-first"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit-second"
+          ],
+          "chosen": "commit-second"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "dispatch-again"
+          ],
+          "chosen": "dispatch-again"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    }
+  ]
+}

@@ -60,7 +60,7 @@ class RequestField:
 
 
 REQUEST_FIELDS = MappingProxyType({"tool": "str", "agent_id": "str", "purpose": "str",
-                                  "recipient": "str", "resource": "str"})
+                                  "recipient": "str", "resource": "str", "base_digest": "str"})
 
 
 @dataclass(frozen=True)

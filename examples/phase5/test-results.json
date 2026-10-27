@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "tests": {
+    "baseline": {
+      "tests": 446,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 43.774,
+      "raw_xml": ".runs/phase5/baseline.xml"
+    },
+    "targeted": {
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 23.695,
+      "raw_xml": ".runs/phase5/targeted.xml"
+    },
+    "regression": {
+      "tests": 498,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 66.129,
+      "raw_xml": ".runs/phase5/regression.xml"
+    }
+  },
+  "scenario_count": 13,
+  "mode_count": 6,
+  "mechanism_records": 78,
+  "exact_replays": 78,
+  "accepted_violation_rates": [
+    {
+      "mode": "no_guard",
+      "numerator": 7,
+      "denominator": 18,
+      "value": 0.3888888888888889,
+      "scope": "13 finite deterministic plans; exact replays are not independent trials"
+    },
+    {
+      "mode": "stateless_per_action",
+      "numerator": 5,
+      "denominator": 16,
+      "value": 0.3125,
+      "scope": "13 finite deterministic plans; exact replays are not independent trials"
+    },
+    {
+      "mode": "reusable_capability",
+      "numerator": 6,
+      "denominator": 17,
+      "value": 0.35294117647058826,
+      "scope": "13 finite deterministic plans; exact replays are not independent trials"
+    },
+    {
+      "mode": "stateful_non_atomic",
+      "numerator": 4,
+      "denominator": 15,
+      "value": 0.26666666666666666,
+      "scope": "13 finite deterministic plans; exact replays are not independent trials"
+    },
+    {
+      "mode": "global_version_atomicroot",
+      "numerator": 0,
+      "denominator": 10,
+      "value": 0.0,
+      "scope": "13 finite deterministic plans; exact replays are not independent trials"
+    },
+    {
+      "mode": "atomicroot",
+      "numerator": 0,
+      "denominator": 11,
+      "value": 0.0,
+      "scope": "13 finite deterministic plans; exact replays are not independent trials"
+    }
+  ],
+  "commands": [
+    ".\\.venv\\Scripts\\python.exe -m pytest atomicroot/tests -q --junitxml=.runs/phase5/regression.xml",
+    ".\\.venv\\Scripts\\python.exe -m pytest atomicroot/tests/test_phase5_policies.py atomicroot/tests/test_phase5_modes.py atomicroot/tests/test_phase5_oracle.py -q --junitxml=.runs/phase5/targeted.xml",
+    ".\\.venv\\Scripts\\python.exe examples/phase5/generate.py",
+    ".\\.venv\\Scripts\\python.exe phase5_cli.py compare budget .runs/phase5/cli-budget",
+    ".\\.venv\\Scripts\\python.exe phase5_cli.py replay .runs/phase5/cli-budget/stateful_non_atomic.json",
+    ".\\.venv\\Scripts\\python.exe phase5_cli.py record stale_write .runs/phase5/cli-write.json --mode atomicroot",
+    ".\\.venv\\Scripts\\python.exe phase5_cli.py matrix",
+    ".\\.venv\\Scripts\\python.exe phase5_cli.py catalog",
+    ".\\.venv\\Scripts\\python.exe phase5_cli.py schema",
+    "git diff --check"
+  ],
+  "cli_smoke": "PASS",
+  "effects": "SIMULATED",
+  "live_validation": "NOT RUN",
+  "next_phase_5_5": "NOT IMPLEMENTED",
+  "claims": "Finite fixtures only. Canonical weak-mode stale acceptance and main/global CAS rejection are observed; shared uniqueness/dedupe protections remain attributed separately."
+}

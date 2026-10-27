@@ -1,0 +1,293 @@
+{
+  "actions": [
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "writer",
+        "args": {
+          "digest": "sha256:66e5b1e451065758dd185edd1636085b70c21e514d8322491d4a910f5f04be31",
+          "resource": "file"
+        },
+        "operation": "read-op",
+        "task": "write-a",
+        "tool": "read_document"
+      },
+      "depends_on": [],
+      "id": "read",
+      "kind": "guarded",
+      "priority": 0
+    },
+    {
+      "actor": "trusted_fixture",
+      "arrival": 0,
+      "data": {
+        "content": "Changed by trusted owner",
+        "resource": "file"
+      },
+      "depends_on": [
+        "read"
+      ],
+      "id": "mutation",
+      "kind": "content",
+      "priority": 0
+    },
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "writer",
+        "args": {
+          "content": "Synthetic proposed update",
+          "digest": "sha256:66e5b1e451065758dd185edd1636085b70c21e514d8322491d4a910f5f04be31",
+          "resource": "file"
+        },
+        "operation": "write-op",
+        "read_receipt_from": "read",
+        "task": "write-a",
+        "tool": "update_document"
+      },
+      "depends_on": [
+        "mutation"
+      ],
+      "id": "auth",
+      "kind": "authorize",
+      "priority": 0
+    },
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "writer",
+        "authorization": "auth"
+      },
+      "depends_on": [
+        "auth"
+      ],
+      "id": "commit",
+      "kind": "commit",
+      "priority": 0
+    },
+    {
+      "actor": "framework",
+      "arrival": 0,
+      "data": {},
+      "depends_on": [
+        "commit"
+      ],
+      "id": "dispatch",
+      "kind": "dispatch",
+      "priority": 0
+    },
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "writer",
+        "args": {
+          "content": "Synthetic proposed update",
+          "digest": "sha256:66e5b1e451065758dd185edd1636085b70c21e514d8322491d4a910f5f04be31",
+          "resource": "file"
+        },
+        "operation": "write-op",
+        "read_receipt_from": "read",
+        "task": "write-a",
+        "tool": "update_document"
+      },
+      "depends_on": [
+        "dispatch"
+      ],
+      "id": "reauthorize-old-read",
+      "kind": "authorize",
+      "priority": 0
+    }
+  ],
+  "clock": "2026-10-27T00:00:00+00:00",
+  "effect_order": {},
+  "fixture": {
+    "destinations": [
+      {
+        "destination": "alice@corp.id",
+        "endpoint": null,
+        "kind": "recipient",
+        "labels": [],
+        "models": [],
+        "purposes": [
+          "research"
+        ]
+      }
+    ],
+    "entitlements": [
+      {
+        "rights": {
+          "budget_limit": 0,
+          "limits": {
+            "max_calls": 12,
+            "max_in_flight": 4,
+            "max_output_tokens": 1600,
+            "max_retries": 2,
+            "max_steps": 64,
+            "max_tokens": 200000,
+            "timeout": 120
+          },
+          "max_agents": 2,
+          "scope": [
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "file",
+              "tool": "read_document"
+            },
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "file",
+              "tool": "update_document"
+            },
+            {
+              "destination": "alice@corp.id",
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": null,
+              "tool": "send_email"
+            }
+          ]
+        },
+        "subject": "local-user",
+        "task": "write-a"
+      }
+    ],
+    "resources": [
+      {
+        "content": "Synthetic initial file",
+        "label": "PUBLIC",
+        "purposes": [
+          "research"
+        ],
+        "resource": "file"
+      }
+    ]
+  },
+  "ground_truth": {
+    "file:1:sha256:66e5b1e451065758dd185edd1636085b70c21e514d8322491d4a910f5f04be31": "PUBLIC"
+  },
+  "hook_mutations": [],
+  "model_records": {},
+  "name": "stale_before_authorize",
+  "pairing": "same TaskSpec, logical operations, immutable payload/source bindings, arrivals/priorities/fault plan across six modes",
+  "preferred": [
+    "read",
+    "mutation",
+    "auth",
+    "commit",
+    "dispatch",
+    "reauthorize-old-read"
+  ],
+  "responses": {},
+  "seed": 5,
+  "tasks": [
+    {
+      "acceptance": [
+        {
+          "destination": null,
+          "kind": "receipt",
+          "tool": "update_document"
+        }
+      ],
+      "agents": [
+        {
+          "id": "writer",
+          "role": "Read and update",
+          "scope": [
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "file",
+              "tool": "read_document"
+            },
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "file",
+              "tool": "update_document"
+            },
+            {
+              "destination": "alice@corp.id",
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": null,
+              "tool": "send_email"
+            }
+          ]
+        }
+      ],
+      "budget_limit": 0,
+      "classifier": {
+        "mode": "disabled"
+      },
+      "limits": {
+        "inference": {},
+        "max_in_flight": 2,
+        "max_steps": 8
+      },
+      "objective": "Guarded simulated update after verified read",
+      "outputs": [],
+      "policies": [],
+      "provider": null,
+      "purpose": "research",
+      "resources": [
+        {
+          "digest": "sha256:66e5b1e451065758dd185edd1636085b70c21e514d8322491d4a910f5f04be31",
+          "resource": "file",
+          "version": 1
+        }
+      ],
+      "schema_version": 1,
+      "scope": [
+        {
+          "destination": null,
+          "max_amount": 0,
+          "purpose": "research",
+          "resource": "file",
+          "tool": "read_document"
+        },
+        {
+          "destination": null,
+          "max_amount": 0,
+          "purpose": "research",
+          "resource": "file",
+          "tool": "update_document"
+        },
+        {
+          "destination": "alice@corp.id",
+          "max_amount": 0,
+          "purpose": "research",
+          "resource": null,
+          "tool": "send_email"
+        }
+      ],
+      "task_id": "write-a",
+      "unknown_release": "DENY",
+      "workflow": {
+        "nodes": [
+          {
+            "agent": "writer",
+            "depends_on": [],
+            "id": "read"
+          },
+          {
+            "agent": "writer",
+            "depends_on": [
+              "read"
+            ],
+            "id": "write"
+          }
+        ]
+      }
+    }
+  ]
+}

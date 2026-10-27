@@ -1,0 +1,374 @@
+{
+  "actions": [
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "payer-a",
+        "args": {
+          "amount": 300,
+          "to": "account-a"
+        },
+        "operation": "op-first",
+        "task": "payments-a",
+        "tool": "transfer_funds"
+      },
+      "depends_on": [],
+      "id": "auth-first",
+      "kind": "authorize",
+      "priority": 0
+    },
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "payer-b",
+        "args": {
+          "amount": 300,
+          "to": "account-b"
+        },
+        "operation": "op-second",
+        "task": "payments-a",
+        "tool": "transfer_funds"
+      },
+      "depends_on": [],
+      "id": "auth-second",
+      "kind": "authorize",
+      "priority": 0
+    },
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "payer-a",
+        "authorization": "auth-first"
+      },
+      "depends_on": [
+        "auth-first",
+        "auth-second"
+      ],
+      "id": "commit-first",
+      "kind": "commit",
+      "priority": 0
+    },
+    {
+      "actor": "worker",
+      "arrival": 0,
+      "data": {
+        "agent": "payer-b",
+        "authorization": "auth-second",
+        "connection": 1
+      },
+      "depends_on": [
+        "commit-first"
+      ],
+      "id": "commit-second",
+      "kind": "commit",
+      "priority": 0
+    },
+    {
+      "actor": "framework",
+      "arrival": 0,
+      "data": {},
+      "depends_on": [
+        "commit-second"
+      ],
+      "id": "dispatch",
+      "kind": "dispatch",
+      "priority": 0
+    },
+    {
+      "actor": "framework",
+      "arrival": 0,
+      "data": {},
+      "depends_on": [
+        "dispatch"
+      ],
+      "id": "dispatch-again",
+      "kind": "dispatch",
+      "priority": 0
+    }
+  ],
+  "clock": "2026-10-25T00:00:00+00:00",
+  "effect_order": {},
+  "fixture": {
+    "destinations": [
+      {
+        "destination": "alice@corp.id",
+        "endpoint": null,
+        "kind": "recipient",
+        "labels": [],
+        "models": [],
+        "purposes": [
+          "research"
+        ]
+      },
+      {
+        "destination": "account-a",
+        "endpoint": null,
+        "kind": "recipient",
+        "labels": [],
+        "models": [],
+        "purposes": [
+          "payments"
+        ]
+      },
+      {
+        "destination": "account-b",
+        "endpoint": null,
+        "kind": "recipient",
+        "labels": [],
+        "models": [],
+        "purposes": [
+          "payments"
+        ]
+      }
+    ],
+    "entitlements": [
+      {
+        "rights": {
+          "budget_limit": 0,
+          "limits": {
+            "max_calls": 12,
+            "max_in_flight": 4,
+            "max_output_tokens": 1600,
+            "max_retries": 2,
+            "max_steps": 64,
+            "max_tokens": 200000,
+            "timeout": 120
+          },
+          "max_agents": 4,
+          "scope": [
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "journal-a",
+              "tool": "read_document"
+            },
+            {
+              "destination": null,
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": "journal-b",
+              "tool": "read_document"
+            },
+            {
+              "destination": "alice@corp.id",
+              "max_amount": 0,
+              "purpose": "research",
+              "resource": null,
+              "tool": "send_email"
+            }
+          ]
+        },
+        "subject": "local-user",
+        "task": "literature-a"
+      },
+      {
+        "rights": {
+          "budget_limit": 500,
+          "limits": {
+            "max_calls": 12,
+            "max_in_flight": 4,
+            "max_output_tokens": 1600,
+            "max_retries": 2,
+            "max_steps": 64,
+            "max_tokens": 200000,
+            "timeout": 120
+          },
+          "max_agents": 4,
+          "scope": [
+            {
+              "destination": "account-a",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            },
+            {
+              "destination": "account-b",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ]
+        },
+        "subject": "local-user",
+        "task": "payments-a"
+      }
+    ],
+    "resources": [
+      {
+        "content": "Synthetic public journal A: bind authorization to versions.",
+        "label": "PUBLIC",
+        "purposes": [
+          "research"
+        ],
+        "resource": "journal-a"
+      },
+      {
+        "content": "Synthetic public journal B: commit must check freshness atomically.",
+        "label": "PUBLIC",
+        "purposes": [
+          "research"
+        ],
+        "resource": "journal-b"
+      }
+    ]
+  },
+  "ground_truth": {
+    "journal-a:1:sha256:ab6fcb6428e16c701ec85c086574fcfd526394b0f74c48509e9b2f28f7ab5cea": "PUBLIC",
+    "journal-b:1:sha256:60df1d4aae6b663e9132ed730e0a846a98620ff281fed171731f884e0c01ea52": "PUBLIC"
+  },
+  "hook_mutations": [],
+  "model_records": {},
+  "name": "budget",
+  "pairing": "same TaskSpec, logical operations, immutable payload/source bindings, arrivals/priorities/fault plan across six modes",
+  "preferred": [
+    "auth-first",
+    "auth-second",
+    "commit-first",
+    "commit-second",
+    "dispatch",
+    "dispatch-again"
+  ],
+  "responses": {},
+  "seed": 4,
+  "tasks": [
+    {
+      "acceptance": [
+        {
+          "destination": "account-a",
+          "kind": "receipt",
+          "tool": "transfer_funds"
+        },
+        {
+          "destination": "account-b",
+          "kind": "receipt",
+          "tool": "transfer_funds"
+        }
+      ],
+      "agents": [
+        {
+          "id": "payer-a",
+          "role": "First payment",
+          "scope": [
+            {
+              "destination": "account-a",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ]
+        },
+        {
+          "id": "payer-b",
+          "role": "Second payment",
+          "scope": [
+            {
+              "destination": "account-b",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ]
+        },
+        {
+          "id": "observer",
+          "role": "Observe task without protected tool privileges",
+          "scope": []
+        }
+      ],
+      "budget_limit": 500,
+      "classifier": {
+        "mode": "disabled"
+      },
+      "limits": {
+        "inference": {
+          "max_calls": 12,
+          "max_output_tokens": 1600,
+          "max_retries": 0,
+          "max_tokens": 200000,
+          "timeout": 30
+        },
+        "max_in_flight": 3,
+        "max_steps": 12
+      },
+      "objective": "Simulate two bounded payments",
+      "outputs": [],
+      "policies": [
+        {
+          "applies_to": [
+            "transfer_funds"
+          ],
+          "constraint": {
+            "left": {
+              "op": "amount"
+            },
+            "op": "le",
+            "right": {
+              "op": "const",
+              "value": 300
+            }
+          },
+          "on_violation": "DENY",
+          "policy_id": "payment_limit",
+          "scope": "task",
+          "version": 1,
+          "when": {
+            "op": "const",
+            "value": true
+          }
+        }
+      ],
+      "provider": null,
+      "purpose": "payments",
+      "resources": [],
+      "schema_version": 1,
+      "scope": [
+        {
+          "destination": "account-a",
+          "max_amount": 300,
+          "purpose": "payments",
+          "resource": null,
+          "tool": "transfer_funds"
+        },
+        {
+          "destination": "account-b",
+          "max_amount": 300,
+          "purpose": "payments",
+          "resource": null,
+          "tool": "transfer_funds"
+        }
+      ],
+      "task_id": "payments-a",
+      "unknown_release": "DENY",
+      "workflow": {
+        "nodes": [
+          {
+            "agent": "payer-a",
+            "depends_on": [],
+            "id": "first"
+          },
+          {
+            "agent": "payer-b",
+            "depends_on": [],
+            "id": "second"
+          },
+          {
+            "agent": "observer",
+            "depends_on": [
+              "first",
+              "second"
+            ],
+            "id": "join"
+          }
+        ]
+      }
+    }
+  ]
+}

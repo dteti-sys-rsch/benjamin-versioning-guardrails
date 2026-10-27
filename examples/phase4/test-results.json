@@ -1,0 +1,60 @@
+{
+  "environment": {
+    "python": "3.12.3",
+    "dependencies": {
+      "z3-solver": "5.1.0.0",
+      "PyNaCl": "1.6.2",
+      "langgraph": "1.2.12",
+      "langgraph-checkpoint-sqlite": "3.1.1"
+    },
+    "registry_digest": "sha256:555c055bbead2c92dd511b826895151da62e3b4d16b9b03383ca81eb993beef1",
+    "policy_encoding": "facts-and-not-constraints-v1",
+    "prompt_version": "config-worker-v3",
+    "replay_host_version": 1
+  },
+  "tests": {
+    "foundation_regression": {
+      "tests": 379,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 21.608,
+      "raw_xml": ".runs/phase4/regression-working.xml"
+    },
+    "phase4_targeted": {
+      "tests": 67,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 14.33,
+      "raw_xml": ".runs/phase4/targeted.xml"
+    },
+    "full_regression": {
+      "tests": 446,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 43.957,
+      "raw_xml": ".runs/phase4/regression.xml"
+    }
+  },
+  "commands": [
+    ".\\.venv\\Scripts\\python.exe -m pytest atomicroot/tests -q --junitxml=.runs/phase4/regression.xml",
+    ".\\.venv\\Scripts\\python.exe -m pytest atomicroot/tests/test_phase4_replay.py atomicroot/tests/test_phase4_fallback.py -q --junitxml=.runs/phase4/targeted.xml",
+    ".\\.venv\\Scripts\\python.exe examples/phase4/generate.py",
+    ".\\.venv\\Scripts\\python.exe phase4_cli.py record budget-double-allow .runs/phase4/cli-budget.json",
+    ".\\.venv\\Scripts\\python.exe phase4_cli.py replay .runs/phase4/cli-budget.json",
+    ".\\.venv\\Scripts\\python.exe phase4_cli.py replay examples/phase4/artifacts/ticket-forged.json",
+    ".\\.venv\\Scripts\\python.exe phase4_cli.py replay examples/phase4/artifacts/workflow-review.json",
+    ".\\.venv\\Scripts\\python.exe phase4_cli.py pair examples/phase4/artifacts/fallback-contention.json examples/phase4/artifacts/fallback-contention-exclusive.json",
+    "git diff --check"
+  ],
+  "cli_smoke": "PASS",
+  "live_validation": "NOT RUN",
+  "effects": "SIMULATED",
+  "notes": [
+    "Tests require unsandboxed internal asyncio loopback on this Windows host; no_network fixture still blocks provider connections.",
+    "Foundation regression 379 tests was run after early instrumentation, not an untouched pre-change checkout.",
+    "Checkpoint replay retains physical path identity; stateless replay uses a fresh temporary directory."
+  ]
+}

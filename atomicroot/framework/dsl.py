@@ -10,7 +10,8 @@ from atomicroot.framework.registry import SOURCES, TOOLS
 BINARY = {"add": Add, "sub": Sub, "eq": Eq, "le": Le, "lt": Lt,
           "member": Member, "subset": Subset}
 RESERVED_POLICIES = frozenset({"no_exfil_after_sensitive", "budget_monotone", "scope", "unknown_release", "provider_scope",
-    "agent_scope", "agent_membership", "parent_scope", "parent_budget", "destination_scope", "resolved_provider", "resolved_model"})
+    "agent_scope", "agent_membership", "parent_scope", "parent_budget", "destination_scope", "resolved_provider", "resolved_model",
+    "no_write_after_stale_read", "irreversible_once", "recipient_pinned", "cap_subset"})
 
 
 def parse_expr(data):
@@ -121,10 +122,17 @@ def builtin_constraints(request):
                 )))
             source_rules.append(Or(tuple(applicable)))
         provider_scope = And((provider_scope, *source_rules))
-    return [
+    result = [
         ("scope", And(tuple(scope)), "DENY"),
         ("provider_scope", provider_scope, "DENY"),
         ("budget_monotone", Le(Add(Add(task("budget_used"), task("budget_reserved")), RequestAmount()), task("budget_limit")), "DENY"),
         ("no_exfil_after_sensitive", If(Const(tool.external and not model_context), Not(sensitive), Const(True)), "DENY"),
         ("unknown_release", If(Const(tool.external and not inference), Not(unknown), Const(True)), request["unknown_release"]),
+        ("irreversible_once", Not(Ref("operation_committed", "operation")), "DENY"),
     ]
+    if request["tool"] == "update_document":
+        result.append(("no_write_after_stale_read", And((
+            Eq(Ref("read_version", "operation"), Ref("document_version", "document")),
+            Eq(Ref("read_digest", "operation"), Ref("document_digest", "document")),
+            Eq(RequestField("base_digest"), Ref("read_digest", "operation")))), "DENY"))
+    return result

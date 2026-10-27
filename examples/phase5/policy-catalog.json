@@ -1,0 +1,409 @@
+{
+  "schema_version": 1,
+  "evaluator": "Z3 only",
+  "query": "facts AND NOT(all applicable constraints)",
+  "results": {
+    "SAT": "DENY",
+    "UNSAT": "candidate ALLOW after prerequisites",
+    "UNKNOWN/error/missing/inconsistent": "no ticket"
+  },
+  "composition": "all applicable constraints; static all-branch plus trusted dynamic dependency union and policy-set membership; hard DENY wins",
+  "benchmarks": [
+    {
+      "policy_id": "no_exfil_after_sensitive",
+      "applicability": "external business release; scoped provider exception remains separately authorized",
+      "constraints": [
+        "no_exfil_after_sensitive",
+        "unknown_release",
+        "provider_scope"
+      ],
+      "keys": [
+        "exposure:{task}",
+        "label:{resource}",
+        "document:{resource}",
+        "contract3:{task}"
+      ],
+      "authority": "Gateway/LabelManager/approved contract",
+      "transitions": "exposure union before read delivery; owner labels and accepted restrictions remain distinct",
+      "evidence": "read intent, content binding, official label, classification proposal/restriction and release intent",
+      "limits": "UNKNOWN follows explicit DENY/ESCALATE; classifier PUBLIC and worker claims never declassify"
+    },
+    {
+      "policy_id": "budget_monotone",
+      "applicability": "all actions; positive amounts only on spending tools",
+      "constraints": [
+        "budget_monotone"
+      ],
+      "keys": [
+        "budget:{task}",
+        "reserved:{task}",
+        "contract3:{task}"
+      ],
+      "authority": "Gateway/Dispatcher/ContractService",
+      "transitions": "reserve at intent, move reserved to used once after receipt; ambiguous outcome retains reservation",
+      "evidence": "intent facts and independently persisted receiver receipt",
+      "limits": "integer smallest units, nonnegative bounded; no exactly-once provider billing claim"
+    },
+    {
+      "policy_id": "cap_subset",
+      "applicability": "managed A tasks",
+      "constraints": [
+        "scope",
+        "agent_scope",
+        "parent_scope",
+        "agent_membership",
+        "parent_budget",
+        "parent_execution_caps"
+      ],
+      "keys": [
+        "delegation:{task}:{agent}",
+        "agents:{task}",
+        "entitlement:{task}:{parent}",
+        "taskresolved:{task}",
+        "taskmode:{task}",
+        "contract3:{task}"
+      ],
+      "authority": "TaskService/ContractService/TrustedCatalog",
+      "transitions": "reviewed relation activation/revocation and aggregate membership version",
+      "evidence": "resolved TaskSpec, parent rights and actual per-agent correlated tuples",
+      "limits": "reuses Phase 3.6 scope_expression and delegation_constraints, no second capability system in main runtime"
+    },
+    {
+      "policy_id": "recipient_pinned",
+      "applicability": "external tools",
+      "constraints": [
+        "scope",
+        "agent_scope",
+        "parent_scope",
+        "destination_scope"
+      ],
+      "keys": [
+        "contract3:{task}",
+        "destination:{recipient}",
+        "delegation:{task}:{agent}",
+        "entitlement:{task}:{parent}"
+      ],
+      "authority": "reviewed contract/delegation and admin destination catalog",
+      "transitions": "concrete destination is immutable in signed payload and outbox",
+      "evidence": "authorized payload hash, accepted intent and applied receiver destination",
+      "limits": "cc/bcc/body_ref rejected; no alias/group resolver; unknown destination denied"
+    },
+    {
+      "policy_id": "no_write_after_stale_read",
+      "applicability": "update_document",
+      "constraints": [
+        "no_write_after_stale_read"
+      ],
+      "keys": [
+        "readbasis:{task}:{operation}",
+        "document:{resource}",
+        "label:{resource}"
+      ],
+      "authority": "trusted read receiver/RuntimeAuthority/Gateway",
+      "transitions": "immutable delivered receipt binds task/agent/resource/version/digest; write advances content and label atomically at intent",
+      "evidence": "server read_binding, immutable readbasis and actual document at acceptance",
+      "limits": "stale receipt is not renewed by reauthorization; new read and reviewed plan may be required"
+    },
+    {
+      "policy_id": "irreversible_once",
+      "applicability": "each task-scoped logical operation ID",
+      "constraints": [
+        "irreversible_once"
+      ],
+      "keys": [
+        "operation:{task}:{operation}",
+        "consent:{task}:{operation}"
+      ],
+      "authority": "Gateway/ApprovalBroker",
+      "transitions": "false to true, unique outbox/task-operation and ticket/nonce consume in same transaction",
+      "evidence": "logical operation digest, intent count and separate receiver receipt",
+      "limits": "status reread is not new intent; a new ID does not prove a different semantic action; finite-prefix monitor only"
+    }
+  ],
+  "facts": [
+    {
+      "fact_id": "budget_limit",
+      "type": "int",
+      "scope": "task",
+      "source": "approved contract",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "activate revision"
+      ],
+      "approval": "exact proposal",
+      "field": "budget_limit"
+    },
+    {
+      "fact_id": "allowed_recipients",
+      "type": "set",
+      "scope": "task",
+      "source": "approved contract",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "activate revision"
+      ],
+      "approval": "exact proposal",
+      "field": "allowed_recipients"
+    },
+    {
+      "fact_id": "allowed_tools",
+      "type": "set",
+      "scope": "task",
+      "source": "approved contract",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "activate revision"
+      ],
+      "approval": "exact proposal",
+      "field": "allowed_tools"
+    },
+    {
+      "fact_id": "allowed_resources",
+      "type": "set",
+      "scope": "task",
+      "source": "approved contract",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "activate revision"
+      ],
+      "approval": "exact proposal",
+      "field": "allowed_resources"
+    },
+    {
+      "fact_id": "allowed_agents",
+      "type": "set",
+      "scope": "task",
+      "source": "approved delegation",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "activate revision"
+      ],
+      "approval": "exact proposal",
+      "field": "allowed_agents"
+    },
+    {
+      "fact_id": "purpose",
+      "type": "str",
+      "scope": "task",
+      "source": "approved contract",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "activate revision"
+      ],
+      "approval": "exact proposal",
+      "field": "purpose"
+    },
+    {
+      "fact_id": "unknown_release",
+      "type": "str",
+      "scope": "task",
+      "source": "approved contract",
+      "prefix": "contract3",
+      "updater": "ContractService",
+      "transitions": [
+        "DENY",
+        "ESCALATE"
+      ],
+      "approval": "exact proposal",
+      "field": "unknown_release"
+    },
+    {
+      "fact_id": "budget_used",
+      "type": "int",
+      "scope": "task",
+      "source": "receiver settlement ledger",
+      "prefix": "budget",
+      "updater": "Dispatcher",
+      "transitions": [
+        "settle reservation"
+      ],
+      "approval": "none",
+      "field": null
+    },
+    {
+      "fact_id": "budget_reserved",
+      "type": "int",
+      "scope": "task",
+      "source": "accepted intent ledger",
+      "prefix": "reserved",
+      "updater": "Gateway/Dispatcher",
+      "transitions": [
+        "reserve",
+        "settle",
+        "definite failure release"
+      ],
+      "approval": "none",
+      "field": null
+    },
+    {
+      "fact_id": "exposure",
+      "type": "set",
+      "scope": "task",
+      "source": "committed reads / accepted restrictions",
+      "prefix": "exposure",
+      "updater": "Gateway/LabelManager",
+      "transitions": [
+        "monotone union",
+        "propagate accepted restriction"
+      ],
+      "approval": "none",
+      "field": null
+    },
+    {
+      "fact_id": "document_version",
+      "type": "int",
+      "scope": "document",
+      "source": "storage content digest",
+      "prefix": "document",
+      "updater": "StorageService",
+      "transitions": [
+        "ingest new version"
+      ],
+      "approval": "none",
+      "field": "version"
+    },
+    {
+      "fact_id": "document_digest",
+      "type": "str",
+      "scope": "document",
+      "source": "storage content digest",
+      "prefix": "document",
+      "updater": "StorageService",
+      "transitions": [
+        "ingest new version"
+      ],
+      "approval": "none",
+      "field": "digest"
+    },
+    {
+      "fact_id": "label",
+      "type": "str",
+      "scope": "document",
+      "source": "owner attestation of digest/purpose",
+      "prefix": "label",
+      "updater": "LabelManager",
+      "transitions": [
+        "set for current digest",
+        "invalidate on content change",
+        "accept conservative classification restriction"
+      ],
+      "approval": "owner authentication",
+      "field": "label"
+    },
+    {
+      "fact_id": "approval",
+      "type": "str",
+      "scope": "operation",
+      "source": "review record",
+      "prefix": "consent",
+      "updater": "ApprovalBroker/Gateway",
+      "transitions": [
+        "NONE -> APPROVED -> CONSUMED",
+        "REJECTED"
+      ],
+      "approval": "operation review",
+      "field": "status"
+    },
+    {
+      "fact_id": "operation_committed",
+      "type": "bool",
+      "scope": "operation",
+      "source": "committed intent",
+      "prefix": "operation",
+      "updater": "Gateway",
+      "transitions": [
+        "false -> true"
+      ],
+      "approval": "none",
+      "field": null
+    },
+    {
+      "fact_id": "agent_members",
+      "type": "set",
+      "scope": "task",
+      "source": "activated resolved task",
+      "prefix": "agents",
+      "updater": "ContractService",
+      "transitions": [
+        "reviewed task revision"
+      ],
+      "approval": "exact proposal",
+      "field": null
+    },
+    {
+      "fact_id": "read_version",
+      "type": "int",
+      "scope": "operation",
+      "source": "delivered server read receipt",
+      "prefix": "readbasis",
+      "updater": "RuntimeAuthority",
+      "transitions": [
+        "bind immutable receipt"
+      ],
+      "approval": "none",
+      "field": "version"
+    },
+    {
+      "fact_id": "read_digest",
+      "type": "str",
+      "scope": "operation",
+      "source": "delivered server read receipt",
+      "prefix": "readbasis",
+      "updater": "RuntimeAuthority",
+      "transitions": [
+        "bind immutable receipt"
+      ],
+      "approval": "none",
+      "field": "digest"
+    }
+  ],
+  "extension_example": {
+    "policy_id": "research_small_action",
+    "version": 3,
+    "scope": "task",
+    "applies_to": [
+      "transfer_funds"
+    ],
+    "when": {
+      "op": "const",
+      "value": true
+    },
+    "constraint": {
+      "op": "and",
+      "children": [
+        {
+          "op": "le",
+          "left": {
+            "op": "amount"
+          },
+          "right": {
+            "op": "const",
+            "value": 175
+          }
+        },
+        {
+          "op": "not",
+          "child": {
+            "op": "lt",
+            "left": {
+              "op": "ref",
+              "fact": "budget_limit",
+              "scope": "task"
+            },
+            "right": {
+              "op": "const",
+              "value": 175
+            }
+          }
+        }
+      ]
+    },
+    "on_violation": "DENY"
+  }
+}

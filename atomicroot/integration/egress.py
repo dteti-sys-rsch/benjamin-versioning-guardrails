@@ -7,7 +7,8 @@ from atomicroot.authority.policy_engine import valid_identity
 def validate_model_context(reader, document, request):
     context = json.loads(document["content"])
     fields = {"messages", "sources", "provider", "model", "prompt_version"}
-    configured = context.get("prompt_version") == "config-worker-v1" if type(context) is dict else False
+    from atomicroot.integration.prompts import CONFIG_WORKER_VERSION
+    configured = context.get("prompt_version") == CONFIG_WORKER_VERSION if type(context) is dict else False
     if configured: fields = fields | {"execution"}
     if type(context) is not dict or set(context) not in (fields, fields | {"response_schema"}):
         raise ValueError("invalid server model context")
@@ -26,17 +27,18 @@ def validate_model_context(reader, document, request):
         if not record or record[0] != execution["binding"] or json.loads(record[1])["resolved"] != reader.read(f"taskresolved:{request['task_id']}") or job.get("context_hash") != args_hash(context) or job.get("principal") != request["agent_id"]:
             raise ValueError("untrusted execution context")
     if "response_schema" in context:
-        from atomicroot.integration.prompts import worker_response_schema, config_response_schema
+        from atomicroot.integration.prompts import worker_response_schema, config_schema_matches
         # Use the same Authority snapshot; schema cannot grant another tool or
         # become a worker-controlled escape from the host's capability bounds.
         contract = reader.read(f"contract3:{request['task_id']}")
         expected = worker_response_schema(contract)
+        matches = context["response_schema"] == expected
         if configured:
             from atomicroot.framework.tasks import artifact
             active = artifact(reader.snapshot, reader.read(f"taskresolved:{request['task_id']}"))
             agent = reader.read(f"delegation:{request['task_id']}:{request['agent_id']}")
-            expected = config_response_schema(agent, active["spec"]["outputs"])
-        if context["provider"] != "ollama" or context["response_schema"] != expected:
+            matches = config_schema_matches(context["response_schema"], agent, active["spec"]["outputs"])
+        if context["provider"] != "ollama" or not matches:
             raise ValueError("untrusted worker response schema")
     for message in context["messages"]:
         if type(message) is not dict or set(message) != {"role", "content"} or message["role"] not in {"system", "user"} or type(message["content"]) is not str:

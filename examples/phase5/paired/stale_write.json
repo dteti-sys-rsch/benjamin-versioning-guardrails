@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "pairing_digest": "sha256:129f0f971875d757bf79e45c9486f3ca9c68c20fd7969d12aa29d531e69a8549",
+  "scenario": "stale_write",
+  "modes": [
+    {
+      "mode": "no_guard",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "mutation"
+          ],
+          "chosen": "mutation"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "reauthorize-old-read"
+          ],
+          "chosen": "reauthorize-old-read"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "write-a:write-op",
+            "policies": [
+              "no_write_after_stale_read"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "stateless_per_action",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "mutation"
+          ],
+          "chosen": "mutation"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "reauthorize-old-read"
+          ],
+          "chosen": "reauthorize-old-read"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "write-a:write-op",
+            "policies": [
+              "no_write_after_stale_read"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "reusable_capability",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "mutation"
+          ],
+          "chosen": "mutation"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "reauthorize-old-read"
+          ],
+          "chosen": "reauthorize-old-read"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "write-a:write-op",
+            "policies": [
+              "no_write_after_stale_read"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "stateful_non_atomic",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "mutation"
+          ],
+          "chosen": "mutation"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "reauthorize-old-read"
+          ],
+          "chosen": "reauthorize-old-read"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "write-a:write-op",
+            "policies": [
+              "no_write_after_stale_read"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "write-a:write-op": [
+            "no_write_after_stale_read"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "global_version_atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "mutation"
+          ],
+          "chosen": "mutation"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "reauthorize-old-read"
+          ],
+          "chosen": "reauthorize-old-read"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "auth"
+          ],
+          "chosen": "auth"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "mutation"
+          ],
+          "chosen": "mutation"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "commit"
+          ],
+          "chosen": "commit"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "dispatch"
+          ],
+          "chosen": "dispatch"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "reauthorize-old-read"
+          ],
+          "chosen": "reauthorize-old-read"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 4,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:atomicroot:phase4:replay:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "workload",
+    "environment",
+    "initial",
+    "public_key",
+    "bindings",
+    "run",
+    "hooks",
+    "terminal_observations",
+    "semantic_trace",
+    "model_records"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "public_key": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hooks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "stage",
+          "action"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deferred": {
+            "type": "boolean"
+          },
+          "observed_after": {
+            "const": "fallback_release"
+          }
+        }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "required": [
+        "name",
+        "seed",
+        "clock",
+        "fixture",
+        "tasks",
+        "actions",
+        "preferred"
+      ],
+      "properties": {
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2048,
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "preferred": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "clock": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tasks": {
+          "type": "array",
+          "minItems": 1
+        }
+      }
+    },
+    "environment": {
+      "type": "object"
+    },
+    "initial": {
+      "type": "object"
+    },
+    "bindings": {
+      "type": "object"
+    },
+    "run": {
+      "type": "object"
+    },
+    "terminal_observations": {
+      "type": "object"
+    },
+    "semantic_trace": {
+      "type": "object"
+    },
+    "model_records": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "actor",
+        "depends_on",
+        "arrival",
+        "priority",
+        "data"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actor": {
+          "enum": [
+            "worker",
+            "trusted_fixture",
+            "fault",
+            "framework"
+          ]
+        },
+        "depends_on": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "arrival": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": -1000000,
+          "maximum": 1000000
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

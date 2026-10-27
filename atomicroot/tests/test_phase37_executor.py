@@ -214,12 +214,13 @@ def test_model_context_is_bound_and_no_author_call(system, tmp_path):
     # One worker performs a read with a context that changes on its next decision.
     s.spec["agents"] = [{"id": "reader1", "role": "Researcher", "scope": s.spec["scope"]}]
     s.spec["workflow"]["nodes"] = [{"id": "a", "agent": "reader1", "depends_on": []}]
-    s.spec["acceptance"] = [{"kind": "read", "resource": "d1"}]; s.spec["outputs"] = []
+    s.spec["acceptance"] = [{"kind": "read", "resource": "d1"}, {"kind": "receipt", "tool": "send_email", "destination": "alice@corp.id"}]
+    s.spec["outputs"] = []
     rights = deepcopy(s.rights)
     if ctxrule not in rights["scope"]: rights["scope"].append(ctxrule)
     s.runtime.catalog.set_entitlement("t", "user", rights, s.admin)
     s.activate()
-    responses = [read_response(s.refs[0]), done()]
+    responses = [read_response(s.refs[0]), send()]
     model = FakeModel(lambda messages: responses[json.loads(messages[-1]["content"])["step"]], provider="ollama")
     model.execution_binding = "test-fixture-v1"
     limits = Limits(**TaskSpec.parse(s.spec).data["limits"]["inference"])
@@ -236,7 +237,7 @@ def test_model_context_is_bound_and_no_author_call(system, tmp_path):
         assert result["status"] == "SATISFIED", errors
         assert len(model.calls) == 2
         assert all("delegation" in json.loads(m[-1]["content"]) for m in model.calls)
-        assert len(s.runtime.store.inspect_outbox()) == 3
+        assert len(s.runtime.store.inspect_outbox()) == 4
         with s.runtime.store.snapshot() as snap: assert snap.read("document:ctx")[1]["version"] == 3
         assert f.recover("model")["status"] == "SATISFIED" and len(model.calls) == 2
         # A worker cannot use an approved context identity with bytes absent from a trusted job.
@@ -264,6 +265,8 @@ def test_parallel_progress_sequence_is_redacted(tmp_path):
     with ThreadPoolExecutor(4) as pool: list(pool.map(lambda n: progress("WORKER", step=n, status="READY"), range(100)))
     rows = [json.loads(row) for row in (tmp_path / "p.jsonl").read_text().splitlines()]
     assert [r["sequence"] for r in rows] == list(range(1, 101))
+    assert [r["session_elapsed_ms"] for r in rows] == sorted(r["session_elapsed_ms"] for r in rows)
+    assert all(r["since_previous_ms"] >= 0 for r in rows)
     with pytest.raises(ValueError): progress("WORKER", body="secret")
 
 
@@ -518,7 +521,9 @@ def test_real_examples_cli_execution_and_history(tmp_path, monkeypatch, mode):
     with __import__("sqlite3").connect(directory / "ledger.sqlite") as conn:
         assert conn.execute("SELECT status FROM execution_runs").fetchone()[0] == "SATISFIED"
         assert conn.execute("SELECT count(*) FROM execution_history").fetchone()[0] == 1
-        assert conn.execute("SELECT count(*) FROM outbox").fetchone()[0] == (10 if mode == "fake" else 3)
+        from collections import Counter
+        intents = Counter(json.loads(r[0])["tool"] for r in conn.execute("SELECT payload FROM outbox"))
+        assert intents == ({"read_document": 2, "send_email": 1, "model_inference": 4} if mode == "fake" else {"read_document": 2, "send_email": 1})
     monkeypatch.setattr("sys.argv", ["phase37_cli.py", "--directory", str(directory), "--task", "payments-a", "--responses", "examples/phase37/payments-responses.json", "start"])
     assert phase37_cli.main() == 0
     with __import__("sqlite3").connect(directory / "ledger.sqlite") as conn:

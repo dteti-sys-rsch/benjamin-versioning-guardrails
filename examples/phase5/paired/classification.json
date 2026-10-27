@@ -1,0 +1,517 @@
+{
+  "schema_version": 1,
+  "pairing_digest": "sha256:b904a2445713509a0f0847bb1071ed21ce152fabd7c8b0469f3955c0323d2fda",
+  "scenario": "classification",
+  "modes": [
+    {
+      "mode": "no_guard",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "enable-restriction"
+          ],
+          "chosen": "enable-restriction"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "begin"
+          ],
+          "chosen": "begin"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "result"
+          ],
+          "chosen": "result"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "accept"
+          ],
+          "chosen": "accept"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "send"
+          ],
+          "chosen": "send"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "literature-a:send-truth": [
+            "unknown_release"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "literature-a:send-truth",
+            "policies": [
+              "unknown_release"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "literature-a:send-truth": [
+            "unknown_release"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_delivered_leaks": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_byte_disclosures": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "stateless_per_action",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "enable-restriction"
+          ],
+          "chosen": "enable-restriction"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "begin"
+          ],
+          "chosen": "begin"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "result"
+          ],
+          "chosen": "result"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "accept"
+          ],
+          "chosen": "accept"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "send"
+          ],
+          "chosen": "send"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "literature-a:send-truth": [
+            "unknown_release"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "literature-a:send-truth",
+            "policies": [
+              "unknown_release"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "literature-a:send-truth": [
+            "unknown_release"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_delivered_leaks": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_byte_disclosures": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "reusable_capability",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "enable-restriction"
+          ],
+          "chosen": "enable-restriction"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "begin"
+          ],
+          "chosen": "begin"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "result"
+          ],
+          "chosen": "result"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "accept"
+          ],
+          "chosen": "accept"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "send"
+          ],
+          "chosen": "send"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 2,
+        "accepted_violations": {
+          "literature-a:send-truth": [
+            "unknown_release"
+          ]
+        },
+        "accepted_violation_count": 1,
+        "violating_intents": [
+          {
+            "event": 1,
+            "operation": "literature-a:send-truth",
+            "policies": [
+              "unknown_release"
+            ]
+          }
+        ],
+        "applied_effects": 2,
+        "delivered_violations": {
+          "literature-a:send-truth": [
+            "unknown_release"
+          ]
+        },
+        "delivered_violation_count": 1,
+        "ground_truth_release_intents": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_delivered_leaks": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_byte_disclosures": [
+          "literature-a:send-truth"
+        ],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 1,
+          "denominator": 2,
+          "value": 0.5
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "stateful_non_atomic",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "enable-restriction"
+          ],
+          "chosen": "enable-restriction"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "begin"
+          ],
+          "chosen": "begin"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "result"
+          ],
+          "chosen": "result"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "accept"
+          ],
+          "chosen": "accept"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "send"
+          ],
+          "chosen": "send"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "global_version_atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "enable-restriction"
+          ],
+          "chosen": "enable-restriction"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "begin"
+          ],
+          "chosen": "begin"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "result"
+          ],
+          "chosen": "result"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "accept"
+          ],
+          "chosen": "accept"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "send"
+          ],
+          "chosen": "send"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    },
+    {
+      "mode": "atomicroot",
+      "schedule": [
+        {
+          "tick": 0,
+          "ready": [
+            "enable-restriction"
+          ],
+          "chosen": "enable-restriction"
+        },
+        {
+          "tick": 1,
+          "ready": [
+            "begin"
+          ],
+          "chosen": "begin"
+        },
+        {
+          "tick": 2,
+          "ready": [
+            "result"
+          ],
+          "chosen": "result"
+        },
+        {
+          "tick": 3,
+          "ready": [
+            "accept"
+          ],
+          "chosen": "accept"
+        },
+        {
+          "tick": 4,
+          "ready": [
+            "read"
+          ],
+          "chosen": "read"
+        },
+        {
+          "tick": 5,
+          "ready": [
+            "send"
+          ],
+          "chosen": "send"
+        }
+      ],
+      "divergence": [],
+      "blocked": [],
+      "oracle": {
+        "schema_version": 1,
+        "attempted_actions": 2,
+        "accepted_intents": 1,
+        "accepted_violations": {},
+        "accepted_violation_count": 0,
+        "violating_intents": [],
+        "applied_effects": 1,
+        "delivered_violations": {},
+        "delivered_violation_count": 0,
+        "ground_truth_release_intents": [],
+        "ground_truth_delivered_leaks": [],
+        "ground_truth_byte_disclosures": [],
+        "ground_truth_unknown_release_intents": [],
+        "unknown_delivery_operations": [],
+        "accepted_violation_rate": {
+          "numerator": 0,
+          "denominator": 1,
+          "value": 0.0
+        },
+        "zero_denominator": "N/A",
+        "scope": "finite-prefix six scenario invariants; no DSL/Python reference evaluator",
+        "unknown_delivery_observations": [],
+        "attempted_logical_operations": 2
+      }
+    }
+  ]
+}

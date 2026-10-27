@@ -23,18 +23,30 @@ class StorageService:
         if source not in {"owner upload", "trusted metadata", "external document"}:
             raise ValueError("unregistered provenance source")
         with self.store.transaction() as conn:
-            _, old = self.store.value(conn, f"document:{resource}")
-            version = (old["version"] if old else 0) + 1
-            data = {"resource": resource, "digest": digest, "version": version,
-                    "content": content, "source": source, "stored_by": principal.subject,
-                    "instruction_trust": "UNTRUSTED", "factual_accuracy": "UNVERIFIED"}
-            self.store.put(conn, f"document:{resource}", data)
-            # Every content/version update invalidates label scope, even same bytes.
-            self.store.put(conn, f"label:{resource}", {"label": "UNKNOWN", "digest": digest,
-                "version": version, "purposes": [], "label_set_by": "StorageService",
-                "source": "official default: new version", "resource": resource})
-            self.store.audit(conn, "INGEST", principal.subject, {k: v for k, v in data.items() if k != "content"})
-        return {"resource": resource, "digest": digest, "version": version}
+            data = write_content(self.store, conn, resource, content, principal.subject, source=source)
+        return {k: data[k] for k in ("resource", "digest", "version")}
+
+
+def write_content(store, conn, resource, content, actor, *, source="guarded update", sensitive=False):
+    """Shared state transition; caller owns authorization and transaction scope."""
+    digest = content_digest(content)
+    _, old = store.value(conn, f"document:{resource}")
+    data = {"resource": resource, "digest": digest, "version": (old["version"] if old else 0) + 1,
+            "content": content, "source": source, "stored_by": actor,
+            "instruction_trust": "UNTRUSTED", "factual_accuracy": "UNVERIFIED"}
+    store.put(conn, f"document:{resource}", data)
+    # New output never inherits a PUBLIC assertion over old bytes. Sensitive
+    # task exposure conservatively restricts this new resource across tasks.
+    store.put(conn, f"label:{resource}", {"label": "SENSITIVE" if sensitive else "UNKNOWN", "digest": digest,
+        "version": data["version"], "purposes": [], "label_set_by": "StorageService",
+        "source": "conservative guarded-write exposure" if sensitive else "official default: new version", "resource": resource})
+    if sensitive:
+        label = store.value(conn, f"label:{resource}")[1]
+        # A sensitive output is restrictive for every purpose, including tasks
+        # that have not seen its source context.
+        store.put(conn, f"label:{resource}", {**label, "conservative_sensitive": True})
+    store.audit(conn, "INGEST", actor, {k: v for k, v in data.items() if k != "content"})
+    return data
 
 
 class LabelManager:
@@ -56,6 +68,8 @@ class LabelManager:
             _, previous = self.store.value(conn, f"label:{resource}")
             if previous and previous.get("restrictions"):
                 data["restrictions"] = previous["restrictions"]
+            if previous and previous.get("conservative_sensitive"):
+                data["conservative_sensitive"] = True
             self.store.put(conn, f"label:{resource}", data)
             # A result already in shared memory keeps its task-level provenance.
             # Tightening the official basis invalidates pending release intents
@@ -138,6 +152,7 @@ class LabelManager:
         scoped = (label["digest"] == digest and label["version"] == document["version"]
                   and purpose in label["purposes"])
         effective = label["label"] if scoped else "UNKNOWN"
+        if label.get("conservative_sensitive") is True: effective = "SENSITIVE"
         for restriction in label.get("restrictions", []):
             if (restriction["digest"], restriction["version"], restriction["purpose"]) == (digest, document["version"], purpose):
                 if restriction["label"] != "SENSITIVE": raise ValueError("invalid conservative restriction")

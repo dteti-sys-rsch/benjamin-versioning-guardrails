@@ -14,6 +14,8 @@ build/
 dist/
 *.egg-info/
 
+docs/
+
 # Local credentials and runtime state
 .env
 .env.*

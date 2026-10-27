@@ -157,6 +157,44 @@ def test_progress_records_real_flow_without_prompt_payload_or_secrets(tmp_path, 
         h.runtime.store.close()
 
 
+def test_progress_timestamp_and_monotonic_timing_across_append(tmp_path, capsys, monkeypatch):
+    from datetime import datetime, timezone
+    from atomicroot.integration import progress as module
+
+    ticks = iter([10.0, 11.0, 13.25, 100.0, 100.25])
+    monkeypatch.setattr(module, "monotonic", lambda: next(ticks))
+    dates = iter([datetime(2026, 10, 25, 8, 0, 5, tzinfo=timezone.utc),
+                  datetime(2026, 10, 25, 8, 0, 4, tzinfo=timezone.utc),
+                  datetime(2026, 10, 25, 9, 0, 0, tzinfo=timezone.utc)])
+
+    class Clock:
+        @staticmethod
+        def now(tz):
+            assert tz == timezone.utc
+            return next(dates)
+
+    monkeypatch.setattr(module, "datetime", Clock)
+    path = tmp_path / "progress.jsonl"
+    log = Progress(path)
+    log("INFERENCE_CALL")
+    log("INFERENCE_RETURNED", elapsed_ms=500)
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    assert [r["session_elapsed_ms"] for r in rows] == [1000.0, 3250.0]
+    assert [r["since_previous_ms"] for r in rows] == [1000.0, 2250.0]
+    assert rows[1]["elapsed_ms"] == 500  # Existing per-inference duration is distinct.
+    assert datetime.fromisoformat(rows[1]["time"]) < datetime.fromisoformat(rows[0]["time"])
+    lines = capsys.readouterr().out.splitlines()
+    assert f"[001] [{rows[0]['time']}] [total=1.000s delta=1.000s] INFERENCE_CALL" == lines[0]
+    assert "[total=3.250s delta=2.250s] INFERENCE_RETURNED elapsed_ms=500" in lines[1]
+
+    resumed = Progress(path, quiet=True)
+    resumed("WORKFLOW", status="DONE")
+    last = json.loads(path.read_text().splitlines()[-1])
+    assert last["sequence"] == 3
+    assert last["session_elapsed_ms"] == last["since_previous_ms"] == 250.0
+    assert capsys.readouterr().out == ""
+
+
 def test_broken_progress_sink_does_not_change_authorization_or_effect(tmp_path):
     h = PilotHost(tmp_path)
     def broken(*args, **kwargs): raise OSError("failed local log sink")
