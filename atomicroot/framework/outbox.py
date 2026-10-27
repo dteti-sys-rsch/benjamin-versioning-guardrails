@@ -60,7 +60,7 @@ class SimulatedReceiver:
                             "resource": args["resource"], "version": payload["resource_snapshot"]["version"], "digest": args["digest"]}
             conn.execute("INSERT INTO receiver_receipts(task,operation,digest,receipt) VALUES (?,?,?,?)",
                          (task, operation, digest, dumps(receipt)))
-            self.store.observe("receiver_apply", operation)
+            self.store.observe("receiver_apply", operation, task=task)
         return receipt
 
 
@@ -82,7 +82,7 @@ class Dispatcher:
             lease = self.store.new_id("lease")
             conn.execute("UPDATE outbox SET status='RELEASING',lease=?,lease_until=?,attempts=attempts+1 WHERE task=? AND operation=?",
                          (lease, now + self.lease_seconds, row["task"], row["operation"]))
-            self.store.observe("outbox_claim", row["operation"])
+            self.store.observe("outbox_claim", row["operation"], task=row["task"])
             return {**row, "lease": lease, "status": "RELEASING", "attempts": row["attempts"] + 1}
 
     def finish(self, claim, receipt=None, *, error=None):
@@ -95,7 +95,7 @@ class Dispatcher:
             if not delivered and not absent:
                 conn.execute("UPDATE outbox SET status='UNKNOWN',lease=NULL,lease_until=NULL,error=? WHERE task=? AND operation=?",
                              (error or "ambiguous receiver outcome", row["task"], row["operation"]))
-                self.store.observe("ack_unknown", row["operation"])
+                self.store.observe("ack_unknown", row["operation"], task=row["task"])
                 return {"status": "UNKNOWN"}
             # Only receipts committed by the registered receiver can settle the ledger.
             proof = conn.execute("SELECT receipt FROM receiver_receipts WHERE task=? AND operation=?", (row["task"], row["operation"])).fetchone()
@@ -115,7 +115,7 @@ class Dispatcher:
                          (status, dumps(receipt), row["task"], row["operation"]))
             self.store.audit(conn, "SETTLEMENT", "Dispatcher", {"task": row["task"], "operation": row["operation"],
                                                                   "amount": amount, "status": status, "receipt": receipt["receipt_id"]})
-            self.store.observe("ack_result", row["operation"])
+            self.store.observe("ack_result", row["operation"], task=row["task"])
             return {"status": status, "receipt": receipt}
 
     def dispatch_once(self, *, lose_ack=False):

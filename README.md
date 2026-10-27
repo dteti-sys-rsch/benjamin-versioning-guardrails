@@ -38,6 +38,17 @@ On other platforms, use `.venv/bin/python` after creating the environment with
 
 ## Offline examples
 
+Run all offline tests and generate fresh timestamped replay evidence in one command:
+
+```powershell
+.\.venv\Scripts\python.exe run_tests.py all
+```
+
+Use `quick`, `phase4`, `phase5`, `regression`, or `scenarios` to select work.
+Each invocation keeps a new result directory with UTC timing, logs and a summary.
+See [testing profiles and timestamp meanings](TESTING.md) for PowerShell/Bash
+examples and the distinction between real observation time and virtual replay time.
+
 ```powershell
 .\.venv\Scripts\python.exe demo.py
 .\.venv\Scripts\python.exe phase3_cli.py demo

@@ -18,6 +18,7 @@ from atomicroot.framework.identity import Principal
 from atomicroot.framework.tasks import REGISTRY_DIGEST
 from atomicroot.integration.prompts import CONFIG_WORKER_VERSION
 from atomicroot.sim.scheduler import SCHEMA_VERSION, TestInputs, HookLog, ReadyScheduler, semantic, validate_artifact
+from atomicroot.observability import Stopwatch, point, protocol_run
 
 
 def environment():
@@ -249,8 +250,8 @@ class ReplayHooks(HookLog):
         super().__init__()
         self.host = host
 
-    def checkpoint(self, stage, action_id, *, deferred=False):
-        super().checkpoint(stage, action_id, deferred=deferred)
+    def checkpoint(self, stage, action_id, *, deferred=False, task=None):
+        super().checkpoint(stage, action_id, deferred=deferred, task=task)
         plan = self.host.workload.get("hook_mutations", [])
         index = len(self.host.hook_mutations)
         if index >= len(plan): return
@@ -294,6 +295,7 @@ def test_workspace(reconstruct=None):
 
 
 def record(workload, *, mode="optimistic", expected=None, workspace=None):
+    timer = Stopwatch()
     with test_workspace(workspace) as directory:
         host = ReplayHost(directory, workload, mode=mode)
         try:
@@ -311,7 +313,9 @@ def record(workload, *, mode="optimistic", expected=None, workspace=None):
                              "fixture_authority": "local-user/local-human/local-owner are trusted fixtures, never attacker principals"},
                 "run": run, "hooks": host.hooks.steps, "terminal_observations": terminal,
                 "model_records": workload.get("model_records", {})}
-            artifact["semantic_trace"] = semantic({"run": run, "terminal": terminal}, artifact["public_key"])
+            artifact["observed_timing"] = {"schema_version": 1, "run": timer.finish(),
+                "exported_at_utc": point()["observed_at_utc"], "meaning": "UTC observer time and local monotonic durations; separate from virtual authorization clock"}
+            artifact["semantic_trace"] = semantic({"run": protocol_run(run), "terminal": terminal}, artifact["public_key"])
             return validate_artifact(artifact)
         finally: host.close()
 

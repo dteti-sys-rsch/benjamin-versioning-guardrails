@@ -198,6 +198,10 @@ ditampilkan. Tidak ada universal guarantee dari finite fixtures ini.
 
 ## Command, artifact dan kompatibilitas
 
+Untuk eksekusi satu perintah dengan pilihan profil dan timestamp UTC nyata,
+gunakan `run_tests.py` sesuai [panduan testing](../../TESTING.md). Profil `all`
+menyimpan hasil baru, log, JUnit dan artifact tanpa menimpa examples historis.
+
 ```powershell
 .\.venv\Scripts\python.exe phase5_cli.py catalog
 .\.venv\Scripts\python.exe phase5_cli.py matrix

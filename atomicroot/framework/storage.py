@@ -80,24 +80,29 @@ class FrameworkStore(TraceStore):
             finally:
                 events = self._instrumentation.events
                 self._instrumentation.events = None
-        for stage, action in events: self.observe(stage, action)
+        for stage, action, task in events: self.observe(stage, action, task=task)
 
-    def observe(self, stage, action=None):
+    def observe(self, stage, action=None, *, task=None):
         if self.harness is None: return
         events = getattr(self._instrumentation, "events", None)
         if events is not None:
-            events.append((stage, action))
+            events.append((stage, action, task))
         elif self.coordinator.held_exclusively():
             pending = getattr(self._instrumentation, "deferred", None)
             if pending is None: self._instrumentation.deferred = pending = []
-            pending.append((stage, action))
+            pending.append((stage, action, task))
         else:
-            self.harness.checkpoint(stage, action)
+            callback = getattr(self.harness, "context_checkpoint", None)
+            if callback: callback(stage, action, task=task)
+            else: self.harness.checkpoint(stage, action)
 
     def flush_observations(self):
         pending = getattr(self._instrumentation, "deferred", [])
         self._instrumentation.deferred = []
-        for stage, action in pending:
+        for stage, action, task in pending:
+            if callback := getattr(self.harness, "context_checkpoint", None):
+                callback(stage, action, task=task, deferred=True)
+                continue
             callback = getattr(self.harness, "deferred_checkpoint", None)
             if callback: callback(stage, action)
             else: self.observe(stage, action)

@@ -5,6 +5,7 @@ does not grant egress and never initiates calls during replay.
 """
 from atomicroot.authority.ticket import args_hash, freeze_json
 from threading import Lock
+from atomicroot.observability import Stopwatch
 
 
 class ModelTape:
@@ -46,12 +47,13 @@ class ModelTape:
                 raise ValueError("model tape record binding mismatch")
             return freeze_json(previous["response"])
         if self.delegate is None: raise ValueError("no exact context/model/schema/prompt replay record")
+        timer = Stopwatch()
         try:
             response = await self.delegate.generate(messages, response_schema=response_schema) if response_schema is not None else await self.delegate.generate(messages)
             response = freeze_json(response)
         except Exception as exc:
             # Do not serialize provider exception bodies, credentials or URLs.
-            self.records[key] = {"binding": binding, "error": type(exc).__name__}
+            self.records[key] = {"binding": binding, "error": type(exc).__name__, "observed_timing": timer.finish()}
             raise RuntimeError("recorded model failure: " + type(exc).__name__) from None
-        self.records[key] = {"binding": binding, "response": response, "response_digest": args_hash(response)}
+        self.records[key] = {"binding": binding, "response": response, "response_digest": args_hash(response), "observed_timing": timer.finish()}
         return freeze_json(response)

@@ -10,6 +10,7 @@ from atomicroot.sim.replay import ReplayHost, environment, ledger
 from atomicroot.sim.scheduler import ReadyScheduler, semantic
 from atomicroot.evaluation.modes import configure_evaluation, MODES
 from atomicroot.evaluation.oracle import monitor
+from atomicroot.observability import Stopwatch, point, protocol_run, event_times
 
 ARTIFACT_FIELDS = ("schema_version", "mode", "workload", "pairing_digest", "environment", "public_key", "initial", "run", "hooks", "events", "terminal_ledger", "oracle", "capabilities", "bindings", "semantic_trace")
 
@@ -20,6 +21,7 @@ def evaluation_schema():
     definitions = task_schema()["$defs"]
     definitions["action"] = artifact_schema()["$defs"]["action"]
     properties = {name: {"type": "object"} for name in ARTIFACT_FIELDS}
+    properties["observed_timing"] = {"type": "object"}
     properties.update(schema_version={"const": 1}, mode={"enum": list(MODES)}, public_key={"type": "string", "pattern": "^[a-f0-9]{64}$"},
         pairing_digest={"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, hooks={"type": "array"}, events={"type": "array"},
         workload={"type": "object", "required": ["tasks", "actions", "fixture", "preferred", "ground_truth"], "properties": {
@@ -108,6 +110,7 @@ def observations(store):
 
 
 def run(workload, mode, *, expected=None):
+    timer = Stopwatch()
     if mode not in MODES: raise ValueError("unknown guard mode")
     if any(a["kind"] == "workflow" for a in workload["actions"]):
         raise ValueError("Phase 5 mechanism manifests schedule protocol boundaries from a TaskSpec plan, not opaque workflow calls")
@@ -130,25 +133,39 @@ def run(workload, mode, *, expected=None):
                 if value.get("status") == "UNKNOWN" or value.get("detail", {}).get("delivery") == "UNKNOWN"]
             result["oracle"]["attempted_logical_operations"] = len({(a["data"]["task"], a["data"]["operation"]) for a in workload["actions"]
                 if a["id"] in realized["observations"] and a["kind"] in {"authorize", "guarded", "forged_consent"}})
-            result["semantic_trace"] = semantic_trace({k: result[k] for k in ("initial", "run", "events", "terminal_ledger", "oracle", "capabilities")}, result["public_key"])
+            result["observed_timing"] = {"schema_version": 1, "run": timer.finish(), "exported_at_utc": point()["observed_at_utc"],
+                "events": event_times(events, host.hooks.steps, result["terminal_ledger"]),
+                "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"}
+            result["semantic_trace"] = semantic_trace(comparable(result), result["public_key"])
             return result
         finally: host.close()
 
 
+def comparable(artifact):
+    value = {k: artifact[k] for k in ("initial", "run", "events", "terminal_ledger", "oracle", "capabilities")}
+    value["run"] = protocol_run(value["run"])
+    return value
+
+
 def replay(artifact):
-    if type(artifact) is not dict or set(artifact) != set(ARTIFACT_FIELDS): raise ValueError("unsupported evaluation artifact fields")
+    required = set(ARTIFACT_FIELDS)
+    if type(artifact) is not dict or not required <= set(artifact) or set(artifact) - required - {"observed_timing"}:
+        raise ValueError("unsupported evaluation artifact fields")
     if artifact["schema_version"] != 1 or artifact["environment"] != environment(): raise ValueError("evaluation schema/environment divergence")
     if artifact["pairing_digest"] != args_hash(artifact["workload"]): raise ValueError("workload binding mismatch")
-    if artifact["semantic_trace"] != semantic_trace({k: artifact[k] for k in ("initial", "run", "events", "terminal_ledger", "oracle", "capabilities")}, artifact["public_key"]):
+    if artifact["semantic_trace"] != semantic_trace(comparable(artifact), artifact["public_key"]):
         raise ValueError("evaluation semantic binding mismatch")
     repeated = run(artifact["workload"], artifact["mode"], expected=[s["chosen"] for s in artifact["run"]["schedule"]])
     return {"match": repeated["semantic_trace"] == artifact["semantic_trace"] and not repeated["run"]["divergence"], "artifact": repeated}
 
 
 def pair(artifacts):
+    timer = Stopwatch()
     if len(artifacts) != len(MODES) or {a["mode"] for a in artifacts} != set(MODES): raise ValueError("six distinct modes required")
     if any(a["pairing_digest"] != args_hash(a["workload"]) for a in artifacts): raise ValueError("workload binding mismatch")
     if len({a["pairing_digest"] for a in artifacts}) != 1: raise ValueError("unpaired workload/arrival/priority/fault plan")
     return {"schema_version": 1, "pairing_digest": artifacts[0]["pairing_digest"], "scenario": artifacts[0]["workload"]["name"],
+        "observed_timing": {"comparison": timer.finish(), "generated_at_utc": point()["observed_at_utc"]},
         "modes": [{"mode": a["mode"], "schedule": a["run"]["schedule"], "divergence": a["run"]["divergence"], "blocked": a["run"]["blocked"],
+                   "recording_window": a.get("observed_timing", {}).get("run"),
                    "oracle": a["oracle"]} for a in artifacts]}

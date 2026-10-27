@@ -8,6 +8,7 @@ import random
 
 from nacl.signing import VerifyKey
 from atomicroot.authority.ticket import Ticket, args_hash, freeze_json
+from atomicroot.observability import point, Stopwatch, protocol_run
 
 SCHEMA_VERSION = 1
 MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
@@ -56,10 +57,15 @@ class Action:
 
 class HookLog:
     def __init__(self): self.steps, self.lock = [], Lock()
-    def checkpoint(self, stage, action_id, *, deferred=False):
+    def checkpoint(self, stage, action_id, *, deferred=False, task=None):
         observation = {"stage": stage, "action": action_id}
         if deferred: observation.update(deferred=True, observed_after="fallback_release")
-        with self.lock: self.steps.append(observation)
+        if task is not None: observation["task"] = task
+        with self.lock:
+            observation["observed"] = point()
+            self.steps.append(observation)
+    def context_checkpoint(self, stage, action_id, *, task=None, deferred=False):
+        self.checkpoint(stage, action_id, task=task, deferred=deferred)
     def deferred_checkpoint(self, stage, action_id):
         self.checkpoint(stage, action_id, deferred=True)
 
@@ -87,6 +93,7 @@ class ReadyScheduler:
 
     def run(self, execute, *, ready=lambda a, results: True, exact_schedule=None):
         results, schedule, divergence = {}, [], []
+        timer, windows = Stopwatch(), []
         tick = 0
         while len(results) < len(self.actions):
             candidates = [a for a in self.actions if a.id not in results and a.arrival <= tick and
@@ -101,13 +108,16 @@ class ReadyScheduler:
             chosen = next((a for a in ranked if a.id == desired), ranked[0])
             if desired is not None and chosen.id != desired:
                 divergence.append({"step": len(schedule), "requested": desired, "chosen": chosen.id, "reason": "requested action unready"})
+            step_timer = Stopwatch()
             observation = execute(chosen, results)
+            windows.append({"step": len(schedule), "action": chosen.id, **step_timer.finish()})
             results[chosen.id] = freeze_json(observation, max_bytes=MAX_ARTIFACT_BYTES)
             schedule.append({"tick": tick, "ready": sorted(a.id for a in candidates), "chosen": chosen.id})
             tick += 1
         if exact_schedule is not None and len(schedule) != len(exact_schedule):
             divergence.append({"reason": "schedule length changed", "expected": len(exact_schedule), "actual": len(schedule)})
         return {"schedule": schedule, "observations": results, "divergence": divergence,
+                "observed_timing": {**timer.finish(), "steps": windows},
                 "terminal": "COMPLETED" if len(results) == len(self.actions) else "BLOCKED",
                 "blocked": [a.id for a in self.actions if a.id not in results]}
 
@@ -137,14 +147,14 @@ def save_artifact(path, artifact):
 
 def validate_artifact(artifact):
     fields = {"schema_version", "workload", "environment", "initial", "public_key", "bindings", "run", "hooks", "terminal_observations", "semantic_trace", "model_records"}
-    if type(artifact) is not dict or set(artifact) != fields or artifact["schema_version"] != SCHEMA_VERSION:
+    if type(artifact) is not dict or not fields <= set(artifact) or set(artifact) - fields - {"observed_timing"} or artifact["schema_version"] != SCHEMA_VERSION:
         raise ValueError("unsupported replay artifact schema")
     freeze_json(artifact, max_bytes=MAX_ARTIFACT_BYTES)
     # A replay artifact has no key material field. Model inputs must be approved
     # public/synthetic data before recording; never serialize runtime objects.
     VerifyKey(bytes.fromhex(artifact["public_key"]))
     ReadyScheduler(artifact["workload"]["actions"], preferred=artifact["workload"]["preferred"])
-    if artifact["semantic_trace"] != semantic({"run": artifact["run"], "terminal": artifact["terminal_observations"]}, artifact["public_key"]):
+    if artifact["semantic_trace"] != semantic({"run": protocol_run(artifact["run"]), "terminal": artifact["terminal_observations"]}, artifact["public_key"]):
         raise ValueError("semantic trace binding mismatch")
     return artifact
 
@@ -156,7 +166,9 @@ def artifact_schema():
         "properties": {"schema_version": {"const": SCHEMA_VERSION}, "public_key": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
             "hooks": {"type": "array", "items": {"type": "object", "required": ["stage", "action"], "additionalProperties": False,
                 "properties": {"stage": {"type": "string"}, "action": {"type": ["string", "null"]},
-                               "deferred": {"type": "boolean"}, "observed_after": {"const": "fallback_release"}}}},
+                               "deferred": {"type": "boolean"}, "observed_after": {"const": "fallback_release"},
+                               "task": {"type": "string"}, "observed": {"type": "object"}}}},
+            "observed_timing": {"type": "object"},
             "workload": {"type": "object", "required": ["name", "seed", "clock", "fixture", "tasks", "actions", "preferred"],
                 "properties": {"actions": {"type": "array", "minItems": 1, "maxItems": 2048, "items": {"$ref": "#/$defs/action"}},
                     "preferred": {"type": "array", "uniqueItems": True, "items": {"type": "string"}},
@@ -185,9 +197,11 @@ def load_artifact(path):
 
 def compare_pair(first, second):
     """Pair exogenous inputs; preserve realized schedules and semantic divergence."""
+    timer = Stopwatch()
     if first["workload"] != second["workload"]: raise ValueError("unpaired workload/arrival/priority/fault plan")
     left, right = first["run"], second["run"]
     return {"workload_digest": args_hash(first["workload"]), "same_outcome": first["semantic_trace"] == second["semantic_trace"],
+            "observed_timing": {"comparison": timer.finish(), "generated_at_utc": point()["observed_at_utc"]},
             "schedules": [left["schedule"], right["schedule"]], "divergence": [left["divergence"], right["divergence"]],
             "blocked": [left["blocked"], right["blocked"]],
             "schedule_differences": [{"step": i, "first": left["schedule"][i] if i < len(left["schedule"]) else None,
