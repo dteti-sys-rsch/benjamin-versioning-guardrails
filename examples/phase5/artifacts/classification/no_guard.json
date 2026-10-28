@@ -412,7 +412,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "01b0c0c72c847fcd9e4c0d0ac630dfd470e0a2cbd5db6ff922329eca56b666b6",
+  "public_key": "897f79c89c737a5e06da70b6e101bb429eb533df04111dca3f3fa09a8693db8e",
   "initial": {
     "ledger": {
       "state": [
@@ -2994,6 +2994,62 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:46.976943+00:00",
+      "finished_at_utc": "2026-10-27T14:40:46.987952+00:00",
+      "duration_ns": 10713000,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "enable-restriction",
+          "started_at_utc": "2026-10-27T14:40:46.976943+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.977943+00:00",
+          "duration_ns": 668800,
+          "process_id": 21216
+        },
+        {
+          "step": 1,
+          "action": "begin",
+          "started_at_utc": "2026-10-27T14:40:46.977943+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.977943+00:00",
+          "duration_ns": 661700,
+          "process_id": 21216
+        },
+        {
+          "step": 2,
+          "action": "result",
+          "started_at_utc": "2026-10-27T14:40:46.977943+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.978961+00:00",
+          "duration_ns": 704800,
+          "process_id": 21216
+        },
+        {
+          "step": 3,
+          "action": "accept",
+          "started_at_utc": "2026-10-27T14:40:46.978961+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.979955+00:00",
+          "duration_ns": 613800,
+          "process_id": 21216
+        },
+        {
+          "step": 4,
+          "action": "read",
+          "started_at_utc": "2026-10-27T14:40:46.979955+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.983955+00:00",
+          "duration_ns": 4124400,
+          "process_id": 21216
+        },
+        {
+          "step": 5,
+          "action": "send",
+          "started_at_utc": "2026-10-27T14:40:46.983955+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.987952+00:00",
+          "duration_ns": 3661900,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": []
@@ -3001,99 +3057,225 @@
   "hooks": [
     {
       "stage": "mutation:contract3",
-      "action": "contract3:literature-a"
+      "action": "contract3:literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.976943+00:00",
+        "monotonic_ns": 10121086419000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:TRUSTED_UPDATER_FIXTURE",
-      "action": "test-owner"
+      "action": "test-owner",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.976943+00:00",
+        "monotonic_ns": 10121086424900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:CLASSIFICATION_REQUESTED",
-      "action": "test-classifier"
+      "action": "test-classifier",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.977943+00:00",
+        "monotonic_ns": 10121087132100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:CLASSIFICATION_RESULT",
-      "action": "test-classifier"
+      "action": "test-classifier",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.978961+00:00",
+        "monotonic_ns": 10121087883300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:CLASSIFICATION_DECLINED",
-      "action": "local-owner"
+      "action": "local-owner",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.979955+00:00",
+        "monotonic_ns": 10121088558900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "read-truth"
+      "action": "read-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.979955+00:00",
+        "monotonic_ns": 10121088960800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "read-truth"
+      "action": "read-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.980947+00:00",
+        "monotonic_ns": 10121089686400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "read-truth"
+      "action": "read-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.980947+00:00",
+        "monotonic_ns": 10121089866900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:exposure",
-      "action": "exposure:literature-a"
+      "action": "exposure:literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.981950+00:00",
+        "monotonic_ns": 10121090732700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:literature-a:read-truth"
+      "action": "operation:literature-a:read-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.981950+00:00",
+        "monotonic_ns": 10121090738900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "read-truth"
+      "action": "read-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.981950+00:00",
+        "monotonic_ns": 10121090744300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "read-truth"
+      "action": "read-truth",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.981950+00:00",
+        "monotonic_ns": 10121091425000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "read-truth"
+      "action": "read-truth",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.982953+00:00",
+        "monotonic_ns": 10121092085000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.983955+00:00",
+        "monotonic_ns": 10121092636300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "read-truth"
+      "action": "read-truth",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.983955+00:00",
+        "monotonic_ns": 10121092643400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "send-truth"
+      "action": "send-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.983955+00:00",
+        "monotonic_ns": 10121093068000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "send-truth"
+      "action": "send-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.984950+00:00",
+        "monotonic_ns": 10121093770000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "send-truth"
+      "action": "send-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.984950+00:00",
+        "monotonic_ns": 10121093947900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:literature-a:send-truth"
+      "action": "operation:literature-a:send-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.985949+00:00",
+        "monotonic_ns": 10121094771000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "send-truth"
+      "action": "send-truth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.985949+00:00",
+        "monotonic_ns": 10121094778100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "send-truth"
+      "action": "send-truth",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.985949+00:00",
+        "monotonic_ns": 10121095271200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "send-truth"
+      "action": "send-truth",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.986947+00:00",
+        "monotonic_ns": 10121095770700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.986947+00:00",
+        "monotonic_ns": 10121096356500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "send-truth"
+      "action": "send-truth",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.986947+00:00",
+        "monotonic_ns": 10121096363000,
+        "process_id": 21216
+      }
     }
   ],
   "events": [
@@ -4256,7 +4438,7 @@
             "nonce": "n-test-4-00000006",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:caeaa0e3929c79e9addd926e613a32c9c186eff6245c341daa4ad356024dc2f37f1e03ef53463373223baeb9d0e1ce5cf7dfd985fbf38ef48ab92c01e2afe305",
+            "signature": "ed25519:8b2b77421a294a136de1f79c0cd63d51f27fc6b5d6e4cd10f452fd7ed419b01436cbeee79c5f6fba5947c87075a7274bb68b474d1e365e687e2ccfa51ef9720d",
             "task_id": "literature-a",
             "ticket_id": "tk-test-4-00000005",
             "tool": "read_document",
@@ -4305,7 +4487,7 @@
             "nonce": "n-test-4-00000011",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:7c1244890eee03b33956e5f674886dea9c9c83dbb7f027b2d543946be6c42064e544b6df419e9c2744162ed34dd231e8486c84e14063bd0d776417b8e89b990a",
+            "signature": "ed25519:6aee3f876776c683d349004425a4ab8fd5ded3bf75d1b0bc7a01eb2f24b3d432afbd39dd07889d211c91ea79edb60d7bd35694c8c61fcfdabc77cc168efdb301",
             "task_id": "literature-a",
             "ticket_id": "tk-test-4-00000010",
             "tool": "send_email",
@@ -5088,7 +5270,7 @@
         "subject": "ag-a5e83ea94a72be0ce8ad96fbe0b48147",
         "task": "literature-a"
       },
-      "signature": "23d507140ad260d5b0b7f8e061146edfc820498e74869084020cdefcde97880e354051ae945bd956ffe3ade7186767cd03e1bda9fc9bca87a12c9783dc9bf00e"
+      "signature": "a6a006b527afd7b379d084e7282f1d83bb65187d284e337138d5f50238edc9bf9f75a673c8cf60f34983f7cadf4edfdd089943f42ddf3a8c175a0218f9a6a70c"
     },
     "ag-19d5e06d84728b888021cd024fe36217": {
       "data": {
@@ -5106,7 +5288,7 @@
         "subject": "ag-19d5e06d84728b888021cd024fe36217",
         "task": "literature-a"
       },
-      "signature": "b3ed2e8853197fe9236b1a5754423a873c96ef7fbd5ad23ac196bb49f94535058b7bbf64a479e66bfe32f6dbef2f5845b1c9f8a74467a2bf4b72522dc0974805"
+      "signature": "f795702bc4a3fe41f87b24c1f1a0f432d37fbff9c7689cb650796299e09ac8b655c7a1af020bb3d8b2819f9709b5cea62ad1786195124451508813d208bac705"
     },
     "ag-c486f95d05effc129708037e501bc5d4": {
       "data": {
@@ -5124,7 +5306,7 @@
         "subject": "ag-c486f95d05effc129708037e501bc5d4",
         "task": "literature-a"
       },
-      "signature": "aa61155e06bf3f2ad535035608c3411f4ec8e0d76c40dad8ac3de6c7adb5ed983222b67ac00bf572a6f9d92033c07bd9583e248348972a7ba5082775a2fa5f08"
+      "signature": "d0981deb70167c638068973d7013c780d36382cddb090765b6aa4d5392df1d6f54677069f01cdb4a0dc3ccab0c0c328138e3aff5981b545fe403951c5d3ac108"
     }
   },
   "bindings": {
@@ -5142,6 +5324,83 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:46.948116+00:00",
+      "finished_at_utc": "2026-10-27T14:40:46.990948+00:00",
+      "duration_ns": 42339400,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:46.990948+00:00",
+    "events": [
+      {
+        "event": 0,
+        "kind": "INTENT",
+        "task": "literature-a",
+        "operation": "read-truth",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:46.990948+00:00",
+        "hook_index": 9,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:46.981950+00:00",
+          "monotonic_ns": 10121090738900,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 1,
+        "kind": "INTENT",
+        "task": "literature-a",
+        "operation": "send-truth",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:46.990948+00:00",
+        "hook_index": 18,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:46.985949+00:00",
+          "monotonic_ns": 10121094771000,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 2,
+        "kind": "APPLIED",
+        "task": "literature-a",
+        "operation": "read-truth",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:46.990948+00:00",
+        "hook_index": 12,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:46.982953+00:00",
+          "monotonic_ns": 10121092085000,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 3,
+        "kind": "APPLIED",
+        "task": "literature-a",
+        "operation": "send-truth",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:46.990948+00:00",
+        "hook_index": 21,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:46.986947+00:00",
+          "monotonic_ns": 10121095770700,
+          "process_id": 21216
+        },
+        "deferred": false
+      }
+    ],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {

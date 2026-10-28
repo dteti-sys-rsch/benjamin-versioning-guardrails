@@ -376,7 +376,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "ae3bab5dd21de72d343edc4d01c1ebf6f1262f7456e0eff27568e52b25beb88e",
+  "public_key": "320eb4fa2cc77f279b8ceb00adbcfadd47986b16e0a7c240ac9cbb21075d4c51",
   "initial": {
     "ledger": {
       "state": [
@@ -2813,7 +2813,7 @@
           "nonce": "n-test-4-00000006",
           "not_after": "2026-10-25T00:00:30+00:00",
           "not_before": "2026-10-25T00:00:00+00:00",
-          "signature": "ed25519:95f3a9306390de29eadec79ee3c25d0ad884d4f14cc3585e834a107a3280d01f949d7fda10ee071a00fc43eb11816231bdf3cc7ea2ac1273de3e90ef302b540d",
+          "signature": "ed25519:618fd4e3e2aa906f11572855391e8f5f9a424dab5cfcdcc9a93ef431d5a8831a904463b7da4ed43aee7f13c0e8176869f32fe9bb799b8788e8d868b444559802",
           "task_id": "payments-a",
           "ticket_id": "tk-test-4-00000005",
           "tool": "transfer_funds",
@@ -2837,6 +2837,54 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:46.807401+00:00",
+      "finished_at_utc": "2026-10-27T14:40:46.845676+00:00",
+      "duration_ns": 37374600,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "review",
+          "started_at_utc": "2026-10-27T14:40:46.808408+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.825681+00:00",
+          "duration_ns": 17770700,
+          "process_id": 21216
+        },
+        {
+          "step": 1,
+          "action": "approve",
+          "started_at_utc": "2026-10-27T14:40:46.825681+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.826671+00:00",
+          "duration_ns": 737200,
+          "process_id": 21216
+        },
+        {
+          "step": 2,
+          "action": "auth",
+          "started_at_utc": "2026-10-27T14:40:46.826671+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.843689+00:00",
+          "duration_ns": 17570300,
+          "process_id": 21216
+        },
+        {
+          "step": 3,
+          "action": "change",
+          "started_at_utc": "2026-10-27T14:40:46.843689+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.844679+00:00",
+          "duration_ns": 561100,
+          "process_id": 21216
+        },
+        {
+          "step": 4,
+          "action": "commit",
+          "started_at_utc": "2026-10-27T14:40:46.844679+00:00",
+          "finished_at_utc": "2026-10-27T14:40:46.845676+00:00",
+          "duration_ns": 528700,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": []
@@ -2844,39 +2892,84 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "review"
+      "action": "review",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.808408+00:00",
+        "monotonic_ns": 10120917208800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "review_created",
-      "action": "review-test-4-00000004"
+      "action": "review-test-4-00000004",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.825681+00:00",
+        "monotonic_ns": 10120934657500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:consent",
-      "action": "consent:payments-a:op-first"
+      "action": "consent:payments-a:op-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.826671+00:00",
+        "monotonic_ns": 10120935462800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:REVIEW_APPROVED",
-      "action": "local-human"
+      "action": "local-human",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.826671+00:00",
+        "monotonic_ns": 10120935469400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.826671+00:00",
+        "monotonic_ns": 10120935796800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.843689+00:00",
+        "monotonic_ns": 10120953048800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:contract3",
-      "action": "contract3:payments-a"
+      "action": "contract3:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.844679+00:00",
+        "monotonic_ns": 10120953658100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:TRUSTED_UPDATER_FIXTURE",
-      "action": "test-owner"
+      "action": "test-owner",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.844679+00:00",
+        "monotonic_ns": 10120953664300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit"
+      "action": "commit",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:46.844679+00:00",
+        "monotonic_ns": 10120954077400,
+        "process_id": 21216
+      }
     }
   ],
   "events": [],
@@ -3299,7 +3392,7 @@
             "nonce": "n-test-4-00000006",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:95f3a9306390de29eadec79ee3c25d0ad884d4f14cc3585e834a107a3280d01f949d7fda10ee071a00fc43eb11816231bdf3cc7ea2ac1273de3e90ef302b540d",
+            "signature": "ed25519:618fd4e3e2aa906f11572855391e8f5f9a424dab5cfcdcc9a93ef431d5a8831a904463b7da4ed43aee7f13c0e8176869f32fe9bb799b8788e8d868b444559802",
             "task_id": "payments-a",
             "ticket_id": "tk-test-4-00000005",
             "tool": "transfer_funds",
@@ -4215,7 +4308,7 @@
         "subject": "ag-7173a23f6b45b9c97fa55ebf4559860f",
         "task": "payments-a"
       },
-      "signature": "a2d118ee1762783df907f6edf2681f60129b4fb99e16f89f1cf81b7d570c700b2e219e3719d73c2ea23cf63f87c105d223f5ff4c1cfc24e3a2e38bd4f2ff4c08"
+      "signature": "6498f846a8128ec7db3953f52ef89fc071697f77136831a557e10f57b4f9fe947ca6aa5b9a0666bd716db0e307f57bf9fcad3326f6330c09d47fbe7495a78102"
     },
     "ag-e1bfaa6a4c632e8d19b9e57e8b35de04": {
       "data": {
@@ -4233,7 +4326,7 @@
         "subject": "ag-e1bfaa6a4c632e8d19b9e57e8b35de04",
         "task": "payments-a"
       },
-      "signature": "27c3e18d00e728362a9b37fb76da8f82b87e4b28ae8c6ddbfdd33a21b35bd2bb465676c3d6afc17d673aca7dd318b94cd7002de9f9e8fac1aa3c8fd6b1fafb02"
+      "signature": "b469a0d6178cc1307462be4cf3b906dac7d8189a1fea431355e352dff26ba725dfa35c5c11d99f45dc35268ee2faf02d11e0cc88f0a7b02157641b4c65c33102"
     },
     "ag-0199f8b9e81f9b70488d92a1b0192ef4": {
       "data": {
@@ -4243,7 +4336,7 @@
         "subject": "ag-0199f8b9e81f9b70488d92a1b0192ef4",
         "task": "payments-a"
       },
-      "signature": "e0d9d80771bf6e754bb5015df771e56c51abb49ed193604a8e3e62cafc72be0432849938f35183900f863d66228dfe3c49b967818921edfb75db5fd6e856f304"
+      "signature": "7a5a755b4a64803747075ed07a4e73eb86cbb4348e4e527c4420819fab8ad3729793bb2b7c2ae3fe12c26ef19edf5852b2c1a4bcd13a440a6fddea60c1358205"
     }
   },
   "bindings": {
@@ -4261,6 +4354,18 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:46.782600+00:00",
+      "finished_at_utc": "2026-10-27T14:40:46.847686+00:00",
+      "duration_ns": 65675700,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:46.847686+00:00",
+    "events": [],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {

@@ -48,10 +48,17 @@ class InferenceReceiver:
             if context["model"] != self.model.model or context["provider"] != self.model.provider:
                 raise ValueError("configured model changed; new inference intent required")
             async def generate():
+                if "planning" in context and getattr(self.model, "structured_worker_output", False):
+                    from atomicroot.integration.planning import planner_response_schema
+                    return await self.model.generate(context["messages"], response_schema=planner_response_schema(context["messages"]))
                 if "response_schema" in context:
                     return await self.model.generate(context["messages"], response_schema=context["response_schema"])
                 return await self.model.generate(context["messages"])
-            result = await self.memo.run(operation, job["budget"], "LLM", self.model.model, context, self.llm_limits, generate)
+            memo_payload = context
+            if "planning" in context and getattr(self.model, "structured_worker_output", False):
+                from atomicroot.integration.planning import planner_response_schema
+                memo_payload = {**context, "response_schema": planner_response_schema(context["messages"])}
+            result = await self.memo.run(operation, job["budget"], "LLM", self.model.model, memo_payload, self.llm_limits, generate)
         else:
             if payload["args"]["to"] != self.classifier.provider or job["model"] != self.classifier.model:
                 raise ValueError("classifier provider/model changed; new intent required")
@@ -94,13 +101,14 @@ class InferenceReceiver:
 
 
 class ModelBridge:
-    def __init__(self, runtime, model, classifier, *, llm_limits=Limits(), jev_limits=Limits(), threshold=.8, bootstrap_authorized=False, progress=None):
+    def __init__(self, runtime, model, classifier, *, llm_limits=Limits(), jev_limits=Limits(), threshold=.8, bootstrap_authorized=False, progress=None, budget=None):
         self.runtime, self.model = runtime, model
         self.progress = progress
-        self.memo = InferenceMemo(runtime.store, progress=progress)
+        self.memo = InferenceMemo(runtime.store, progress=progress, aggregate_budget=budget)
         self.receiver = InferenceReceiver(runtime, self.memo, model, classifier, llm_limits=llm_limits, jev_limits=jev_limits, threshold=threshold)
         self.tools = GuardedTools(runtime, receiver=self.receiver, progress=progress)
         self.bootstrap_authorized, self.llm_limits = bootstrap_authorized, llm_limits
+        self.budget = budget
 
     def author(self, key, budget, messages):
         import asyncio
@@ -108,11 +116,15 @@ class ModelBridge:
         return asyncio.run(self.memo.run(key, budget, "LLM", self.model.model, {"messages": messages, "provider": self.model.provider,
                                   "prompt_version": AUTHOR_VERSION}, self.llm_limits, lambda: self.model.generate(messages)))["output"]
 
-    def worker(self, key, budget, *, messages, sources, context_resource, principal, task, purpose, execution=None):
+    def worker(self, key, budget, *, messages, sources, context_resource, principal, task, purpose, execution=None, planning=None):
+        budget = self.budget or budget
         context = {"messages": messages, "sources": sources, "provider": self.model.provider,
                    "model": self.model.model, "prompt_version": CONFIG_WORKER_VERSION if execution else WORKER_VERSION}
         if execution: context["execution"] = freeze_json(execution)
-        if getattr(self.model, "structured_worker_output", False):
+        if planning:
+            from atomicroot.integration.planning import PLANNER_VERSION
+            context.update(prompt_version=PLANNER_VERSION, planning=freeze_json(planning))
+        if not planning and getattr(self.model, "structured_worker_output", False):
             with self.runtime.store.snapshot() as snap:
                 contract = snap.read(f"contract3:{task}")[1]
                 if execution:
@@ -134,7 +146,7 @@ class ModelBridge:
             doc = self.runtime.storage.ingest(context_resource, content, owner)
             data = {"task": task, "tool": "model_inference", "resource": context_resource,
                 "digest": doc["digest"], "version": doc["version"], "context_hash": args_hash(context), "budget": budget}
-            if execution:
+            if execution or planning:
                 with self.runtime.store.snapshot() as snap: binding = snap.read(f"taskresolved:{task}")[1]
                 data.update(principal=principal.subject, resolved_binding=binding)
             job = self.memo.save_job(key, data)
@@ -147,6 +159,7 @@ class ModelBridge:
 
     def classify(self, key, budget, *, resource, digest, version, principal, task, purpose, criteria=None,
                  criteria_version=CRITERIA_VERSION, extraction=None):
+        budget = self.budget or budget
         provider = self.receiver.classifier
         criteria = freeze_json(criteria or CRITERIA)
         if set(criteria) != set(OPTIONS): raise ValueError("registered classifier criteria required")

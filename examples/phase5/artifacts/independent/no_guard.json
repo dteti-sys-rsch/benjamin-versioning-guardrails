@@ -555,7 +555,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "d0de65f89fd7ac7c6ff3225f58bb44cf53b3974c1d58ed2dc82ee84bafc7a348",
+  "public_key": "15e3cdc6ff2d0b5fee24c9938f92f7662aeea00825e7528aba7ce1eef86c943d",
   "initial": {
     "ledger": {
       "state": [
@@ -5096,7 +5096,7 @@
           "nonce": "n-test-4-00000008",
           "not_after": "2026-10-25T00:00:30+00:00",
           "not_before": "2026-10-25T00:00:00+00:00",
-          "signature": "ed25519:7aef9de8af7c4853f6907f3ea3e736a15f2a17b7605c8a54f89be5ea4c18821f6063de74926f99aa9561a9031a330f4330312a1169bdc831f6c83cc71f36aa04",
+          "signature": "ed25519:ad7567979e62fba36922f5015f16f0e17f11ad9f71d9b6968089f41fd6ea0fee9da932b83182a7d32c68eaeb0bc653c3bdd886e1e65c1df86a64ae3ba3d3fd0d",
           "task_id": "payments-a",
           "ticket_id": "tk-test-4-00000007",
           "tool": "transfer_funds",
@@ -5139,7 +5139,7 @@
           "nonce": "n-test-4-00000010",
           "not_after": "2026-10-25T00:00:30+00:00",
           "not_before": "2026-10-25T00:00:00+00:00",
-          "signature": "ed25519:ef0e98d69e7443760b089f97825dcda5330bffa484c309f7115449a96cda9376054d396cbac3f2db61040ed9b9ac226b36415ecae00c3aa1effe2660744c770b",
+          "signature": "ed25519:40610dc563db1a8c4bb6722d7954357f8bc85d50ca8f679913a2b7d6cd15f2e727cf41816517309479c4a8206cc6e8369fedec1110370269a6d4c8cfa9dbda07",
           "task_id": "independent-a",
           "ticket_id": "tk-test-4-00000009",
           "tool": "transfer_funds",
@@ -5183,6 +5183,62 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:41.448898+00:00",
+      "finished_at_utc": "2026-10-27T14:40:41.477893+00:00",
+      "duration_ns": 28748200,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "auth-one",
+          "started_at_utc": "2026-10-27T14:40:41.448898+00:00",
+          "finished_at_utc": "2026-10-27T14:40:41.450897+00:00",
+          "duration_ns": 1841500,
+          "process_id": 21216
+        },
+        {
+          "step": 1,
+          "action": "auth-two",
+          "started_at_utc": "2026-10-27T14:40:41.450897+00:00",
+          "finished_at_utc": "2026-10-27T14:40:41.451895+00:00",
+          "duration_ns": 1291100,
+          "process_id": 21216
+        },
+        {
+          "step": 2,
+          "action": "commit-one",
+          "started_at_utc": "2026-10-27T14:40:41.451895+00:00",
+          "finished_at_utc": "2026-10-27T14:40:41.454385+00:00",
+          "duration_ns": 2133400,
+          "process_id": 21216
+        },
+        {
+          "step": 3,
+          "action": "commit-two",
+          "started_at_utc": "2026-10-27T14:40:41.454385+00:00",
+          "finished_at_utc": "2026-10-27T14:40:41.471422+00:00",
+          "duration_ns": 17363400,
+          "process_id": 21216
+        },
+        {
+          "step": 4,
+          "action": "dispatch",
+          "started_at_utc": "2026-10-27T14:40:41.471422+00:00",
+          "finished_at_utc": "2026-10-27T14:40:41.474895+00:00",
+          "duration_ns": 2911100,
+          "process_id": 21216
+        },
+        {
+          "step": 5,
+          "action": "dispatch-again",
+          "started_at_utc": "2026-10-27T14:40:41.474895+00:00",
+          "finished_at_utc": "2026-10-27T14:40:41.477893+00:00",
+          "duration_ns": 2716700,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": []
@@ -5190,99 +5246,225 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "auth-one"
+      "action": "auth-one",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.449898+00:00",
+        "monotonic_ns": 10115558457000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth-one"
+      "action": "auth-one",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.450897+00:00",
+        "monotonic_ns": 10115559689800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "auth-two"
+      "action": "auth-two",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.450897+00:00",
+        "monotonic_ns": 10115560204300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth-two"
+      "action": "auth-two",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.451895+00:00",
+        "monotonic_ns": 10115561076800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit-one"
+      "action": "commit-one",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.452939+00:00",
+        "monotonic_ns": 10115561783600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:reserved",
-      "action": "reserved:payments-a"
+      "action": "reserved:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.454385+00:00",
+        "monotonic_ns": 10115563289400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:payments-a:op-first"
+      "action": "operation:payments-a:op-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.454385+00:00",
+        "monotonic_ns": 10115563302600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "commit-one"
+      "action": "commit-one",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.454385+00:00",
+        "monotonic_ns": 10115563314400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit-two"
+      "action": "commit-two",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.470423+00:00",
+        "monotonic_ns": 10115579376500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:reserved",
-      "action": "reserved:independent-a"
+      "action": "reserved:independent-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.471422+00:00",
+        "monotonic_ns": 10115580704100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:independent-a:op-first"
+      "action": "operation:independent-a:op-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.471422+00:00",
+        "monotonic_ns": 10115580721000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "commit-two"
+      "action": "commit-two",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.471422+00:00",
+        "monotonic_ns": 10115580734600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.472663+00:00",
+        "monotonic_ns": 10115581753300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.473884+00:00",
+        "monotonic_ns": 10115582850400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:reserved",
-      "action": "reserved:payments-a"
+      "action": "reserved:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.474895+00:00",
+        "monotonic_ns": 10115583697200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:budget",
-      "action": "budget:payments-a"
+      "action": "budget:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.474895+00:00",
+        "monotonic_ns": 10115583712000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.474895+00:00",
+        "monotonic_ns": 10115583722100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.474895+00:00",
+        "monotonic_ns": 10115583732300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "independent-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.475894+00:00",
+        "monotonic_ns": 10115584632200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "independent-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.476894+00:00",
+        "monotonic_ns": 10115585469900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:reserved",
-      "action": "reserved:independent-a"
+      "action": "reserved:independent-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.477893+00:00",
+        "monotonic_ns": 10115586498500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:budget",
-      "action": "budget:independent-a"
+      "action": "budget:independent-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.477893+00:00",
+        "monotonic_ns": 10115586513800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.477893+00:00",
+        "monotonic_ns": 10115586522500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "independent-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:41.477893+00:00",
+        "monotonic_ns": 10115586532100,
+        "process_id": 21216
+      }
     }
   ],
   "events": [
@@ -6621,7 +6803,7 @@
             "nonce": "n-test-4-00000008",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:7aef9de8af7c4853f6907f3ea3e736a15f2a17b7605c8a54f89be5ea4c18821f6063de74926f99aa9561a9031a330f4330312a1169bdc831f6c83cc71f36aa04",
+            "signature": "ed25519:ad7567979e62fba36922f5015f16f0e17f11ad9f71d9b6968089f41fd6ea0fee9da932b83182a7d32c68eaeb0bc653c3bdd886e1e65c1df86a64ae3ba3d3fd0d",
             "task_id": "payments-a",
             "ticket_id": "tk-test-4-00000007",
             "tool": "transfer_funds",
@@ -6671,7 +6853,7 @@
             "nonce": "n-test-4-00000010",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:ef0e98d69e7443760b089f97825dcda5330bffa484c309f7115449a96cda9376054d396cbac3f2db61040ed9b9ac226b36415ecae00c3aa1effe2660744c770b",
+            "signature": "ed25519:40610dc563db1a8c4bb6722d7954357f8bc85d50ca8f679913a2b7d6cd15f2e727cf41816517309479c4a8206cc6e8369fedec1110370269a6d4c8cfa9dbda07",
             "task_id": "independent-a",
             "ticket_id": "tk-test-4-00000009",
             "tool": "transfer_funds",
@@ -8105,52 +8287,6 @@
     "attempted_logical_operations": 2
   },
   "capabilities": {
-    "ag-7173a23f6b45b9c97fa55ebf4559860f": {
-      "data": {
-        "budget_limit": 500,
-        "expires": "2026-10-25T00:05:00+00:00",
-        "scope": [
-          {
-            "destination": "account-a",
-            "max_amount": 300,
-            "purpose": "payments",
-            "resource": null,
-            "tool": "transfer_funds"
-          }
-        ],
-        "subject": "ag-7173a23f6b45b9c97fa55ebf4559860f",
-        "task": "payments-a"
-      },
-      "signature": "676fa0e05d9f88c865a361c61b1af274970650bbffbd0e7c31450ba4072a11557fe72b41bced15eeec2054beaae2db9898608fd8e9cf474f9caf9ff991616006"
-    },
-    "ag-e1bfaa6a4c632e8d19b9e57e8b35de04": {
-      "data": {
-        "budget_limit": 500,
-        "expires": "2026-10-25T00:05:00+00:00",
-        "scope": [
-          {
-            "destination": "account-b",
-            "max_amount": 300,
-            "purpose": "payments",
-            "resource": null,
-            "tool": "transfer_funds"
-          }
-        ],
-        "subject": "ag-e1bfaa6a4c632e8d19b9e57e8b35de04",
-        "task": "payments-a"
-      },
-      "signature": "fae9a664ff1edaf4577d05a83594b009d082e3b2d1fda5faee88d7d3593bb3f00ff28673883d96b5b02ab617e03f91cc46da11fbb2ea8315410acbf9ec35490d"
-    },
-    "ag-0199f8b9e81f9b70488d92a1b0192ef4": {
-      "data": {
-        "budget_limit": 500,
-        "expires": "2026-10-25T00:05:00+00:00",
-        "scope": [],
-        "subject": "ag-0199f8b9e81f9b70488d92a1b0192ef4",
-        "task": "payments-a"
-      },
-      "signature": "63ce24bd89a07d62ee7387be8e5532430e97aad123ba071ba45fb00b413029250664382ea51503f98e5d56f6f0fbfcfa88472cdfe3b3b9976c42fb2e5191a10a"
-    },
     "ag-3940dabb880f184a0a2cae61318b2c18": {
       "data": {
         "budget_limit": 500,
@@ -8167,7 +8303,7 @@
         "subject": "ag-3940dabb880f184a0a2cae61318b2c18",
         "task": "independent-a"
       },
-      "signature": "26b2fc8c0d58890ae7113fce43898f40f7de8bf17248fa1e1e9a1e7be4192bfc0dcad7e023cc519bbe43ce8cdfd3d75744a861a0931f5c3a9b8e24246877e502"
+      "signature": "cc7a848abb3ec1ae84b9228350c9d1065c83f5643b769798d33cec9ad6f69de84754c5bac0a391b804d7b8260c6d65fb21fd077fca7ac2bc5dabfbab1e7b7b0b"
     },
     "ag-ab94d0515b1622d60afcf6f00b1de637": {
       "data": {
@@ -8185,7 +8321,7 @@
         "subject": "ag-ab94d0515b1622d60afcf6f00b1de637",
         "task": "independent-a"
       },
-      "signature": "a4df4e97026fb46f3c09e052480e39336f9452b8936e9b49e8a06f9ac5406d0c3076c93dd3cdc9818b5c5feb35cac1cb625c04c3aa070b24d09c62ecbdebed00"
+      "signature": "3d0b378ee13acdd371f5bace748f3d9f1a5651b90e7085dd9bd399b0c74af4b327ecd02158cd6737b6e883fc49c70abad2b339e26342ed316df5f3e441b10804"
     },
     "ag-656c4e5d8dde7256b08ca3921f963f98": {
       "data": {
@@ -8195,7 +8331,53 @@
         "subject": "ag-656c4e5d8dde7256b08ca3921f963f98",
         "task": "independent-a"
       },
-      "signature": "b6eefe4c40605948625ca8d238f7f6f1884042825d41d007b413d70e6414ec03e2825f2ecb4229c15d724c3552e1e6d98a2e0e533989ec25ebe97deace84ec06"
+      "signature": "d079029dba1362992635b68aac516c5fc5395f3f26472bb9d53ed98d41260a9d796b3fc0572c5f2d01a32795b7083525c5035e3b8342ea98af3e084f128c9e02"
+    },
+    "ag-7173a23f6b45b9c97fa55ebf4559860f": {
+      "data": {
+        "budget_limit": 500,
+        "expires": "2026-10-25T00:05:00+00:00",
+        "scope": [
+          {
+            "destination": "account-a",
+            "max_amount": 300,
+            "purpose": "payments",
+            "resource": null,
+            "tool": "transfer_funds"
+          }
+        ],
+        "subject": "ag-7173a23f6b45b9c97fa55ebf4559860f",
+        "task": "payments-a"
+      },
+      "signature": "d674dc0c5b6de1c831157aee1533ab0e0a5e5112e2cd79f4b5f5fa4c046bb9c70e526ccd8b08f78677a2f9a93eac316bbcd9f15defd0cb031b0be551aad76d09"
+    },
+    "ag-e1bfaa6a4c632e8d19b9e57e8b35de04": {
+      "data": {
+        "budget_limit": 500,
+        "expires": "2026-10-25T00:05:00+00:00",
+        "scope": [
+          {
+            "destination": "account-b",
+            "max_amount": 300,
+            "purpose": "payments",
+            "resource": null,
+            "tool": "transfer_funds"
+          }
+        ],
+        "subject": "ag-e1bfaa6a4c632e8d19b9e57e8b35de04",
+        "task": "payments-a"
+      },
+      "signature": "642c859785bff44ed3ecc960affcb2e06a713a036329520878fdbc40ff1dee508cb8f4a36d9b93a6aa48c315b661294529baf262f1ec1607fea6707b4feb0103"
+    },
+    "ag-0199f8b9e81f9b70488d92a1b0192ef4": {
+      "data": {
+        "budget_limit": 500,
+        "expires": "2026-10-25T00:05:00+00:00",
+        "scope": [],
+        "subject": "ag-0199f8b9e81f9b70488d92a1b0192ef4",
+        "task": "payments-a"
+      },
+      "signature": "7e034e4705f5b0f3309202eaf20c7241d4ec37e52f648df76a230bd8324d116a175f5d74e345d117c4f4b10e05b338c1dde4253593a2083874246d06c1337a02"
     }
   },
   "bindings": {
@@ -8213,6 +8395,83 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:41.395123+00:00",
+      "finished_at_utc": "2026-10-27T14:40:41.484483+00:00",
+      "duration_ns": 88753000,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:41.484483+00:00",
+    "events": [
+      {
+        "event": 0,
+        "kind": "INTENT",
+        "task": "payments-a",
+        "operation": "op-first",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:41.484483+00:00",
+        "hook_index": 6,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:41.454385+00:00",
+          "monotonic_ns": 10115563302600,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 1,
+        "kind": "INTENT",
+        "task": "independent-a",
+        "operation": "op-first",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:41.484483+00:00",
+        "hook_index": 10,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:41.471422+00:00",
+          "monotonic_ns": 10115580721000,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 2,
+        "kind": "APPLIED",
+        "task": "payments-a",
+        "operation": "op-first",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:41.484483+00:00",
+        "hook_index": 13,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:41.473884+00:00",
+          "monotonic_ns": 10115582850400,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 3,
+        "kind": "APPLIED",
+        "task": "independent-a",
+        "operation": "op-first",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:41.484483+00:00",
+        "hook_index": 19,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:41.476894+00:00",
+          "monotonic_ns": 10115585469900,
+          "process_id": 21216
+        },
+        "deferred": false
+      }
+    ],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {
@@ -15686,67 +15945,6 @@
       "attempted_logical_operations": 2
     },
     "capabilities": {
-      "ag-7173a23f6b45b9c97fa55ebf4559860f": {
-        "data": {
-          "budget_limit": 500,
-          "expires": "2026-10-25T00:05:00+00:00",
-          "scope": [
-            {
-              "destination": "account-a",
-              "max_amount": 300,
-              "purpose": "payments",
-              "resource": null,
-              "tool": "transfer_funds"
-            }
-          ],
-          "subject": "ag-7173a23f6b45b9c97fa55ebf4559860f",
-          "task": "payments-a"
-        },
-        "signature": {
-          "algorithm": "Ed25519",
-          "verified": true,
-          "payload_digest": "sha256:2607d14aee04ba989e6699ae8dded3fbc41564b68a7582749d2122de8d96a55f",
-          "key_role": "temporary-evaluation-authority"
-        }
-      },
-      "ag-e1bfaa6a4c632e8d19b9e57e8b35de04": {
-        "data": {
-          "budget_limit": 500,
-          "expires": "2026-10-25T00:05:00+00:00",
-          "scope": [
-            {
-              "destination": "account-b",
-              "max_amount": 300,
-              "purpose": "payments",
-              "resource": null,
-              "tool": "transfer_funds"
-            }
-          ],
-          "subject": "ag-e1bfaa6a4c632e8d19b9e57e8b35de04",
-          "task": "payments-a"
-        },
-        "signature": {
-          "algorithm": "Ed25519",
-          "verified": true,
-          "payload_digest": "sha256:bcc7f4361dc5ea2e3904d477e39af960034996194cd77996f2ddc141cb723d10",
-          "key_role": "temporary-evaluation-authority"
-        }
-      },
-      "ag-0199f8b9e81f9b70488d92a1b0192ef4": {
-        "data": {
-          "budget_limit": 500,
-          "expires": "2026-10-25T00:05:00+00:00",
-          "scope": [],
-          "subject": "ag-0199f8b9e81f9b70488d92a1b0192ef4",
-          "task": "payments-a"
-        },
-        "signature": {
-          "algorithm": "Ed25519",
-          "verified": true,
-          "payload_digest": "sha256:84843bb364dca953762804df6c07c097090b1dfedb442f440f1c7283c79c037a",
-          "key_role": "temporary-evaluation-authority"
-        }
-      },
       "ag-3940dabb880f184a0a2cae61318b2c18": {
         "data": {
           "budget_limit": 500,
@@ -15805,6 +16003,67 @@
           "algorithm": "Ed25519",
           "verified": true,
           "payload_digest": "sha256:b42744f896a3094db71151e44f642cefcf862c76b6cca703e9078e7ed7fda1f1",
+          "key_role": "temporary-evaluation-authority"
+        }
+      },
+      "ag-7173a23f6b45b9c97fa55ebf4559860f": {
+        "data": {
+          "budget_limit": 500,
+          "expires": "2026-10-25T00:05:00+00:00",
+          "scope": [
+            {
+              "destination": "account-a",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ],
+          "subject": "ag-7173a23f6b45b9c97fa55ebf4559860f",
+          "task": "payments-a"
+        },
+        "signature": {
+          "algorithm": "Ed25519",
+          "verified": true,
+          "payload_digest": "sha256:2607d14aee04ba989e6699ae8dded3fbc41564b68a7582749d2122de8d96a55f",
+          "key_role": "temporary-evaluation-authority"
+        }
+      },
+      "ag-e1bfaa6a4c632e8d19b9e57e8b35de04": {
+        "data": {
+          "budget_limit": 500,
+          "expires": "2026-10-25T00:05:00+00:00",
+          "scope": [
+            {
+              "destination": "account-b",
+              "max_amount": 300,
+              "purpose": "payments",
+              "resource": null,
+              "tool": "transfer_funds"
+            }
+          ],
+          "subject": "ag-e1bfaa6a4c632e8d19b9e57e8b35de04",
+          "task": "payments-a"
+        },
+        "signature": {
+          "algorithm": "Ed25519",
+          "verified": true,
+          "payload_digest": "sha256:bcc7f4361dc5ea2e3904d477e39af960034996194cd77996f2ddc141cb723d10",
+          "key_role": "temporary-evaluation-authority"
+        }
+      },
+      "ag-0199f8b9e81f9b70488d92a1b0192ef4": {
+        "data": {
+          "budget_limit": 500,
+          "expires": "2026-10-25T00:05:00+00:00",
+          "scope": [],
+          "subject": "ag-0199f8b9e81f9b70488d92a1b0192ef4",
+          "task": "payments-a"
+        },
+        "signature": {
+          "algorithm": "Ed25519",
+          "verified": true,
+          "payload_digest": "sha256:84843bb364dca953762804df6c07c097090b1dfedb442f440f1c7283c79c037a",
           "key_role": "temporary-evaluation-authority"
         }
       }

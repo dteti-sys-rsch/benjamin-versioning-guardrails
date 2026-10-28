@@ -36,6 +36,31 @@ py -m venv .venv
 On other platforms, use `.venv/bin/python` after creating the environment with
 `python3 -m venv .venv`.
 
+## Goal-driven use: System B
+
+`atomicroot_cli.py` is the primary goal-to-execution entry point. The planner
+proposes a TaskSpec, agent scopes, workflow and policy DSL from the goal and an
+authorized catalog. Trusted resolution, exact Broker review and executor A then
+control activation and execution. No per-use-case template is required in the
+runtime; available adapters, facts, operators and completion criteria bound it.
+
+Planning itself requires a separately reviewed intake task before any provider
+call. Unknown requirements remain visible as clarification/unsupported results.
+Model proposals never install tools, grant rights or set authoritative labels.
+
+```powershell
+.\.venv\Scripts\python.exe atomicroot_cli.py --help
+.\.venv\Scripts\python.exe run_tests.py phase55
+.\.venv\Scripts\python.exe examples/phase55/generate.py --output .runs/my-b-evidence
+```
+
+See [System B setup, review and replay](examples/phase55/README.md).
+Phase 5.5 is offline verified with fake/replay models. A finite local Qwen3:8b
+smoke test verified the configured A worker, read/summary evidence and recovery;
+B planner attempts did not produce an executable proposal. See the
+[live commands and limitations](examples/phase55/README.md#live-ollama-qwen38b).
+The Phase 3.6/3.7 configuration CLIs remain available as the internal A path.
+
 ## Offline examples
 
 Run all offline tests and generate fresh timestamped replay evidence in one command:
@@ -44,7 +69,7 @@ Run all offline tests and generate fresh timestamped replay evidence in one comm
 .\.venv\Scripts\python.exe run_tests.py all
 ```
 
-Use `quick`, `phase4`, `phase5`, `regression`, or `scenarios` to select work.
+Use `quick`, `phase4`, `phase5`, `phase55`, `regression`, or `scenarios` to select work.
 Each invocation keeps a new result directory with UTC timing, logs and a summary.
 See [testing profiles and timestamp meanings](TESTING.md) for PowerShell/Bash
 examples and the distinction between real observation time and virtual replay time.

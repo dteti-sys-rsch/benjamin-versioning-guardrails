@@ -18,7 +18,8 @@ class ModelTape:
             raise ValueError("recording delegate binding mismatch")
         self.live = bool(delegate and delegate.live)
         self.mode = "live" if self.live else "replay" if delegate is None else "fake"
-        self.structured_worker_output = bool(getattr(delegate, "structured_worker_output", False))
+        self.structured_worker_output = bool(getattr(delegate, "structured_worker_output", False) or
+            (delegate is None and any(r.get("binding", {}).get("response_schema") is not None for r in (records or {}).values())))
         self.records = freeze_json(records or {}, max_bytes=16 * 1024 * 1024)
         self.ordinals, self.lock = {}, Lock()
         source = getattr(delegate, "execution_binding", None) if delegate else args_hash(self.records)

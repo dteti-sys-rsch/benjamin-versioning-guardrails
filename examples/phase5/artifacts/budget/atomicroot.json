@@ -389,7 +389,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "27caacd3164052eaa97027cddf8432374e6097b581ef7ba6d7c361ce45d40de9",
+  "public_key": "eac54593443aa1377f36af32d3937edae6e49de7801c2201390ba13c8d369ef1",
   "initial": {
     "ledger": {
       "state": [
@@ -2905,7 +2905,7 @@
           "nonce": "n-test-4-00000005",
           "not_after": "2026-10-25T00:00:30+00:00",
           "not_before": "2026-10-25T00:00:00+00:00",
-          "signature": "ed25519:49fa47296e1ed142a60fa5527ab90f9f495d777476a7b1ffc1a9924a42811c10ce0e6b392807febbc91510bf5b03e57810969ca299b6212e5bc27e3585bd230d",
+          "signature": "ed25519:f7787a04e4f0bc41524a49bebdea9f96f225d7bda4d3da6ea4fa0ffb039d9e74366a36e013dfb0d18ca2c74dd1feab734e5f4c5083a12145a137130d03f8c006",
           "task_id": "payments-a",
           "ticket_id": "tk-test-4-00000004",
           "tool": "transfer_funds",
@@ -2948,7 +2948,7 @@
           "nonce": "n-test-4-00000007",
           "not_after": "2026-10-25T00:00:30+00:00",
           "not_before": "2026-10-25T00:00:00+00:00",
-          "signature": "ed25519:f06e09ddc67b25a9ae45433bb2d665ce50c7171716cfe4e4ab40aea7faec8fd0bc7c81f114495ae6f36c3195f4a06aa36c88c95d088c1264133aa6ce9f068101",
+          "signature": "ed25519:54f8056f2d6d6d177b97289a02a6b1d829e61369f29f8805a1f442ecae8bc3565c6a9dc4a74d8b21fa4d4a00013d2c88df1b696a7dcc33bee6827466bd2f9105",
           "task_id": "payments-a",
           "ticket_id": "tk-test-4-00000006",
           "tool": "transfer_funds",
@@ -2985,6 +2985,62 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:35.692609+00:00",
+      "finished_at_utc": "2026-10-27T14:40:35.755624+00:00",
+      "duration_ns": 63082100,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "auth-first",
+          "started_at_utc": "2026-10-27T14:40:35.692609+00:00",
+          "finished_at_utc": "2026-10-27T14:40:35.714323+00:00",
+          "duration_ns": 21567300,
+          "process_id": 21216
+        },
+        {
+          "step": 1,
+          "action": "auth-second",
+          "started_at_utc": "2026-10-27T14:40:35.714323+00:00",
+          "finished_at_utc": "2026-10-27T14:40:35.735695+00:00",
+          "duration_ns": 20828200,
+          "process_id": 21216
+        },
+        {
+          "step": 2,
+          "action": "commit-first",
+          "started_at_utc": "2026-10-27T14:40:35.735695+00:00",
+          "finished_at_utc": "2026-10-27T14:40:35.737318+00:00",
+          "duration_ns": 1787000,
+          "process_id": 21216
+        },
+        {
+          "step": 3,
+          "action": "commit-second",
+          "started_at_utc": "2026-10-27T14:40:35.737318+00:00",
+          "finished_at_utc": "2026-10-27T14:40:35.753517+00:00",
+          "duration_ns": 16361300,
+          "process_id": 21216
+        },
+        {
+          "step": 4,
+          "action": "dispatch",
+          "started_at_utc": "2026-10-27T14:40:35.753517+00:00",
+          "finished_at_utc": "2026-10-27T14:40:35.755624+00:00",
+          "duration_ns": 2176600,
+          "process_id": 21216
+        },
+        {
+          "step": 5,
+          "action": "dispatch-again",
+          "started_at_utc": "2026-10-27T14:40:35.755624+00:00",
+          "finished_at_utc": "2026-10-27T14:40:35.755624+00:00",
+          "duration_ns": 57100,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": []
@@ -2992,63 +3048,141 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "auth-first"
+      "action": "auth-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.692609+00:00",
+        "monotonic_ns": 10109802138100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth-first"
+      "action": "auth-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.714323+00:00",
+        "monotonic_ns": 10109823359900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "auth-second"
+      "action": "auth-second",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.715333+00:00",
+        "monotonic_ns": 10109824057600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth-second"
+      "action": "auth-second",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.735695+00:00",
+        "monotonic_ns": 10109844252600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit-first"
+      "action": "commit-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.736253+00:00",
+        "monotonic_ns": 10109844978500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:reserved",
-      "action": "reserved:payments-a"
+      "action": "reserved:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.737318+00:00",
+        "monotonic_ns": 10109846129200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:payments-a:op-first"
+      "action": "operation:payments-a:op-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.737318+00:00",
+        "monotonic_ns": 10109846136900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "commit-first"
+      "action": "commit-first",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.737318+00:00",
+        "monotonic_ns": 10109846143400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit-second"
+      "action": "commit-second",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.753517+00:00",
+        "monotonic_ns": 10109862349700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.754101+00:00",
+        "monotonic_ns": 10109863322300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.755114+00:00",
+        "monotonic_ns": 10109864046100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:reserved",
-      "action": "reserved:payments-a"
+      "action": "reserved:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.755624+00:00",
+        "monotonic_ns": 10109864755900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:budget",
-      "action": "budget:payments-a"
+      "action": "budget:payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.755624+00:00",
+        "monotonic_ns": 10109864762900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.755624+00:00",
+        "monotonic_ns": 10109864767400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "op-first"
+      "action": "op-first",
+      "task": "payments-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:35.755624+00:00",
+        "monotonic_ns": 10109864771400,
+        "process_id": 21216
+      }
     }
   ],
   "events": [
@@ -3855,7 +3989,7 @@
             "nonce": "n-test-4-00000005",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:49fa47296e1ed142a60fa5527ab90f9f495d777476a7b1ffc1a9924a42811c10ce0e6b392807febbc91510bf5b03e57810969ca299b6212e5bc27e3585bd230d",
+            "signature": "ed25519:f7787a04e4f0bc41524a49bebdea9f96f225d7bda4d3da6ea4fa0ffb039d9e74366a36e013dfb0d18ca2c74dd1feab734e5f4c5083a12145a137130d03f8c006",
             "task_id": "payments-a",
             "ticket_id": "tk-test-4-00000004",
             "tool": "transfer_funds",
@@ -3914,7 +4048,7 @@
             "nonce": "n-test-4-00000007",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:f06e09ddc67b25a9ae45433bb2d665ce50c7171716cfe4e4ab40aea7faec8fd0bc7c81f114495ae6f36c3195f4a06aa36c88c95d088c1264133aa6ce9f068101",
+            "signature": "ed25519:54f8056f2d6d6d177b97289a02a6b1d829e61369f29f8805a1f442ecae8bc3565c6a9dc4a74d8b21fa4d4a00013d2c88df1b696a7dcc33bee6827466bd2f9105",
             "task_id": "payments-a",
             "ticket_id": "tk-test-4-00000006",
             "tool": "transfer_funds",
@@ -4672,7 +4806,7 @@
         "subject": "ag-7173a23f6b45b9c97fa55ebf4559860f",
         "task": "payments-a"
       },
-      "signature": "986977b4c76e4fa3bcb094b8cf80986f8558659d1f09dab325e65de82bf7b1145e77f0e027f9a4f0a0619ec7cffdf656f4980bfe101b2bbe1700f2545fdd6d09"
+      "signature": "7f8e46aedd8bdcec3d4620efe76d6e920249bb778f1b67937c3a3f9e406f3e904ae2e3b176ebf483397cd21c09ba7c84c98980aafe9d6c73b7692e7ca12add01"
     },
     "ag-e1bfaa6a4c632e8d19b9e57e8b35de04": {
       "data": {
@@ -4690,7 +4824,7 @@
         "subject": "ag-e1bfaa6a4c632e8d19b9e57e8b35de04",
         "task": "payments-a"
       },
-      "signature": "70ab74d48e5fe216d1b3ecc7dabc91c3eb4db5cdeb48c644af1dcb8296d10abd0ae5f07d0a78b056b886be2dd459579cdb2e796142ca78e35e4846bc516f4e0e"
+      "signature": "1395f443e66a6d547b3c18d736bafd5861a29931d766cfc036559a543a3c92e53bd7e2890a07155a980147bd4d9be747c95f936f3b559a6875b90b6d4208150e"
     },
     "ag-0199f8b9e81f9b70488d92a1b0192ef4": {
       "data": {
@@ -4700,7 +4834,7 @@
         "subject": "ag-0199f8b9e81f9b70488d92a1b0192ef4",
         "task": "payments-a"
       },
-      "signature": "a6f069717f702df507e0299e2d7fb41ce9fd849b27ecc6a8ca28e7b7bdc0caf65a6cfa1e264411b89a3450c9ddbf834fb0d887a4c9edc6ce2ebdb2c532830008"
+      "signature": "d31b0057ee4c9c2a24b6f389be812b00f3ef7eb0ce3dedbc85d4a17d1b239122d3b8aa26cb6b87fdc416f8b7d0dbc341effadb1d64ee8a5d4a9b94d9d836c606"
     }
   },
   "bindings": {
@@ -4718,6 +4852,51 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:35.663513+00:00",
+      "finished_at_utc": "2026-10-27T14:40:35.759651+00:00",
+      "duration_ns": 96136400,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:35.759651+00:00",
+    "events": [
+      {
+        "event": 0,
+        "kind": "INTENT",
+        "task": "payments-a",
+        "operation": "op-first",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:35.759651+00:00",
+        "hook_index": 6,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:35.737318+00:00",
+          "monotonic_ns": 10109846136900,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 1,
+        "kind": "APPLIED",
+        "task": "payments-a",
+        "operation": "op-first",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:35.759651+00:00",
+        "hook_index": 10,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:35.755114+00:00",
+          "monotonic_ns": 10109864046100,
+          "process_id": 21216
+        },
+        "deferred": false
+      }
+    ],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {

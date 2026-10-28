@@ -1,5 +1,5 @@
 """Phase 3 authorization and intent Commit reuse the shared AST, tickets and CAS."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import re
 from dataclasses import asdict
@@ -137,6 +137,7 @@ class RuntimeAuthority:
                               "unknown_release": contract["unknown_release"], "resolved_label": "PUBLIC"}
                 normalized["base_digest"] = request["args"].get("digest", "")
                 normalized["inference_egress"] = contract.get("inference_egress", [])
+                normalized["authorization_time"] = self.store.now()
                 resource = None
                 if spec.resource:
                     digest = request["args"]["digest"]
@@ -189,6 +190,8 @@ class RuntimeAuthority:
             now = self.store._clock()
             ticket.not_before = now.isoformat()
             ticket.not_after = self._expiry(now, principal).isoformat()
+            if "_intake_expiry" in normalized:
+                ticket.not_after = min(datetime.fromisoformat(ticket.not_after), datetime.fromtimestamp(normalized["_intake_expiry"], timezone.utc)).isoformat()
             ticket.sign(self._sk)
             with self.store.transaction() as conn:
                 conn.execute("INSERT INTO authorizations(ticket,task,operation,data) VALUES (?,?,?,?)",

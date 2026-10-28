@@ -1,7 +1,7 @@
 # Testing AtomicRoot sekali jalan
 
-Gunakan sekarang untuk verifikasi Fase 1–5. Runner ini tidak menjalankan Fase
-5.5, benchmark/adaptive search baru, atau provider/effects live. Python dipakai
+Gunakan sekarang untuk verifikasi Fase 1–5.5. Runner ini tidak menjalankan Fase
+6, benchmark/adaptive search baru, atau provider/effects live. Python dipakai
 agar alur yang sama berjalan dari PowerShell maupun Bash, tanpa dependency baru.
 Jalankan dari root repository memakai interpreter venv proyek.
 
@@ -26,14 +26,16 @@ path interpreter dipakai langsung. Setup dependency tetap mengikuti README.
 | `quick` (default) | Tests timestamp/runner, policy dan oracle; cocok setelah edit kecil. |
 | `phase4` | Tests scheduler/replay/fallback dan timestamp. |
 | `phase5` | Tests policy, six-mode adapter, oracle, dan timestamp. |
+| `phase55` | Tests intake/planner B, review, replanning, API/CLI, replay/recovery dan timestamp. |
 | `regression` | Seluruh `atomicroot/tests`, termasuk fondasi/executor A. |
 | `scenarios` | 13 scenario plans × enam mode dan exact offline replay, dengan artifact. |
-| `all` | Seluruh regression, generator/replay Fase 4, lalu generator/replay Fase 5. |
+| `all` | Seluruh regression, generator/replay Fase 4, 5, dan dua goal B serta negative artifacts Fase 5.5. |
 
 ```powershell
 .\.venv\Scripts\python.exe run_tests.py quick
 .\.venv\Scripts\python.exe run_tests.py phase4
 .\.venv\Scripts\python.exe run_tests.py phase5
+.\.venv\Scripts\python.exe run_tests.py phase55
 .\.venv\Scripts\python.exe run_tests.py regression
 .\.venv\Scripts\python.exe run_tests.py scenarios
 
@@ -65,6 +67,7 @@ Default setiap eksekusi membuat folder baru:
     regression.log        # raw stdout/stderr; tiap command punya log sendiri
     phase4/               # hanya profil all
     phase5/               # profil all/scenarios tanpa filter
+    phase55/              # profil all: B goals, review/failure evidence dan replay
 ```
 
 Untuk scenario terpilih, artifact berada di subfolder nama scenario. Replay
@@ -158,3 +161,17 @@ Filter `scenarios --scenario budget --mode stateful_non_atomic` juga telah
 dijalankan melalui CLI runner: recording dan replay lulus, dengan laporan pada
 `.runs/testing/timestamps-filter-verification/summary.json`. Semua pemeriksaan
 ini offline dan effects simulasi; live validation `NOT RUN`.
+
+Verifikasi Fase 5.5 pada 28 Oktober 2026: `run_tests.py all --output
+.runs/testing/phase55-final-verification` lulus dengan **552 tests**, 35 replay
+Fase 4, 78 replay Fase 5, serta dua goal B dan tiga negative cases. Profil
+`phase55` diuji terpisah dan menghasilkan **47 passed**. Command, failures
+historis, audit serta batas live ada di [laporan Fase 5.5](examples/phase55/results.md).
+
+Smoke Ollama lokal pada 28 Oktober 2026 mempunyai bukti terpisah: worker A
+Qwen3:8b mencapai SATISFIED dengan 2 live calls, sedangkan empat session planner
+B belum menghasilkan executable proposal. Setelah patch completion read-plus-output,
+regression menghasilkan **555 passed**, dan profil `phase55` yang mencakup test
+harness baru menghasilkan **50 passed**. Hasil ini tidak menggantikan hasil
+historis di atas. [Perintah demo live](examples/phase55/README.md#live-ollama-qwen38b)
+memerlukan explicit flags; `run_tests.py` tetap offline dan tidak memanggil Ollama.

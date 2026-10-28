@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-27T17:32:20.760053+00:00",
+  "phase": "5.5",
+  "status": "IMPLEMENTED_OFFLINE_VERIFIED",
+  "final_run": {
+    "schema_version": 1,
+    "profile": "all",
+    "directory": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification",
+    "python": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+    "python_version": "3.12.3",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "effects": "SIMULATED",
+    "live_validation": "NOT RUN",
+    "status": "PASSED",
+    "commands": [
+      {
+        "name": "regression",
+        "args": [
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+          "-m",
+          "pytest",
+          "atomicroot/tests",
+          "-q",
+          "--junitxml",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\regression.xml"
+        ],
+        "cwd": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System",
+        "log": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\regression.log",
+        "status": "PASSED",
+        "exit_code": 0,
+        "observed_timing": {
+          "started_at_utc": "2026-10-27T17:29:26.004108+00:00",
+          "finished_at_utc": "2026-10-27T17:30:49.358721+00:00",
+          "duration_ns": 83354728400,
+          "process_id": 6508
+        },
+        "junit": {
+          "tests": 552,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suite_timestamps": [
+            "2026-10-28T00:29:27.155470+07:00"
+          ],
+          "seconds": 81.634
+        }
+      },
+      {
+        "name": "phase4-artifacts",
+        "args": [
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\examples\\phase4\\generate.py",
+          "--output",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase4"
+        ],
+        "cwd": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System",
+        "log": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase4-artifacts.log",
+        "status": "PASSED",
+        "exit_code": 0,
+        "observed_timing": {
+          "started_at_utc": "2026-10-27T17:30:49.370603+00:00",
+          "finished_at_utc": "2026-10-27T17:30:59.823184+00:00",
+          "duration_ns": 10452394700,
+          "process_id": 6508
+        }
+      },
+      {
+        "name": "phase5-artifacts",
+        "args": [
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\examples\\phase5\\generate.py",
+          "--output",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase5"
+        ],
+        "cwd": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System",
+        "log": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase5-artifacts.log",
+        "status": "PASSED",
+        "exit_code": 0,
+        "observed_timing": {
+          "started_at_utc": "2026-10-27T17:30:59.826353+00:00",
+          "finished_at_utc": "2026-10-27T17:31:19.674095+00:00",
+          "duration_ns": 19848386100,
+          "process_id": 6508
+        }
+      },
+      {
+        "name": "phase55-artifacts",
+        "args": [
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\examples\\phase55\\generate.py",
+          "--output",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase55"
+        ],
+        "cwd": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System",
+        "log": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase55-artifacts.log",
+        "status": "PASSED",
+        "exit_code": 0,
+        "observed_timing": {
+          "started_at_utc": "2026-10-27T17:31:19.676741+00:00",
+          "finished_at_utc": "2026-10-27T17:31:22.224174+00:00",
+          "duration_ns": 2547191000,
+          "process_id": 6508
+        }
+      }
+    ],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T17:29:25.909005+00:00",
+      "finished_at_utc": "2026-10-27T17:31:25.409731+00:00",
+      "duration_ns": 119500639700,
+      "process_id": 6508
+    }
+  },
+  "baseline": {
+    "command": ".\\.venv\\Scripts\\python.exe -m pytest atomicroot/tests -q --junitxml=.runs/phase55/baseline.xml",
+    "tests": 512,
+    "failures": 0,
+    "raw_xml": ".runs/phase55/baseline.xml"
+  },
+  "phase4_exact_replays": 35,
+  "phase5_exact_replays": 78,
+  "phase55": {
+    "schema_version": 1,
+    "command": [
+      "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+      "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\examples\\phase55\\generate.py",
+      "--output",
+      "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-final-verification\\phase55"
+    ],
+    "runs": [
+      {
+        "goal": "Read the file only.",
+        "status": "SATISFIED",
+        "proposal_replay": true,
+        "checkpoint_recover": true,
+        "business_effects": "SIMULATED",
+        "model_origin": "OFFLINE_FAKE_PREBUILT_PROPOSAL",
+        "live_synthesis": "NOT RUN"
+      },
+      {
+        "goal": "Read the file and write a proposed update after a fresh read, with amount at most 175.",
+        "status": "SATISFIED",
+        "proposal_replay": true,
+        "checkpoint_recover": true,
+        "business_effects": "SIMULATED",
+        "model_origin": "OFFLINE_FAKE_PREBUILT_PROPOSAL",
+        "live_synthesis": "NOT RUN"
+      }
+    ],
+    "negative_cases": [
+      {
+        "scenario": "unsupported",
+        "status": "UNSUPPORTED",
+        "rejection": null,
+        "business_intents": 0,
+        "fixture_actor": "untrusted proposal"
+      },
+      {
+        "scenario": "forged-authority",
+        "status": "INVALID_PROPOSAL",
+        "rejection": null,
+        "business_intents": 0,
+        "fixture_actor": "untrusted proposal"
+      },
+      {
+        "scenario": "stale-review",
+        "status": "REVIEW_WAIT",
+        "rejection": "STALE_REVIEW_REJECTED",
+        "business_intents": 0,
+        "fixture_actor": "trusted owner mutation"
+      }
+    ],
+    "live_validation": "NOT RUN",
+    "live_calls": 0,
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T17:31:21.220197+00:00",
+      "finished_at_utc": "2026-10-27T17:31:22.110473+00:00",
+      "duration_ns": 889821300,
+      "process_id": 38204
+    },
+    "generated": {
+      "observed_at_utc": "2026-10-27T17:31:22.110473+00:00",
+      "monotonic_ns": 20356219232400,
+      "process_id": 38204
+    },
+    "scope": "Fase 5.5 finite offline B; no Phase 6 benchmark"
+  },
+  "environment": {
+    "python": "3.12.3",
+    "dependencies": {
+      "z3-solver": "5.1.0.0",
+      "PyNaCl": "1.6.2",
+      "langgraph": "1.2.12",
+      "langgraph-checkpoint-sqlite": "3.1.1"
+    },
+    "registry_digest": "sha256:a67e3f613af225be0b86910b4f5c2c5d882b4b2c2e9c3d203e0368e97dadfecc",
+    "policy_encoding": "facts-and-not-constraints-v1",
+    "prompt_version": "config-worker-v3",
+    "replay_host_version": 1
+  },
+  "live_validation": "NOT RUN",
+  "effects": "SIMULATED",
+  "live_blocker": "No GROQ_API_KEY/GROQ_MODEL, OPENAI_API_KEY/OPENAI_MODEL, or OLLAMA_MODEL configured in the active environment; no calls attempted",
+  "cli_walkthrough": {
+    "status": "PASSED",
+    "execution": "SATISFIED",
+    "recovery": "SATISFIED",
+    "directory": ".runs/phase55/cli-acceptance"
+  },
+  "failed_attempts": [
+    {
+      "run": ".runs/phase55/targeted-initial.xml",
+      "reason": "scripted read node did not propose done; bounded retry exhaustion; fixture corrected",
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": ".runs/phase55/targeted-third.xml",
+      "reason": "test expected raised PermissionError instead of recorded PLANNING_FAILED; exact error/no-additional-call assertions corrected",
+      "counts": {
+        "tests": 20,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": ".runs/phase55/targeted-sixth.xml",
+      "reason": "fake model repeated output instead of observing OUTPUT_STORED then done; fixture corrected",
+      "counts": {
+        "tests": 37,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "run": ".runs/testing/phase55-final/summary.json",
+      "reason": "cleanup removed json import in planning.py; fail-closed before provider calls; import restored; final verification passed",
+      "status": "FAILED",
+      "counts": {
+        "tests": 549,
+        "failures": 31,
+        "errors": 0,
+        "skipped": 0,
+        "suite_timestamps": [
+          "2026-10-27T23:40:41.963851+07:00"
+        ],
+        "seconds": 74.118
+      }
+    }
+  ],
+  "remaining_scope": [
+    "live B policy synthesis and provider/JEV validation NOT RUN",
+    "finite offline fixtures do not establish intent alignment or universal safety",
+    "no Phase 6 benchmark, new backend/provider/framework, or real business effects"
+  ],
+  "phase55_profile": {
+    "schema_version": 1,
+    "profile": "phase55",
+    "directory": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-profile-verification",
+    "python": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+    "python_version": "3.12.3",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "effects": "SIMULATED",
+    "live_validation": "NOT RUN",
+    "status": "PASSED",
+    "commands": [
+      {
+        "name": "phase55",
+        "args": [
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.venv\\Scripts\\python.exe",
+          "-m",
+          "pytest",
+          "atomicroot/tests/test_phase55_goals.py",
+          "atomicroot/tests/test_timestamps.py",
+          "-q",
+          "--junitxml",
+          "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-profile-verification\\phase55.xml"
+        ],
+        "cwd": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System",
+        "log": "C:\\Main Storage\\Documents\\UGM\\.PROYEK INDIVIDU\\System\\.runs\\testing\\phase55-profile-verification\\phase55.log",
+        "status": "PASSED",
+        "exit_code": 0,
+        "observed_timing": {
+          "started_at_utc": "2026-10-27T17:31:35.874762+00:00",
+          "finished_at_utc": "2026-10-27T17:31:46.791046+00:00",
+          "duration_ns": 10916665400,
+          "process_id": 21192
+        },
+        "junit": {
+          "tests": 47,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "suite_timestamps": [
+            "2026-10-28T00:31:37.001100+07:00"
+          ],
+          "seconds": 9.259
+        }
+      }
+    ],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T17:31:35.793747+00:00",
+      "finished_at_utc": "2026-10-27T17:31:46.861180+00:00",
+      "duration_ns": 11066714200,
+      "process_id": 21192
+    }
+  }
+}

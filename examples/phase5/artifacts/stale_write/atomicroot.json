@@ -308,7 +308,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "277c1afedb4ab47bb08e89a85eeed014418f5add48efe82354129000c44106d7",
+  "public_key": "8dbf3f806448a277bdd828df07f69e270ea9b3e7a5ba098e84b3deebaac2af58",
   "initial": {
     "ledger": {
       "state": [
@@ -2297,7 +2297,7 @@
           "nonce": "n-test-5-00000010",
           "not_after": "2026-10-27T00:00:30+00:00",
           "not_before": "2026-10-27T00:00:00+00:00",
-          "signature": "ed25519:c99190ce41c23c435f75fac812221c61aa92b813e610af5975a09093aaa381fdbef82e4e18a7f3a275f1a8383af68d205006d5a455aa4f8f6d8f071ab6760906",
+          "signature": "ed25519:66889be9fa851b1956251bd990ed6fcd6b41fc51f1d184bcaf88f205cec76357595ee9bcb62f98958555bb11520bc145bab4f16fad69cfe712be7ffd551a650c",
           "task_id": "write-a",
           "ticket_id": "tk-test-5-00000009",
           "tool": "update_document",
@@ -2531,6 +2531,62 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:38.313851+00:00",
+      "finished_at_utc": "2026-10-27T14:40:38.373413+00:00",
+      "duration_ns": 59616100,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "read",
+          "started_at_utc": "2026-10-27T14:40:38.313851+00:00",
+          "finished_at_utc": "2026-10-27T14:40:38.334855+00:00",
+          "duration_ns": 20259100,
+          "process_id": 21216
+        },
+        {
+          "step": 1,
+          "action": "auth",
+          "started_at_utc": "2026-10-27T14:40:38.334855+00:00",
+          "finished_at_utc": "2026-10-27T14:40:38.353403+00:00",
+          "duration_ns": 18411100,
+          "process_id": 21216
+        },
+        {
+          "step": 2,
+          "action": "mutation",
+          "started_at_utc": "2026-10-27T14:40:38.353403+00:00",
+          "finished_at_utc": "2026-10-27T14:40:38.353403+00:00",
+          "duration_ns": 566000,
+          "process_id": 21216
+        },
+        {
+          "step": 3,
+          "action": "commit",
+          "started_at_utc": "2026-10-27T14:40:38.353403+00:00",
+          "finished_at_utc": "2026-10-27T14:40:38.354403+00:00",
+          "duration_ns": 456400,
+          "process_id": 21216
+        },
+        {
+          "step": 4,
+          "action": "dispatch",
+          "started_at_utc": "2026-10-27T14:40:38.354403+00:00",
+          "finished_at_utc": "2026-10-27T14:40:38.354403+00:00",
+          "duration_ns": 77100,
+          "process_id": 21216
+        },
+        {
+          "step": 5,
+          "action": "reauthorize-old-read",
+          "started_at_utc": "2026-10-27T14:40:38.354403+00:00",
+          "finished_at_utc": "2026-10-27T14:40:38.373413+00:00",
+          "duration_ns": 19512600,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": []
@@ -2538,83 +2594,186 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "read-op"
+      "action": "read-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.314850+00:00",
+        "monotonic_ns": 10112423506600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "read-op"
+      "action": "read-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.330849+00:00",
+        "monotonic_ns": 10112440232300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "read-op"
+      "action": "read-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.331853+00:00",
+        "monotonic_ns": 10112440437000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:exposure",
-      "action": "exposure:write-a"
+      "action": "exposure:write-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.332850+00:00",
+        "monotonic_ns": 10112441452000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:write-a:read-op"
+      "action": "operation:write-a:read-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.332850+00:00",
+        "monotonic_ns": 10112441458000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "read-op"
+      "action": "read-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.332850+00:00",
+        "monotonic_ns": 10112441463000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "read-op"
+      "action": "read-op",
+      "task": "write-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.332850+00:00",
+        "monotonic_ns": 10112442232800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "read-op"
+      "action": "read-op",
+      "task": "write-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.333850+00:00",
+        "monotonic_ns": 10112442809700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.333850+00:00",
+        "monotonic_ns": 10112443360900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "read-op"
+      "action": "read-op",
+      "task": "write-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.333850+00:00",
+        "monotonic_ns": 10112443367200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:readbasis",
-      "action": "readbasis:write-a:write-op"
+      "action": "readbasis:write-a:write-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.334855+00:00",
+        "monotonic_ns": 10112444306200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:write-a:write-op"
+      "action": "operation:write-a:write-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.334855+00:00",
+        "monotonic_ns": 10112444312500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:consent",
-      "action": "consent:write-a:write-op"
+      "action": "consent:write-a:write-op",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.334855+00:00",
+        "monotonic_ns": 10112444315600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.334855+00:00",
+        "monotonic_ns": 10112444360600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.352407+00:00",
+        "monotonic_ns": 10112461904100,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:document",
-      "action": "document:file"
+      "action": "document:file",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.353403+00:00",
+        "monotonic_ns": 10112462551800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:label",
-      "action": "label:file"
+      "action": "label:file",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.353403+00:00",
+        "monotonic_ns": 10112462558000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:INGEST",
-      "action": "local-owner"
+      "action": "local-owner",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.353403+00:00",
+        "monotonic_ns": 10112462561600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit"
+      "action": "commit",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.354403+00:00",
+        "monotonic_ns": 10112462920600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "snapshot_authorization",
-      "action": "reauthorize-old-read"
+      "action": "reauthorize-old-read",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:38.354403+00:00",
+        "monotonic_ns": 10112463401600,
+        "process_id": 21216
+      }
     }
   ],
   "events": [
@@ -3351,7 +3510,7 @@
             "nonce": "n-test-5-00000005",
             "not_after": "2026-10-27T00:00:30+00:00",
             "not_before": "2026-10-27T00:00:00+00:00",
-            "signature": "ed25519:b51503015b13cf44190424350bdc2c8bbbb7908b742122402ac252fdb0cdb3155fcf3e6431d4421a7ff74d5bcc725a97df0a7bf8ddadd5d73bc516aa33a65307",
+            "signature": "ed25519:3865ac8c860ab670fae6b3b80208ce8cb876a728d4caaf0a4287677973d4f50b85e0d3762f015ef08d05ce625ecef20ee7fcdc55cd99baad99f7bccab3975e02",
             "task_id": "write-a",
             "ticket_id": "tk-test-5-00000004",
             "tool": "read_document",
@@ -3424,7 +3583,7 @@
             "nonce": "n-test-5-00000010",
             "not_after": "2026-10-27T00:00:30+00:00",
             "not_before": "2026-10-27T00:00:00+00:00",
-            "signature": "ed25519:c99190ce41c23c435f75fac812221c61aa92b813e610af5975a09093aaa381fdbef82e4e18a7f3a275f1a8383af68d205006d5a455aa4f8f6d8f071ab6760906",
+            "signature": "ed25519:66889be9fa851b1956251bd990ed6fcd6b41fc51f1d184bcaf88f205cec76357595ee9bcb62f98958555bb11520bc145bab4f16fad69cfe712be7ffd551a650c",
             "task_id": "write-a",
             "ticket_id": "tk-test-5-00000009",
             "tool": "update_document",
@@ -4110,7 +4269,7 @@
         "subject": "ag-619bc1b1a151cb67590375c156490e25",
         "task": "write-a"
       },
-      "signature": "8680e61e206a4af0de844a8171429e5a62a7bf3c8b3cf3196dc9aec46cf22d198a9f0ec7b515aa74a8a71ed78a8dca6a724ac070d9bd46b98644a080cc1ed80c"
+      "signature": "0d590ea25a23e54966879b50b3d8e359f24eec109ceaa8c8815658194e6246051ba5d7e762c1c217cfbe48abd95f9bd1ac388227d6242312163d31d892f5ed09"
     }
   },
   "bindings": {
@@ -4128,6 +4287,51 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:38.289844+00:00",
+      "finished_at_utc": "2026-10-27T14:40:38.376412+00:00",
+      "duration_ns": 87143600,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:38.376412+00:00",
+    "events": [
+      {
+        "event": 0,
+        "kind": "INTENT",
+        "task": "write-a",
+        "operation": "read-op",
+        "protocol_commit_time": "2026-10-27T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:38.376412+00:00",
+        "hook_index": 4,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:38.332850+00:00",
+          "monotonic_ns": 10112441458000,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 1,
+        "kind": "APPLIED",
+        "task": "write-a",
+        "operation": "read-op",
+        "protocol_commit_time": "2026-10-27T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:38.376412+00:00",
+        "hook_index": 7,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:38.333850+00:00",
+          "monotonic_ns": 10112442809700,
+          "process_id": 21216
+        },
+        "deferred": false
+      }
+    ],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {

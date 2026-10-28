@@ -373,7 +373,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "610fb9fbc2baef75f2373945556f3b5fc72dc39a13959570599a9dc825d084b1",
+  "public_key": "ce8cd56dbb12fdb8e50b31f174d08869c6833a6df363d7c8f142062abae07e86",
   "initial": {
     "ledger": {
       "state": [
@@ -2763,7 +2763,7 @@
           "nonce": "n-test-4-00000005",
           "not_after": "2026-10-25T00:00:30+00:00",
           "not_before": "2026-10-25T00:00:00+00:00",
-          "signature": "ed25519:ca02320b595fb0c26c08aa3f207e4fcaa0c112bbaba4dff0e2904bd8aef846319417d65c5d9802120d2f3ff7e09bfda78aebef29e5580e9b5edd2ff6dae1590d",
+          "signature": "ed25519:3a5d86421b16acff19f92311b53950007ab5cb8d6fe89a39e64b58d0b2400893cc1b53c9cc2b7621fe778480d32e8e28bc362f7c11996608e66b049375b7890d",
           "task_id": "literature-a",
           "ticket_id": "tk-test-4-00000004",
           "tool": "send_email",
@@ -2795,6 +2795,46 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:36.859179+00:00",
+      "finished_at_utc": "2026-10-27T14:40:36.877346+00:00",
+      "duration_ns": 18528600,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "auth",
+          "started_at_utc": "2026-10-27T14:40:36.859179+00:00",
+          "finished_at_utc": "2026-10-27T14:40:36.862171+00:00",
+          "duration_ns": 3162000,
+          "process_id": 21216
+        },
+        {
+          "step": 1,
+          "action": "mutation",
+          "started_at_utc": "2026-10-27T14:40:36.862171+00:00",
+          "finished_at_utc": "2026-10-27T14:40:36.863170+00:00",
+          "duration_ns": 655600,
+          "process_id": 21216
+        },
+        {
+          "step": 2,
+          "action": "commit",
+          "started_at_utc": "2026-10-27T14:40:36.863170+00:00",
+          "finished_at_utc": "2026-10-27T14:40:36.875344+00:00",
+          "duration_ns": 12466000,
+          "process_id": 21216
+        },
+        {
+          "step": 3,
+          "action": "dispatch",
+          "started_at_utc": "2026-10-27T14:40:36.875344+00:00",
+          "finished_at_utc": "2026-10-27T14:40:36.877346+00:00",
+          "duration_ns": 2050000,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": []
@@ -2802,47 +2842,105 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.859179+00:00",
+        "monotonic_ns": 10110968433600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.862171+00:00",
+        "monotonic_ns": 10110971190800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:delegation",
-      "action": "delegation:literature-a:ag-c486f95d05effc129708037e501bc5d4"
+      "action": "delegation:literature-a:ag-c486f95d05effc129708037e501bc5d4",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.863170+00:00",
+        "monotonic_ns": 10110971881700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:TRUSTED_UPDATER_FIXTURE",
-      "action": "test-owner"
+      "action": "test-owner",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.863170+00:00",
+        "monotonic_ns": 10110971888500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "commit"
+      "action": "commit",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.874344+00:00",
+        "monotonic_ns": 10110983361600,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:literature-a:op-send"
+      "action": "operation:literature-a:op-send",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.875344+00:00",
+        "monotonic_ns": 10110984409700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "commit"
+      "action": "commit",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.875344+00:00",
+        "monotonic_ns": 10110984419900,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "op-send"
+      "action": "op-send",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.876345+00:00",
+        "monotonic_ns": 10110985100700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "op-send"
+      "action": "op-send",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.877346+00:00",
+        "monotonic_ns": 10110985889300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.877346+00:00",
+        "monotonic_ns": 10110986517000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "op-send"
+      "action": "op-send",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.877346+00:00",
+        "monotonic_ns": 10110986524300,
+        "process_id": 21216
+      }
     }
   ],
   "events": [
@@ -3543,7 +3641,7 @@
             "nonce": "n-test-4-00000005",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:ca02320b595fb0c26c08aa3f207e4fcaa0c112bbaba4dff0e2904bd8aef846319417d65c5d9802120d2f3ff7e09bfda78aebef29e5580e9b5edd2ff6dae1590d",
+            "signature": "ed25519:3a5d86421b16acff19f92311b53950007ab5cb8d6fe89a39e64b58d0b2400893cc1b53c9cc2b7621fe778480d32e8e28bc362f7c11996608e66b049375b7890d",
             "task_id": "literature-a",
             "ticket_id": "tk-test-4-00000004",
             "tool": "send_email",
@@ -4314,7 +4412,7 @@
         "subject": "ag-a5e83ea94a72be0ce8ad96fbe0b48147",
         "task": "literature-a"
       },
-      "signature": "ed51940e165231c9c5f3f0e158ff0c9ee2ec781cf9cf4c60490491f35e2b1dacbd4e9dc62f07a4497d72dd2e6b8e36cd76856a4c3da3a6d449d99cf9ef495702"
+      "signature": "e17b02bf4776619ab911202319592202fb357f7a382c6a20afa8990df7d16b33261f0fd6254f94021ae86b3c02a5c3307220319a418ab808df1be7adaa116407"
     },
     "ag-19d5e06d84728b888021cd024fe36217": {
       "data": {
@@ -4332,7 +4430,7 @@
         "subject": "ag-19d5e06d84728b888021cd024fe36217",
         "task": "literature-a"
       },
-      "signature": "26d11cf45b48142bf815d0ff9a83351dba039f5159050faf5e778bb5b8565709a6ab29aa6b3cf807cd3803ea463466abcf79a81257c06e81d5e3e5c3d540e401"
+      "signature": "b444fdf4a28e6a081bcbcb7840dfe9c479a55b7a1617c93da1a5be46c8ffbb2cbf2060aaff644631596a79da5bfcd89ee3fd5224985c98a48ac6bbe73bfbd409"
     },
     "ag-c486f95d05effc129708037e501bc5d4": {
       "data": {
@@ -4350,7 +4448,7 @@
         "subject": "ag-c486f95d05effc129708037e501bc5d4",
         "task": "literature-a"
       },
-      "signature": "bc9b72ca823b958d01a0767318bc07376c28704a191a37c1f436efebddf9dd02e4aad2a0ae7c8df3092efb946e5faf17bb55ca942cbe6de517038e2d1cf93104"
+      "signature": "c9dddecad3e6521bf27861e106ac278d21c5428d32ed3f3ba97957ea366174772e84de737f3298b45b61227bcfd15424f78c997109edc303f4c42b9f021cfa08"
     }
   },
   "bindings": {
@@ -4368,6 +4466,51 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:36.828417+00:00",
+      "finished_at_utc": "2026-10-27T14:40:36.881356+00:00",
+      "duration_ns": 53163700,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:36.881356+00:00",
+    "events": [
+      {
+        "event": 0,
+        "kind": "INTENT",
+        "task": "literature-a",
+        "operation": "op-send",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:36.881356+00:00",
+        "hook_index": 5,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:36.875344+00:00",
+          "monotonic_ns": 10110984409700,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 1,
+        "kind": "APPLIED",
+        "task": "literature-a",
+        "operation": "op-send",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:36.881356+00:00",
+        "hook_index": 8,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:36.877346+00:00",
+          "monotonic_ns": 10110985889300,
+          "process_id": 21216
+        },
+        "deferred": false
+      }
+    ],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {

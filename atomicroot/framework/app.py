@@ -33,7 +33,7 @@ class FrameworkRuntime:
         self.dispatcher = Dispatcher(self.store, self.receiver)
 
 
-def create_phase3_app(runtime, identity_resolver, *, executor_factory=None):
+def create_phase3_app(runtime, identity_resolver, *, executor_factory=None, goal_service=None, goal_executor_factory=None):
     """Resolver returns authenticated Principal from host context, never from body."""
     if getattr(runtime, "evaluation_only", False): raise ValueError("unsafe evaluation runtime cannot be exposed as a service")
     app = FastAPI(title="AtomicRoot Phase 3", version="0.3.0")
@@ -193,5 +193,68 @@ def create_phase3_app(runtime, identity_resolver, *, executor_factory=None):
     async def dispatch(request: Request):
         identity(request).require("dispatcher")
         return await run_in_threadpool(runtime.dispatcher.dispatch_once)
+
+    if goal_service is not None:
+        if goal_service.runtime is not runtime: raise ValueError("goal service must share the main runtime/database")
+
+        @app.get("/goals/schema")
+        async def goal_schema(request: Request):
+            identity(request)
+            from atomicroot.integration.planning import proposal_schema
+            return proposal_schema()
+
+        @app.post("/goals/discover")
+        async def goal_discover(body: dict, request: Request):
+            exact(body, {"intake", "task"})
+            return await run_in_threadpool(goal_service.discover, body["intake"], body["task"], identity(request))
+
+        @app.post("/goals")
+        async def goal_plan(body: dict, request: Request):
+            exact(body, {"session", "goal", "intake", "task", "context_resources"})
+            principal = identity(request)
+            await run_in_threadpool(goal_service.plan, body["session"], body["goal"], body["intake"], body["task"], principal, context_resources=body["context_resources"])
+            return await run_in_threadpool(goal_service.status, body["session"], principal)
+
+        @app.get("/goals/{session}")
+        async def goal_status(session: str, request: Request):
+            return await run_in_threadpool(goal_service.status, session, identity(request))
+
+        @app.get("/goals/{session}/preview")
+        async def goal_preview(session: str, request: Request):
+            return await run_in_threadpool(goal_service.status, session, identity(request), private=True)
+
+        @app.post("/goals/{session}/replan")
+        async def goal_replan(session: str, body: dict, request: Request):
+            exact(body, set())
+            principal = identity(request)
+            record = await run_in_threadpool(goal_service._session, session, principal)
+            await run_in_threadpool(goal_service.plan, session, record["data"]["goal"], record["intake"], record["task"], principal,
+                context_resources=record["data"]["context_resources"], replan=True)
+            return await run_in_threadpool(goal_service.status, session, principal)
+
+        @app.post("/goals/{session}/recover-plan")
+        async def goal_recover_plan(session: str, body: dict, request: Request):
+            exact(body, set())
+            principal = identity(request)
+            record = await run_in_threadpool(goal_service._session, session, principal)
+            await run_in_threadpool(goal_service.plan, session, record["data"]["goal"], record["intake"], record["task"], principal,
+                context_resources=record["data"]["context_resources"], recover=True)
+            return await run_in_threadpool(goal_service.status, session, principal)
+
+        @app.post("/goals/{session}/decision")
+        async def goal_decide(session: str, body: dict, request: Request):
+            exact(body, {"decision"})
+            return await run_in_threadpool(goal_service.decide, session, body["decision"], identity(request))
+
+        @app.post("/goals/{session}/activate")
+        async def goal_activate(session: str, body: dict, request: Request):
+            exact(body, set())
+            return await run_in_threadpool(goal_service.activate, session, identity(request))
+
+        @app.post("/goals/{session}/execute/{command}")
+        async def goal_execute(session: str, command: str, body: dict, request: Request):
+            exact(body, set())
+            if goal_executor_factory is None: raise ValueError("trusted goal executor driver not configured")
+            return await run_in_threadpool(goal_service.execute, session, identity(request), goal_executor_factory, command=command)
 
     return app

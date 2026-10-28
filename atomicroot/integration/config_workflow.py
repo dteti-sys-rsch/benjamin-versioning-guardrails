@@ -175,6 +175,8 @@ class ConfigWorkflow:
                     status TEXT NOT NULL,error TEXT,timestamp REAL NOT NULL);
                 CREATE TABLE IF NOT EXISTS execution_history(seq INTEGER PRIMARY KEY AUTOINCREMENT,task TEXT NOT NULL,
                     run TEXT NOT NULL,status TEXT NOT NULL,evidence TEXT NOT NULL,timestamp REAL NOT NULL);
+                CREATE TABLE IF NOT EXISTS execution_carryover(task TEXT NOT NULL,run TEXT NOT NULL,node TEXT NOT NULL,
+                    source_run TEXT NOT NULL,source_binding TEXT NOT NULL,PRIMARY KEY(task,run,node));
             """)
         if callback := getattr(runtime.store, "register_evaluation_tables", None): callback()
         graph = StateGraph(ConfigState)
@@ -199,11 +201,11 @@ class ConfigWorkflow:
         return "op-" + args_hash({"task": self.task, "run": s["run"], "binding": self.binding,
                                  "node": node, "agent": self.plan[node]["agent"], "step": step, "kind": kind}).split(":")[1][:40]
 
-    def start(self, run): return self._invoke(run, "start")
+    def start(self, run, *, continuation=None): return self._invoke(run, "start", continuation=continuation)
     def recover(self, run): return self._invoke(run, "recover")
     def resume(self, run): return self._invoke(run, "resume")
 
-    def _invoke(self, run, mode):
+    def _invoke(self, run, mode, *, continuation=None):
         config = self.config(run)
         invocation = self.runtime.store.new_id("invocation")
         self.runtime.store.observe("checkpoint_" + mode, run)
@@ -223,12 +225,45 @@ class ConfigWorkflow:
                     if state.values: raise ValueError("checkpoint exists; recover")
                     input_value = {"run": run, "binding": self.binding, "nodes": {n: {"step": 0, "phase": "READY", "observations": [],
                         "repairs": 0, "review_retries": 0, "classified": False} for n in self.plan}, "status": "RUNNING"}
+                    if continuation:
+                        source = self.graph.get_state(self.config(continuation["run"]))
+                        with self.runtime.store.transaction() as conn:
+                            old = self.runtime.store.row(conn, "SELECT binding,config FROM execution_runs WHERE task=? AND run=?", (self.task, continuation["run"]))
+                            if not old or source.values.get("binding") != old["binding"] or args_hash(json.loads(old["config"])) != old["binding"]:
+                                raise ValueError("continuation checkpoint/config binding mismatch")
+                            from atomicroot.store.trace_store import Snapshot
+                            from atomicroot.framework.tasks import artifact
+                            old_spec = artifact(Snapshot(conn), json.loads(old["config"])["resolved"])["spec"]
+                            for node in continuation["retained_nodes"]:
+                                previous = source.values["nodes"][node]
+                                definition = next(n for n in old_spec["workflow"]["nodes"] if n["id"] == node)
+                                agent = next(a for a in old_spec["agents"] if a["id"] == definition["agent"])
+                                if previous["phase"] != "DONE" or definition != self.plan.get(node) or agent not in self.spec["agents"]:
+                                    raise ValueError("only completed unchanged nodes can carry to a reviewed plan")
+                                input_value["nodes"][node] = deepcopy(previous)
+                                carried = self.runtime.store.row(conn, "SELECT source_run,source_binding FROM execution_carryover WHERE task=? AND run=? AND node=?", (self.task, continuation["run"], node))
+                                source_run, source_binding = (carried["source_run"], carried["source_binding"]) if carried else (continuation["run"], old["binding"])
+                                conn.execute("INSERT INTO execution_carryover VALUES (?,?,?,?,?)", (self.task, run, node, source_run, source_binding))
+                            self.runtime.store.audit(conn, "EXECUTION_CONTINUATION", self.caller.subject,
+                                {"task": self.task, "run": run, "source_run": continuation["run"], "retained": continuation["retained_nodes"],
+                                 "cancelled_uncommitted": continuation["cancelled_uncommitted_operations"]})
                 else:
                     if state.values and state.values.get("binding") != self.binding: raise ValueError("checkpoint binding mismatch")
                     if not state.values:
                         input_value = {"run": run, "binding": self.binding, "nodes": {n: {"step": 0, "phase": "READY", "observations": [],
                             "repairs": 0, "review_retries": 0, "classified": False} for n in self.plan}, "status": "RUNNING"}
                     else: input_value = Command(resume=True) if mode == "resume" and state.interrupts else None
+                if type(input_value) is dict:
+                    # A crash can occur after continuation metadata commits but
+                    # before the first framework checkpoint. Restore DONE nodes
+                    # from bound source checkpoints, never replay their effects.
+                    with self.runtime.store.snapshot() as snap:
+                        carried = snap._conn.execute("SELECT node,source_run,source_binding FROM execution_carryover WHERE task=? AND run=?", (self.task, run)).fetchall()
+                    for node, source_run, source_binding in carried:
+                        source = self.graph.get_state(self.config(source_run))
+                        if source.values.get("binding") != source_binding or source.values["nodes"][node]["phase"] != "DONE":
+                            raise ValueError("carried checkpoint proof unavailable")
+                        input_value["nodes"][node] = deepcopy(source.values["nodes"][node])
                 with tracing_context(enabled=False): result = self.graph.invoke(input_value, config, durability="sync")
                 self.runtime.store.observe("checkpoint_saved", run)
                 status = "REVIEW_WAIT" if result.get("__interrupt__") and result["status"] == "REVIEW_WAIT" else result["status"]
@@ -291,13 +326,13 @@ class ConfigWorkflow:
         criteria = [c for c in self.spec["acceptance"] if
             (c["kind"] == "read" and any(r["tool"] == "read_document" and r["resource"] == c["resource"] for r in scope)) or
             (c["kind"] == "receipt" and any(r["tool"] == c["tool"] and r["destination"] == c["destination"] for r in scope))]
-        if business - {"read_document"} and not any(node in n["depends_on"] for n in self.plan.values()):
+        # Read capability does not make a required terminal output optional.
+        if business and not any(node in n["depends_on"] for n in self.plan.values()):
             criteria += [c for c in self.spec["acceptance"] if c["kind"] == "output"]
         proof = self.completion(s["run"], criteria=criteria, node=node)
         # Only an unambiguous read-only delegation can be closed automatically.
         # Generic write/spending workers still decide actions; scope is not a goal.
-        read_only = business == {"read_document"} and bool(criteria) and sum(
-            n["agent"] == self.plan[node]["agent"] for n in self.plan.values()) == 1
+        read_only = business == {"read_document"} and bool(criteria) and all(c["kind"] == "read" for c in criteria)
         return {"criteria": proof["criteria"], "remaining": [e["criterion"] for e in proof["criteria"] if not e["satisfied"]],
                 "satisfied": proof["satisfied"], "finish_on_read_receipts": read_only}
 
@@ -519,7 +554,9 @@ class ConfigWorkflow:
         with self.runtime.store.snapshot() as snap:
             rows = snap._conn.execute("SELECT a.operation,a.data,b.status,b.payload,b.receipt,r.receipt FROM execution_actions a "
                 "JOIN outbox b ON b.task=a.task AND b.operation=a.operation JOIN receiver_receipts r ON r.task=b.task AND r.operation=b.operation "
-                "WHERE a.task=? AND a.run=? AND (? IS NULL OR a.node=?)", (self.task, run, node, node)).fetchall()
+                "LEFT JOIN execution_carryover c ON c.task=a.task AND c.source_run=a.run AND c.node=a.node AND c.run=? "
+                "LEFT JOIN execution_runs sr ON sr.task=c.task AND sr.run=c.source_run "
+                "WHERE a.task=? AND (a.run=? OR (c.run=? AND sr.binding=c.source_binding)) AND (? IS NULL OR a.node=?)", (run, self.task, run, run, node, node)).fetchall()
             delivered = []
             for op, action, status, payload, receipt, proof in rows:
                 if status != "RELEASED" or not receipt or receipt != proof: continue
@@ -539,6 +576,11 @@ class ConfigWorkflow:
                     row = snap._conn.execute("SELECT digest,data FROM execution_outputs WHERE task=? AND run=? AND id=?", (self.task, run, criterion["output"])).fetchone()
                     if row and args_hash(json.loads(row[1])) == row[0] and json.loads(row[1])["binding"] == self.binding:
                         matches.append({"output": criterion["output"], "digest": row[0]})
+                    if not matches:
+                        for digest, raw, binding, retained_node in snap._conn.execute("SELECT o.digest,o.data,c.source_binding,c.node FROM execution_carryover c JOIN execution_outputs o ON o.task=c.task AND o.run=c.source_run WHERE c.task=? AND c.run=? AND o.id=?", (self.task, run, criterion["output"])):
+                            value = json.loads(raw)
+                            if args_hash(value) == digest and value["binding"] == binding and value["node"] == retained_node:
+                                matches.append({"output": criterion["output"], "digest": digest, "carried_from_binding": binding})
                 evidence.append({"criterion": criterion, "satisfied": bool(matches), "evidence": matches})
         return {"satisfied": bool(evidence) and all(e["satisfied"] for e in evidence), "criteria": evidence,
                 "quality": "NOT_EVALUATED", "business_effects": "SIMULATED"}

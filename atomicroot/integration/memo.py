@@ -11,9 +11,10 @@ class InferenceInProgress(RuntimeError): pass
 
 
 class InferenceMemo:
-    def __init__(self, store, *, progress=None):
+    def __init__(self, store, *, progress=None, aggregate_budget=None):
         self.store = store
         self.progress = progress
+        self.aggregate_budget = aggregate_budget
         with store._lock:
             store._conn.executescript("""
                 CREATE TABLE IF NOT EXISTS inference_jobs (
@@ -63,7 +64,7 @@ class InferenceMemo:
                     conn.execute("UPDATE inference_attempts SET status='UNKNOWN',error='abandoned attempt; outcome ambiguous' WHERE id=?", (active["id"],))
                 conn.execute("INSERT OR IGNORE INTO inference_memo(id,binding) VALUES (?,?)", (key, binding))
                 attempts, tokens, cost = conn.execute("SELECT count(*),coalesce(sum(reserved_tokens),0),coalesce(sum(reserved_cost),0) "
-                                                     "FROM inference_attempts WHERE budget=? AND kind=?", (budget, kind)).fetchone()
+                                                     "FROM inference_attempts WHERE budget=? AND (kind=? OR ?)", (budget, kind, budget == self.aggregate_budget)).fetchone()
                 per_call = conn.execute("SELECT count(*) FROM inference_attempts WHERE call_id=?", (key,)).fetchone()[0]
                 if per_call >= limits.max_retries + 1 or attempts >= limits.max_calls or tokens + allowance > limits.max_tokens:
                     raise ValueError("inference call/token/retry cap reached")

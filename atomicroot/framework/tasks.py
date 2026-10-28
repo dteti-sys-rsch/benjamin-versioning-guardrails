@@ -203,9 +203,16 @@ class TaskService:
         except PermissionError: raise
         except Exception as exc: return {"valid": False, "unsupported": [str(exc)]}
 
-    def propose(self, value, principal):
+    def propose(self, value, principal, *, review_bindings=None):
         try:
-            with self.store.snapshot() as snapshot: data = self._resolve(value, principal, snapshot)
+            with self.store.snapshot() as snapshot:
+                data = self._resolve(value, principal, snapshot)
+                if review_bindings:
+                    for key, expected in review_bindings.items():
+                        if not key.startswith(("goalproposal:", "goalhead:", "goalexecuting:")) or args_hash(snapshot.read(key)[1]) != expected:
+                            raise ValueError("goal review context changed")
+                        data["basis"][key] = snapshot.version(key)
+                    data["goal_review_bindings"] = freeze_json(review_bindings)
         except (TypeError, KeyError) as exc:
             raise ValueError("malformed TaskSpec or policy definition") from exc
         task, mode_key = data["spec"]["task_id"], "taskmode:" + data["spec"]["task_id"]

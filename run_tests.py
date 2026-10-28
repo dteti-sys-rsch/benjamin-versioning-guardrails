@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent
 PHASE4 = ("atomicroot/tests/test_phase4_replay.py", "atomicroot/tests/test_phase4_fallback.py")
 PHASE5 = ("atomicroot/tests/test_phase5_policies.py", "atomicroot/tests/test_phase5_modes.py", "atomicroot/tests/test_phase5_oracle.py")
 OBSERVABILITY = ("atomicroot/tests/test_timestamps.py", "atomicroot/tests/test_test_runner.py")
-PHASE55 = ("atomicroot/tests/test_phase55_goals.py",)
+PHASE55 = ("atomicroot/tests/test_phase55_goals.py", "atomicroot/tests/test_phase55_live_ollama_demo.py", "atomicroot/tests/test_planner_generation.py")
 PROFILES = ("quick", "phase4", "phase5", "phase55", "regression", "scenarios", "all")
 
 

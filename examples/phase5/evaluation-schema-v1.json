@@ -96,6 +96,9 @@
     },
     "semantic_trace": {
       "type": "object"
+    },
+    "observed_timing": {
+      "type": "object"
     }
   },
   "$defs": {

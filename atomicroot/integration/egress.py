@@ -10,12 +10,16 @@ def validate_model_context(reader, document, request):
     from atomicroot.integration.prompts import CONFIG_WORKER_VERSION
     configured = context.get("prompt_version") == CONFIG_WORKER_VERSION if type(context) is dict else False
     if configured: fields = fields | {"execution"}
+    from atomicroot.integration.planning import PLANNER_VERSION, validate_planning_context
+    planning = context.get("prompt_version") == PLANNER_VERSION if type(context) is dict else False
+    if planning: fields = fields | {"planning"}
     if type(context) is not dict or set(context) not in (fields, fields | {"response_schema"}):
         raise ValueError("invalid server model context")
     if context["provider"] != request["recipient"] or not isinstance(context["model"], str):
         raise ValueError("model provider binding mismatch")
     if type(context["messages"]) is not list or type(context["sources"]) is not list:
         raise ValueError("invalid model messages/sources")
+    if planning: validate_planning_context(reader, context, request)
     if configured:
         from atomicroot.authority.ticket import args_hash
         execution = context["execution"]

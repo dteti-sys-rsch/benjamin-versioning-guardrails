@@ -355,7 +355,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "aaa929ea1aeda2773209e3cc48600d6c31011a4deb9534f96b09f15d54a54f1d",
+  "public_key": "8fb9bf09d39f5098f230e3a984b3874e8c89ef9ae743ff808cbfad7ce118d6fa",
   "initial": {
     "ledger": {
       "state": [
@@ -2700,6 +2700,22 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:36.336283+00:00",
+      "finished_at_utc": "2026-10-27T14:40:36.336283+00:00",
+      "duration_ns": 703000,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "auth",
+          "started_at_utc": "2026-10-27T14:40:36.336283+00:00",
+          "finished_at_utc": "2026-10-27T14:40:36.336283+00:00",
+          "duration_ns": 669000,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "BLOCKED",
     "blocked": [
       "commit",
@@ -2710,7 +2726,12 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "auth"
+      "action": "auth",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:36.336283+00:00",
+        "monotonic_ns": 10110445368200,
+        "process_id": 21216
+      }
     }
   ],
   "events": [],
@@ -3784,7 +3805,7 @@
         "subject": "ag-a5e83ea94a72be0ce8ad96fbe0b48147",
         "task": "literature-a"
       },
-      "signature": "af256f937df2fb3b66cb21b321c3c0af0b01c942db6bf8c78cf3a12a741eee9c06272ae5cbf713f69971fe6bb5672ab37672fdb021a1e855fa11c8e6c7052009"
+      "signature": "85a11dd0110a3d771a1d7df1e4f5e131fb023f7f32255c5c0c2c33fa9493490ab87ee9f5c607af0e06d86bb4763bf21731e16dcf9c5d1003308f10caaddf270b"
     },
     "ag-19d5e06d84728b888021cd024fe36217": {
       "data": {
@@ -3802,7 +3823,7 @@
         "subject": "ag-19d5e06d84728b888021cd024fe36217",
         "task": "literature-a"
       },
-      "signature": "e1090da5f2f2bf89c40b5b4698245c2f44c12ad858f1ce7044d0c9133f87d1f98259b0ef34c421010893ac65aa504ba589f24c42cfeb8203170ae6bccf4b680e"
+      "signature": "9e13c823ea1d688476c9fc9be6d7eb0022bf972880c27615046c2ed901a66c882c8cfa75a52c94cd6f976d5f84eedacaee053309072964a651f17990e428470f"
     },
     "ag-c486f95d05effc129708037e501bc5d4": {
       "data": {
@@ -3820,7 +3841,7 @@
         "subject": "ag-c486f95d05effc129708037e501bc5d4",
         "task": "literature-a"
       },
-      "signature": "373a59012262628cf872619ff194cd84a0f4a365a92358a8eef2ad8d1227db07c0e434fdfdbd48652bebc093f7b712bd91a1fc6549c446d8959f8474b2f0df0d"
+      "signature": "2935f3fb51d4f737787caa8bc3632e288060584ce07d98f7cbae2f146e6eac072f8d1b1d1832ceabc7ebec664bc49bfa1d09182c256d0c438047f1287b17d007"
     }
   },
   "bindings": {
@@ -3838,6 +3859,18 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:36.305262+00:00",
+      "finished_at_utc": "2026-10-27T14:40:36.340283+00:00",
+      "duration_ns": 34535100,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:36.340283+00:00",
+    "events": [],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {

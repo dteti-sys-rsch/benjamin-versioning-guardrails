@@ -344,7 +344,7 @@
     "prompt_version": "config-worker-v3",
     "replay_host_version": 1
   },
-  "public_key": "1e7d3db7920dc058caecba5fd0d049e5f78a7eb878cbc4e64a79960569af94d7",
+  "public_key": "b43d51acbba14ad45b9f54afade15f8742086c3c9fb1a5219f9bf4602a4be0d5",
   "initial": {
     "ledger": {
       "state": [
@@ -2718,6 +2718,22 @@
       }
     },
     "divergence": [],
+    "observed_timing": {
+      "started_at_utc": "2026-10-27T14:40:48.619723+00:00",
+      "finished_at_utc": "2026-10-27T14:40:48.651429+00:00",
+      "duration_ns": 31864200,
+      "process_id": 21216,
+      "steps": [
+        {
+          "step": 0,
+          "action": "execute",
+          "started_at_utc": "2026-10-27T14:40:48.619723+00:00",
+          "finished_at_utc": "2026-10-27T14:40:48.651429+00:00",
+          "duration_ns": 31771300,
+          "process_id": 21216
+        }
+      ]
+    },
     "terminal": "COMPLETED",
     "blocked": [],
     "trusted_hook_mutations": [
@@ -2734,51 +2750,114 @@
   "hooks": [
     {
       "stage": "snapshot_authorization",
-      "action": "op-read"
+      "action": "op-read",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.620725+00:00",
+        "monotonic_ns": 10122729731000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ticket_issued",
-      "action": "op-read"
+      "action": "op-read",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.625724+00:00",
+        "monotonic_ns": 10122735127400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "before_cas",
-      "action": "op-read"
+      "action": "op-read",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.626743+00:00",
+        "monotonic_ns": 10122735462200,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:contract3",
-      "action": "contract3:literature-a"
+      "action": "contract3:literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.645404+00:00",
+        "monotonic_ns": 10122754471400,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:TRUSTED_CONTENTION_FIXTURE",
-      "action": "local-owner"
+      "action": "local-owner",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.645404+00:00",
+        "monotonic_ns": 10122754493000,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:exposure",
-      "action": "exposure:literature-a"
+      "action": "exposure:literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.647405+00:00",
+        "monotonic_ns": 10122756734700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "mutation:operation",
-      "action": "operation:literature-a:op-read"
+      "action": "operation:literature-a:op-read",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.647405+00:00",
+        "monotonic_ns": 10122756754500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "after_commit",
-      "action": "op-read"
+      "action": "op-read",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.647405+00:00",
+        "monotonic_ns": 10122756768800,
+        "process_id": 21216
+      }
     },
     {
       "stage": "outbox_claim",
-      "action": "op-read"
+      "action": "op-read",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.649428+00:00",
+        "monotonic_ns": 10122758037700,
+        "process_id": 21216
+      }
     },
     {
       "stage": "receiver_apply",
-      "action": "op-read"
+      "action": "op-read",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.650427+00:00",
+        "monotonic_ns": 10122759219500,
+        "process_id": 21216
+      }
     },
     {
       "stage": "service:SETTLEMENT",
-      "action": "Dispatcher"
+      "action": "Dispatcher",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.651429+00:00",
+        "monotonic_ns": 10122760351300,
+        "process_id": 21216
+      }
     },
     {
       "stage": "ack_result",
-      "action": "op-read"
+      "action": "op-read",
+      "task": "literature-a",
+      "observed": {
+        "observed_at_utc": "2026-10-27T14:40:48.651429+00:00",
+        "monotonic_ns": 10122760367000,
+        "process_id": 21216
+      }
     }
   ],
   "events": [
@@ -3582,7 +3661,7 @@
             "nonce": "n-test-4-00000005",
             "not_after": "2026-10-25T00:00:30+00:00",
             "not_before": "2026-10-25T00:00:00+00:00",
-            "signature": "ed25519:b2dbf5a5d4d9041b046baab92dfefec821ac8a07e978d3f596c0a550bee161f1710f08def2fcbd77d4e3d3c40d3fbd793c649c091359a0c016a71d1fa435190f",
+            "signature": "ed25519:3b2163045ce8dfebca0ee2d1cae03dff66d18f9f16480f8811535bcb168953617319d7e3299db0b8ac0a6f8660f5068983d7b885619b0c13d77580369ec92d09",
             "task_id": "literature-a",
             "ticket_id": "tk-test-4-00000004",
             "tool": "read_document",
@@ -4337,7 +4416,7 @@
         "subject": "ag-a5e83ea94a72be0ce8ad96fbe0b48147",
         "task": "literature-a"
       },
-      "signature": "20c929a5bd5eb17f9ec9f2e7f152a305cfdf019d065c3097a84431e89a4bacaca14700b0f4f5dca464c30fc5d89d02ec51ae72823dfacb977a9f71e2e6974304"
+      "signature": "bebd111de40781f41868b34647e6ea4cb3ddf89a6f66434dc49cfc9a3baa1eabd3c590c432e43591889162fd0d3ed3eb4f25579e04a7db20c934ed18773dc803"
     },
     "ag-19d5e06d84728b888021cd024fe36217": {
       "data": {
@@ -4355,7 +4434,7 @@
         "subject": "ag-19d5e06d84728b888021cd024fe36217",
         "task": "literature-a"
       },
-      "signature": "eae208edc93e5e7241480b5f68d42f5debf5e455d51a47e905472a29059099c661c487c20ba0f1e822020bebeb8a189331a5bf9d825736905c954c20a3b94b03"
+      "signature": "7abdfcb253021ec7c7466546c300c8b3db6196bc5c766c9c0e770d317c5a9dce14a227ae417ea54cddad31ea77b512c185440da14fa736f7185a97daa253e909"
     },
     "ag-c486f95d05effc129708037e501bc5d4": {
       "data": {
@@ -4373,7 +4452,7 @@
         "subject": "ag-c486f95d05effc129708037e501bc5d4",
         "task": "literature-a"
       },
-      "signature": "f048ab218df240910f6a3bb288aaec8167b335a1854767823405cad6099cc8f5056a5981fca47e8dd3b087efd288180ef1caa9bc57672894fe9ec45af220b409"
+      "signature": "c5e575096622d420b9e156e01d8f17dd95050f884e995a5ae07ca058a2fe22280f1845f83c1ff240a7dcdef25897832530425563f0892971fd89dad332996a06"
     }
   },
   "bindings": {
@@ -4391,6 +4470,51 @@
       "scope/contract basis"
     ],
     "source": "TaskSpec/plan/delegations from Phase 3.6 resolver; trusted updater fixtures separate from attacker; fake/simulated effects only"
+  },
+  "observed_timing": {
+    "schema_version": 1,
+    "run": {
+      "started_at_utc": "2026-10-27T14:40:48.573351+00:00",
+      "finished_at_utc": "2026-10-27T14:40:48.659428+00:00",
+      "duration_ns": 85212600,
+      "process_id": 21216
+    },
+    "exported_at_utc": "2026-10-27T14:40:48.659428+00:00",
+    "events": [
+      {
+        "event": 0,
+        "kind": "INTENT",
+        "task": "literature-a",
+        "operation": "op-read",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:48.659428+00:00",
+        "hook_index": 6,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:48.647405+00:00",
+          "monotonic_ns": 10122756754500,
+          "process_id": 21216
+        },
+        "deferred": false
+      },
+      {
+        "event": 1,
+        "kind": "APPLIED",
+        "task": "literature-a",
+        "operation": "op-read",
+        "protocol_commit_time": "2026-10-25T00:00:00+00:00",
+        "exported_at_utc": "2026-10-27T14:40:48.659428+00:00",
+        "hook_index": 9,
+        "source": "post-transaction hook",
+        "observed": {
+          "observed_at_utc": "2026-10-27T14:40:48.650427+00:00",
+          "monotonic_ns": 10122759219500,
+          "process_id": 21216
+        },
+        "deferred": false
+      }
+    ],
+    "meaning": "UTC post-transaction observation, not exact linearization time; monotonic counters are local to the recording process"
   },
   "semantic_trace": {
     "initial": {
