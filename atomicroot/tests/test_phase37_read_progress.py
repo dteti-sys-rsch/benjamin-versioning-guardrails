@@ -70,6 +70,67 @@ def test_repeated_read_in_mixed_node_has_bounded_feedback_without_new_effect(tmp
     finally: f.close(); s.runtime.store.close()
 
 
+def test_grammar_drops_delivered_read_after_repeat_so_effect_can_proceed(tmp_path):
+    from atomicroot.integration.prompts import config_response_schema, config_schema_matches
+    s = ConfigSystem(tmp_path / "ledger.sqlite")
+    spec = model_spec(s); s.activate(spec)
+    schemas = []
+    class Stubborn(FakeModel):
+        """Live qwen3:8b pattern: rereads whenever the grammar offers read_document."""
+        structured_worker_output = True
+        async def generate(self, messages, *, response_schema=None):
+            schemas.append(response_schema); self.calls.append(messages)
+            tools = {c["properties"].get("tool", {}).get("const") for c in response_schema["oneOf"]}
+            progress = json.loads(messages[-1]["content"])["node_progress"]
+            output = read_response(s.refs[0]) if "read_document" in tools else send() if progress["remaining"] else done()
+            return {"output": output, "actual_model": self.model, "usage": None}
+    model = Stubborn(lambda m: done(), provider="ollama"); model.execution_binding = "repeat-narrowing-v1"
+    limits = Limits(**TaskSpec.parse(spec).data["limits"]["inference"])
+    f = ConfigWorkflow(s.runtime, tmp_path / "g.sqlite", task="t", caller=s.user,
+                       bridge=ModelBridge(s.runtime, model, DisabledClassifier(), llm_limits=limits))
+    try:
+        result = f.start("narrow")
+        assert result["status"] == "SATISFIED", result
+        has_read = ["read_document" in str(x) for x in schemas]
+        # Full grammar for the first read and the one confirmed repeat; narrowed afterwards only.
+        assert has_read[:2] == [True, True] and not any(has_read[2:])
+        rows = s.runtime.store.inspect_outbox()
+        assert sorted(t for t in (json.loads(r["payload"])["tool"] for r in rows) if t != "model_inference") == ["read_document", "send_email"]
+        agent = spec["agents"][0]
+        assert config_schema_matches(schemas[2], agent, spec["outputs"])
+        widened = config_response_schema(agent, spec["outputs"])
+        widened["oneOf"].insert(0, {"type": "object", "properties": {"kind": {"const": "admin"}}})
+        assert not config_schema_matches(widened, agent, spec["outputs"])
+    finally: f.close(); s.runtime.store.close()
+
+
+def test_wrong_resource_digest_gets_bounded_feedback_before_authorization(tmp_path):
+    s = ConfigSystem(tmp_path / "ledger.sqlite")
+    s.spec["workflow"]["nodes"] = [{"id": "a", "agent": "reader1", "depends_on": []}]
+    s.activate()
+    wrong = {**read_response(s.refs[0]), "args": {"resource": "d1", "digest": "sha256:" + "0" * 64}}
+    f = ConfigWorkflow(s.runtime, tmp_path / "g.sqlite", task="t", caller=s.user,
+        worker=ScriptedWorker({"a": [wrong, read_response(s.refs[0]), done()]}))
+    try:
+        result = f.start("digest")
+        feedback = [ob for ob in result["nodes"]["a"]["observations"] if ob["status"] == "INVALID_ARGUMENT"]
+        assert len(feedback) == 1 and s.refs[0]["digest"] in feedback[0]["detail"]["reason"]
+        rows = s.runtime.store.inspect_outbox()
+        assert [json.loads(r["payload"])["args"]["digest"] for r in rows] == [s.refs[0]["digest"]]
+        with s.runtime.store.snapshot() as snap:
+            assert snap._conn.execute("SELECT count(*) FROM authorizations").fetchone()[0] == 1
+    finally: f.close(); s.runtime.store.close()
+    s = ConfigSystem(tmp_path / "bounded.sqlite")
+    s.spec["workflow"]["nodes"] = [{"id": "a", "agent": "reader1", "depends_on": []}]
+    s.activate()
+    f = ConfigWorkflow(s.runtime, tmp_path / "b.sqlite", task="t", caller=s.user, worker=ScriptedWorker({"a": [wrong] * 4}))
+    try:
+        result = f.start("bounded")
+        assert result["nodes"]["a"]["phase"] == "RETRY_EXHAUSTED" and result["nodes"]["a"]["reason"] == "argument_mismatch"
+        assert s.runtime.store.inspect_outbox() == []
+    finally: f.close(); s.runtime.store.close()
+
+
 def test_repeat_with_new_content_version_follows_authorization_not_cached_feedback(tmp_path):
     s = ConfigSystem(tmp_path / "ledger.sqlite")
     # Mixed scope keeps the node open, so an explicit second read is proposed.

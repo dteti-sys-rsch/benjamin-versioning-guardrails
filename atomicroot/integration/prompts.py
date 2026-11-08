@@ -9,8 +9,13 @@ AUTHOR_VERSION, WORKER_VERSION = "author-v2", "worker-v3"
 CONFIG_WORKER_VERSION = "config-worker-v3"
 
 
-def config_response_schema(agent, outputs, completed_outputs=()):
-    contract = {"allowed_tools": [r["tool"] for r in agent["scope"]]}
+# Generation-only narrowing the host may apply after a no-progress repeat; never a grant.
+OMITTABLE = ("read_document",)
+
+
+def config_response_schema(agent, outputs, completed_outputs=(), omit=()):
+    if not set(omit) <= set(OMITTABLE): raise ValueError("unsupported grammar narrowing")
+    contract = {"allowed_tools": [r["tool"] for r in agent["scope"] if r["tool"] not in omit]}
     choices = worker_response_schema(contract)["oneOf"][:-1]
     remaining = [o["id"] for o in outputs if o["id"] not in completed_outputs]
     if remaining:
@@ -34,7 +39,8 @@ def config_schema_matches(value, agent, outputs):
     remaining = output_field.get("enum")
     allowed = {o["id"] for o in outputs}
     if type(remaining) is not list or any(type(v) is not str or v not in allowed for v in remaining): return False
-    return value == config_response_schema(agent, outputs, allowed - set(remaining))
+    # Omitting an already-delivered read branch only narrows generation.
+    return any(value == config_response_schema(agent, outputs, allowed - set(remaining), omit) for omit in ((), OMITTABLE))
 
 
 def compact_observations(observations):
@@ -60,7 +66,7 @@ def compact_observations(observations):
     return result
 
 
-def config_messages(spec, agent, node, step, observations, catalog, counters, progress=None):
+def config_messages(spec, agent, node, step, observations, catalog, counters, progress=None, omit=()):
     completed = [e["criterion"]["output"] for e in (progress or {}).get("criteria", []) if e["criterion"]["kind"] == "output" and e["satisfied"]]
     return [{"role": "system", "content": (
         "You are an AtomicRoot execution worker. Your role and scope are the approved delegation. "
@@ -74,7 +80,7 @@ def config_messages(spec, agent, node, step, observations, catalog, counters, pr
         "Never set identity, grant, operation, labels or facts. No contract authoring or scope expansion. "
         "Model inference/classification are guarded host operations, not worker actions. "
         "All business effects are simulated. Do not repeat a RELEASED action. "
-        "Return one JSON object using this grammar: " + dumps(config_response_schema(agent, spec["outputs"], completed)))},
+        "Return one JSON object using this grammar: " + dumps(config_response_schema(agent, spec["outputs"], completed, omit)))},
         {"role": "user", "content": dumps({"objective": spec["objective"], "delegation": agent,
             "node": node, "step": step, "acceptance": spec["acceptance"], "outputs": spec["outputs"],
             "catalog": catalog, "counters": counters, "node_progress": progress or {},

@@ -362,17 +362,33 @@ class ConfigWorkflow:
         """
         with self.runtime.store.snapshot() as snap:
             if snap.read("taskresolved:" + self.task)[1] != self.active["binding"]: return None
-            doc = snap.read("document:" + request["args"]["resource"])[1]
-            rows = snap._conn.execute("SELECT a.operation,b.payload,b.receipt,r.receipt FROM execution_actions a "
-                "JOIN outbox b ON b.task=a.task AND b.operation=a.operation JOIN receiver_receipts r ON r.task=a.task AND r.operation=a.operation "
-                "WHERE a.task=? AND a.run=? AND a.node=? AND b.status='RELEASED'", (self.task, s["run"], node)).fetchall()
-            for op, raw, receipt, proof in rows:
-                payload = json.loads(raw)
-                if payload["tool"] != "read_document" or payload["args"] != request["args"] or not receipt or receipt != proof: continue
-                delivered = payload["resource_snapshot"]
-                if doc and (doc["digest"], doc["version"]) == (delivered["digest"], delivered["version"]) and json.loads(receipt)["outcome"] == "DELIVERED":
-                    return op
-        return None
+            return self._delivered_reads(snap, s, node).get(dumps(request["args"]))
+
+    def _delivered_reads(self, snap, s, node):
+        """Exact read args → operation, for receipted deliveries whose content version is still current."""
+        result = {}
+        rows = snap._conn.execute("SELECT a.operation,b.payload,b.receipt,r.receipt FROM execution_actions a "
+            "JOIN outbox b ON b.task=a.task AND b.operation=a.operation JOIN receiver_receipts r ON r.task=a.task AND r.operation=a.operation "
+            "WHERE a.task=? AND a.run=? AND a.node=? AND b.status='RELEASED'", (self.task, s["run"], node)).fetchall()
+        for op, raw, receipt, proof in rows:
+            payload = json.loads(raw)
+            if payload["tool"] != "read_document" or not receipt or receipt != proof: continue
+            doc = snap.read("document:" + payload["args"]["resource"])[1]
+            delivered = payload["resource_snapshot"]
+            if doc and (doc["digest"], doc["version"]) == (delivered["digest"], delivered["version"]) and json.loads(receipt)["outcome"] == "DELIVERED":
+                result.setdefault(dumps(payload["args"]), op)
+        return result
+
+    def _omit(self, s, node, data):
+        """After a confirmed no-progress reread, drop the read branch once every scoped source is delivered.
+
+        Generation narrowing only: no permission changes, and first attempts keep the full grammar.
+        """
+        if not data.get("repeat_reads"): return ()
+        sources = {r["resource"] for r in self.agents[self.plan[node]["agent"]]["scope"] if r["tool"] == "read_document"}
+        with self.runtime.store.snapshot() as snap:
+            delivered = {json.loads(args)["resource"] for args in self._delivered_reads(snap, s, node)}
+        return ("read_document",) if sources and sources <= delivered else ()
 
     def _decide_one(self, s, node):
         data = deepcopy(s["nodes"][node])
@@ -407,10 +423,11 @@ class ConfigWorkflow:
                 for ob in observations:
                     source = ob.get("detail", {}).get("source")
                     if source and source not in sources: sources.append(source)
+                omit = self._omit(s, node, data)
                 response = self.bridge.worker(self.operation(s, node, step, "inference"), self.task + ":" + s["run"],
-                    messages=config_messages(self.spec, self.agents[agent_id], node, step, observations, catalog, counters, self._node_progress(s, node)), sources=sources,
+                    messages=config_messages(self.spec, self.agents[agent_id], node, step, observations, catalog, counters, self._node_progress(s, node), omit), sources=sources,
                     context_resource=self.contexts[agent_id], principal=self.principals[agent_id], task=self.task, purpose=self.spec["purpose"],
-                    execution={"run": s["run"], "binding": self.binding, "node": node, "step": step, "agent": agent_id})
+                    execution={"run": s["run"], "binding": self.binding, "node": node, "step": step, "agent": agent_id}, omit=omit)
             else: response = self.worker(freeze_json(view))
             self._checkpoint("worker_returned", node)
             return {**data, "phase": "DECIDED", "response": freeze_json(response, max_bytes=16384)}
@@ -453,6 +470,17 @@ class ConfigWorkflow:
                     pending = response
                 else:
                     if kind != "action" or set(response) != {"kind", "tool", "args"}: raise ValueError("invalid action proposal")
+                    pinned = {r["resource"]: r["digest"] for r in self.spec["resources"] if r.get("binding") != "host_context"}
+                    args = response["args"] if type(response["args"]) is dict else {}
+                    if args.get("resource") in pinned and args.get("digest") != pinned[args["resource"]]:
+                        # Bounded worker feedback before authorization; the reviewed digest is already in its catalog.
+                        count = data.get("argument_feedback", 0) + 1
+                        data.update(step=data["step"] + 1, argument_feedback=count,
+                            phase="RETRY_EXHAUSTED" if count >= 3 else "READY", reason="argument_mismatch")
+                        data["observations"].append({"status": "INVALID_ARGUMENT", "node": node, "detail": {"reason":
+                            f"{response['tool']} digest for {args['resource']} must be the reviewed resource digest {pinned[args['resource']]} from catalog."}})
+                        emit(self.progress, "ACTION", role=self.plan[node]["agent"], step=data["step"], status="INVALID_ARGUMENT")
+                        continue
                     pending = self.tools.stage({"tool": response["tool"], "args": response["args"]}, principal=self.principals[self.plan[node]["agent"]],
                         task=self.task, purpose=self.spec["purpose"], operation=self.operation(s, node, data["step"], "action"))
                     previous_read = self._previous_read(s, node, pending) if pending["tool"] == "read_document" else None
