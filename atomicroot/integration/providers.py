@@ -322,6 +322,25 @@ async def discover_models(provider, timeout=10):
         return sorted(m["id"] for m in response.json()["data"] if type(m) is dict and type(m.get("id")) is str)
 
 
+async def ollama_model_metadata(model, timeout=10, *, client_factory=None):
+    """Read-only provenance of the configured Ollama endpoint: model digest/details and server version.
+
+    Metadata requests only; no prompt, content or inference. The endpoint is the fixed OLLAMA_ENDPOINT,
+    so a tunnel to another host must be declared separately by the operator.
+    """
+    import httpx2
+    if not 0 < timeout <= 30: raise ValueError("bounded metadata timeout required")
+    factory = client_factory or httpx2.AsyncClient
+    async with factory(follow_redirects=False, trust_env=False, timeout=timeout) as client:
+        tags = await client.get(OLLAMA_ENDPOINT + "/tags"); tags.raise_for_status()
+        version = await client.get(OLLAMA_ENDPOINT + "/version"); version.raise_for_status()
+    entry = next((m for m in tags.json().get("models", []) if type(m) is dict and m.get("name") == model), None)
+    if entry is None: raise ValueError("configured model is not served by the Ollama endpoint")
+    return {"endpoint": OLLAMA_ENDPOINT, "model": model, "digest": entry.get("digest"), "size": entry.get("size"),
+            "details": entry.get("details"), "server_version": version.json().get("version"),
+            "options": {"num_ctx": OLLAMA_CONTEXT, "think": False, "temperature": 0}}
+
+
 def live_model(provider, model=None, limits=Limits(), *, trusted_router=False):
     config = model_configuration(provider, model)
     if provider == "9router": return NineRouterModel(config["route"], limits, trusted_route=trusted_router)
