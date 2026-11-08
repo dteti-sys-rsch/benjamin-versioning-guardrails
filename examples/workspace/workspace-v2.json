@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "purpose": "research",
+  "resources": [
+    {"resource": "notes-a", "content": "Synthetic source A: Alpha completed 3 checks.", "label": "PUBLIC", "purposes": ["research"]},
+    {"resource": "notes-b", "content": "Synthetic source B: Beta completed 2 checks.", "label": "PUBLIC", "purposes": ["research"]}
+  ],
+  "destinations": [
+    {"destination": "ollama", "kind": "provider", "purposes": ["research"], "models": ["qwen3:8b"], "labels": ["PUBLIC", "UNKNOWN"], "endpoint": "http://localhost:11434/api"},
+    {"destination": "research@example.net", "kind": "recipient", "purposes": ["research"], "models": [], "labels": [], "endpoint": null}
+  ],
+  "provider": {"destination": "ollama", "model": "qwen3:8b"},
+  "enabled_tools": ["read_document", "update_document", "transfer_funds", "model_inference"],
+  "budget_limit": 500,
+  "max_agents": 3,
+  "limits": {"max_steps": 16, "max_in_flight": 2, "inference": {"max_calls": 6, "max_tokens": 200000, "max_output_tokens": 4000, "max_retries": 0, "timeout": 120}},
+  "planning": {"ttl": 3600, "max_repairs": 1, "max_replans": 2}
+}

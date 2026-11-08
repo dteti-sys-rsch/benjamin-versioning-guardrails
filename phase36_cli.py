@@ -22,31 +22,13 @@ def load(path):
     return freeze_json(json.loads(raw, object_pairs_hook=pairs))
 
 
+# Compatibility exports for historical experiments. Primary B uses environment input.
+from atomicroot.integration.environment import install_catalog, local_identities
+
+
 def init_fixture(runtime, data):
-    """Explicit local admin action; never called from TaskSpec or worker endpoints."""
-    exact(data, {"resources", "destinations", "entitlements"})
-    admin = Principal("local-admin", frozenset({"admin"}))
-    for resource in sequence(data["resources"]):
-        exact(resource, {"resource", "content", "label", "purposes"})
-        owner = Principal("local-owner", frozenset({"owner"}), resources=frozenset({resource["resource"]}))
-        with runtime.store.snapshot() as snap: previous = snap.read("document:" + resource["resource"])[1]
-        if previous is not None: raise ValueError("fixture resource exists; use official owner API for changes")
-        ref = runtime.storage.ingest(resource["resource"], resource["content"], owner)
-        runtime.labels.set_label(ref["resource"], ref["digest"], ref["version"], resource["label"], resource["purposes"], owner)
-    for destination in sequence(data["destinations"]): runtime.catalog.set_destination(destination, admin)
-    for entitlement in sequence(data["entitlements"]):
-        exact(entitlement, {"task", "subject", "rights"})
-        runtime.catalog.set_entitlement(entitlement["task"], entitlement["subject"], entitlement["rights"], admin)
+    install_catalog(runtime, data)
     return {"status": "FIXTURE_INSTALLED", "identity_mode": "TRUSTED_LOCAL_FIXTURE"}
-
-
-def local_identities(runtime):
-    # Authentication fixture is host-owned. TaskSpec cannot nominate its parent.
-    with runtime.store.snapshot() as snap:
-        tasks = frozenset(key.split(":")[1] for (key,) in snap._conn.execute(
-            "SELECT key FROM conflict_keys WHERE key LIKE 'entitlement:%:local-user'"))
-    return (Principal("local-user", frozenset({"user"}), tasks),
-            Principal("local-human", frozenset({"approver"}), tasks))
 
 
 def main():

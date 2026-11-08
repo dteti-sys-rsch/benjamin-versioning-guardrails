@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "my-task",
+  "purpose": "personal-analysis",
+  "resources": [
+    {"resource": "my-notes", "content": "Synthetic example notes. Replace with authorized input.", "label": "PUBLIC", "purposes": ["personal-analysis"]}
+  ],
+  "destinations": [
+    {"destination": "ollama", "kind": "provider", "purposes": ["personal-analysis"], "models": ["qwen3:8b"], "labels": ["PUBLIC", "UNKNOWN"], "endpoint": "http://localhost:11434/api"}
+  ],
+  "scope": [
+    {"tool": "read_document", "resource": "my-notes", "destination": null, "purpose": "personal-analysis", "max_amount": 0},
+    {"tool": "model_inference", "resource": "my-notes", "destination": "ollama", "purpose": "personal-analysis", "max_amount": 0}
+  ],
+  "budget_limit": 0,
+  "max_agents": 1,
+  "limits": {"max_steps": 12, "max_in_flight": 1, "inference": {"max_calls": 8, "max_tokens": 200000, "max_output_tokens": 3072, "max_retries": 0, "timeout": 120}},
+  "provider": {"destination": "ollama", "model": "qwen3:8b"},
+  "planning": {"ttl": 3600, "max_repairs": 1, "max_replans": 2}
+}

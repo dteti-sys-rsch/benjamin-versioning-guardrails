@@ -1,9 +1,10 @@
 # AtomicRoot Fase 5.5 — Goal, discovery, synthesis dan execution B
 
 Status: implemented dan offline verified dengan fake/replay model. Smoke live
-Ollama Qwen3:8b pada 28 Oktober 2026 memverifikasi worker A dan recovery.
-Planner B sudah dicoba live tetapi belum menghasilkan proposal executable;
-policy synthesis live belum berhasil diverifikasi. JEV live **NOT RUN**. Effects bisnis tetap simulasi.
+Ollama Qwen3:8b pada 28 Oktober 2026 berhasil sampai B planning, trusted review,
+worker live, completion dan recovery untuk goal baca/ringkas sintetis.
+Policy synthesis live dan generalisasi semua use case belum terbukti.
+JEV live **NOT RUN**. Effects bisnis tetap simulasi.
 Fase 6 tidak dijalankan. Z3 tetap satu-satunya evaluator policy aktif.
 
 ## Bentuk sistem
@@ -93,17 +94,59 @@ model stateful melalui protected inference yang sama.
 
 ## Live Ollama Qwen3:8b
 
-Perbaikan lanjutan memakai prompt `goal-planner-v6`: structured planner grammar,
+Audit terbaru: [acceptance closed](../../docs/REPORTS/PHASE_55_ACCEPTANCE_CLOSED_REPORT.md).
+Batch awal yang gagal tetap ada di [research acceptance](../../docs/REPORTS/PHASE_55_RESEARCH_ACCEPTANCE_REPORT.md).
+`--case replan` memeriksa source mutation v2 dan fresh reviewed execution;
+`--case budget` menuntut policy hasil model: 175 ALLOW, 176 DENY oleh policy
+tambahan sebelum dummy payment. Jika probe gagal, command gagal dan tidak
+melakukan payment. Dua goal ini adalah fixtures eksperimen, bukan runtime templates.
+Batch kedua yang diotorisasi memakai 23/24 calls: budget policy synthesis,
+fresh replan dan unsupported memiliki bukti live. 175 ALLOW, 176 DENY oleh
+policy hasil Qwen, lalu pembayaran 175 DELIVERED; main used=175/reserved=0.
+Hasil ini finite, bukan jaminan semua goal atau semua respons Qwen berhasil.
+
+`--max-calls N` membatasi session, dan kombinasi cases menolak configured
+allowance di atas 24. Command paket acceptance tersedia, tetapi belum dijamin
+green pada Qwen3:8b:
+
+```powershell
+.\.venv\Scripts\python.exe examples/phase55/live_ollama.py --output .runs/my-research --authorize-live --fixture-approve --case budget --case replan --case unsupported
+```
+
+Perbaikan lanjutan memakai prompt `goal-planner-v22`: structured planner grammar,
 feedback draft/path, validasi context dan scope, serta receipt-based completion
 untuk beberapa node dengan agent sama. Schema generation direkonstruksi host dan
 tetap dihitung dalam budget; batas context 8192 byte dipertahankan. Perubahan
 prompt/schema menyebabkan divergence artifact lama secara eksplisit, tanpa
 menghapus binding agar replay tampak cocok.
 
-Kontrol dua node tersedia melalui `--case worker-multi`. Synthesis B tetap belum
-berhasil untuk read/summary pada sampel live; proposal invalid tidak dilonggarkan.
-Lihat [laporan perbaikan](../../docs/REPORTS/PHASE_55_PLANNER_FIX_REPORT.md)
-untuk hasil aktual, termasuk percobaan gagal.
+Kontrol dua node tersedia melalui `--case worker-multi`. Planner compact memilih
+`agents[].scope_refs` sebagai indeks ke catalog scope yang terikat pada context.
+Compiler mengembangkan pilihan eksplisit menjadi canonical TaskSpec.
+`context_resource` sendiri merupakan deklarasi capability inference host:
+resolver memilih tepat satu rule catalog yang cocok resource/provider/purpose.
+Tidak membuat rule baru, mengganti provider, atau memberikan authority tanpa review.
+Canonical A TaskSpec tetap didukung. Raw model response dan compiled proposal
+keduanya tersimpan; label/identity/footprint tidak berasal dari model.
+
+Budget harness memakai `SemanticBudgetCheck`, oracle research opsional dari
+trusted composition root, bukan field API/model. Ia menguji candidate pada
+snapshot SQLite privat dengan Authority/Z3 yang sama, tanpa delivery. Counterexample
+masuk bounded repair sebelum main preview/activation. Binding oracle tersimpan
+di context/artifact; replay harus memasang checker dengan binding sama dan
+mengulang pemeriksaan. Probe Expectations 175/176 adalah ground truth fixture,
+bukan evaluator DSL alternatif atau bukti intent alignment umum.
+
+Demo B yang berhasil:
+
+```powershell
+.\.venv\Scripts\python.exe examples/phase55/live_ollama.py --output .runs/my-b-live --authorize-live --fixture-approve --case summary
+```
+
+Goal contoh menyatakan identifier output harus `result`. Reviewer tetap menolak
+ID lain atau requirement yang hilang. Ini klarifikasi input demo, bukan rename
+otomatis terhadap proposal. Lihat [laporan penyelesaian planner](../../docs/REPORTS/PHASE_55_B_LIVE_SOLVED_REPORT.md)
+untuk actual commands, kegagalan dan batas klaim.
 
 Dari root repository, dengan Ollama lokal dan `qwen3:8b` sudah tersedia:
 
@@ -132,12 +175,13 @@ fixture/spec, ledger SQLite, `progress.jsonl`, `initial-state.json`,
 keys hanya di memori; checkpoint recovery diperiksa dalam invocation demo yang
 sama. Ini bukan perintah resume CLI untuk ledger yang key-nya tidak disimpan.
 
-Hasil aktual 28 Oktober 2026: kontrol A terakhir `SATISFIED`, 2 calls live,
-recovery tanpa call/intent baru. Empat session planning B belum menghasilkan
-proposal executable (provider crash, timeout, dua CLARIFY setelah proposal
-invalid). Exit code 1 pada B menyatakan kriteria demo belum tercapai; hasil
-negatif tetap disimpan dan tidak diganti fake response. Offline default tetap
-tidak memanggil model. Lihat [laporan Qwen](../../docs/REPORTS/PHASE_55_OLLAMA_QWEN3_8B_REPORT.md).
+Hasil historis awal Qwen terdapat pada [laporan Qwen](../../docs/REPORTS/PHASE_55_OLLAMA_QWEN3_8B_REPORT.md).
+Sesudah compact compiler, dua run B read/summary berhasil SATISFIED dengan model
+live untuk planner dan worker. Recovery tidak menambah call/intent dan proposal
+replay match. Kasus WhatsApp belum konsisten menghasilkan UNSUPPORTED; INVALID_PROPOSAL
+tetap tanpa business effects. Default tiga kasus dapat exit 1 karena kriteria
+unsupported tersebut; jangan menyamakan itu dengan kegagalan kasus summary.
+Offline default tetap tidak memanggil model. Bukan bukti universal use case.
 
 ## Alur CLI lokal yang dapat ditinjau
 
