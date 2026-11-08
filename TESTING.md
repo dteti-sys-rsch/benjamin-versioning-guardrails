@@ -1,5 +1,22 @@
 # Testing AtomicRoot sekali jalan
 
+Implementasi dinamis terintegrasi: **599 tests passed**, artifact fase 4/5/5.5
+PASSED pada `.runs/testing/dynamic-accepted-all`. Live memakai **12/24 calls**;
+acceptance live belum tercapai (CONTEXT_LIMIT dan requirement mismatch), sedangkan
+replay hasil gagal lintas versi **12/12 match**. Lihat
+[report integrasi dinamis](docs/REPORTS/DYNAMIC_GOAL_IMPLEMENTATION_REPORT.md).
+
+Jalur penggunaan dinamis tersedia melalui `run_goal.py`: konfigurasi lingkungan
+dan goal pengguna, review intake, proposal LLM, review bisnis, lalu eksekusi.
+Lihat [panduan workspace pengguna](examples/workspace/README.md). Harness lama
+tetap untuk eksperimen/replay. Runner baru offline verified; audit live Qwen
+memakai 10 calls, satu read assisted berhasil, recovery tanpa operasi tambahan,
+dan replay planning 6/6 cocok. Goal biasa belum andal; lihat
+[audit dan gap live](docs/REPORTS/PHASE_55_WORKSPACE_LIVE_AUDIT_REPORT.md).
+Regression perubahan workspace sebelumnya: **581 passed**,
+beserta artifact fase 4/5/5.5 PASSED di
+`.runs/testing/user-environment-verified/summary.json`.
+
 Gunakan sekarang untuk verifikasi Fase 1–5.5. Runner ini tidak menjalankan Fase
 6, benchmark/adaptive search baru, atau provider/effects live. Python dipakai
 agar alur yang sama berjalan dari PowerShell maupun Bash, tanpa dependency baru.
@@ -175,3 +192,18 @@ regression menghasilkan **555 passed**, dan profil `phase55` yang mencakup test
 harness baru menghasilkan **50 passed**. Hasil ini tidak menggantikan hasil
 historis di atas. [Perintah demo live](examples/phase55/README.md#live-ollama-qwen38b)
 memerlukan explicit flags; `run_tests.py` tetap offline dan tidak memanggil Ollama.
+
+Pembaruan berikutnya pada tanggal yang sama: planner compact v10 berhasil
+menjalankan B read/summary dengan Qwen live pada dua run, termasuk review,
+completion, recovery dan proposal replay. Regression final **559 passed** dan
+seluruh generator replay lulus pada `.runs/testing/b-solve-verified`.
+Kasus unsupported tetap fail-closed, tetapi penjelasan model belum konsisten.
+Lihat [laporan B live](docs/REPORTS/PHASE_55_B_LIVE_SOLVED_REPORT.md).
+
+Batch semantic acceptance kedua yang diizinkan memakai **23/24 live calls**:
+policy hasil Qwen memberi 175 ALLOW/176 DENY, transfer175 delivered,
+read/summary fresh replan sourcev2 SATISFIED, dan WhatsApp UNSUPPORTED tanpa efek.
+Final offline: **565 passed** dan seluruh generator replay PASSED pada
+`.runs/testing/semantic-batch2-final-verified`.
+[Laporan lengkap](docs/REPORTS/PHASE_55_ACCEPTANCE_CLOSED_REPORT.md).
+Hasil finite ini tidak menjamin setiap run model baru berhasil.

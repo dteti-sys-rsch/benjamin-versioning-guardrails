@@ -38,6 +38,35 @@ On other platforms, use `.venv/bin/python` after creating the environment with
 
 ## Goal-driven use: System B
 
+Use the workspace inventory v2 for the named-capability planner and unified
+business review. Users provide inventory and ceilings once, without a per-goal
+workflow or scope tuple template. New permissions are projected for review and
+activated atomically; missing executable tools remain blocked specifications.
+
+```powershell
+.\.venv\Scripts\python.exe run_goal.py --environment examples/workspace/workspace-v2.json --goal "Read notes-a and produce a summary named result." --output .runs/dynamic-goal --authorize-live
+```
+
+The integrated mechanisms are offline verified. Current Qwen live acceptance
+is **not met**: recorded proposals failed requirement consistency or exceeded
+the bounded repair context. See the [implementation and live report](docs/REPORTS/DYNAMIC_GOAL_IMPLEMENTATION_REPORT.md).
+
+For an interactive run from a user-authored environment and goal, use
+`run_goal.py`. It requires explicit environment permission review, intake review,
+and approval of the actual model proposal before execution. No experiment fixture
+or prebuilt business proposal is loaded. See [user workspace flow](examples/workspace/README.md).
+
+```powershell
+.\.venv\Scripts\python.exe run_goal.py --environment examples/workspace/environment.json --goal "Read my-notes and produce a summary output named result." --output .runs/my-goal --authorize-live
+```
+
+The sample environment is optional input, not a runtime default. Available tools
+and user permissions still bound execution. A live audit of this runner completed
+one assisted read with stable recovery and matching offline proposal replay.
+Natural-language goals still showed scope-selection and intent-alignment failures;
+see the [workspace live audit](docs/REPORTS/PHASE_55_WORKSPACE_LIVE_AUDIT_REPORT.md).
+Historical Qwen evidence below uses the earlier synthetic harness.
+
 `atomicroot_cli.py` is the primary goal-to-execution entry point. The planner
 proposes a TaskSpec, agent scopes, workflow and policy DSL from the goal and an
 authorized catalog. Trusted resolution, exact Broker review and executor A then
@@ -55,9 +84,10 @@ Model proposals never install tools, grant rights or set authoritative labels.
 ```
 
 See [System B setup, review and replay](examples/phase55/README.md).
-Phase 5.5 is offline verified with fake/replay models. A finite local Qwen3:8b
-smoke test verified the configured A worker, read/summary evidence and recovery;
-B planner attempts did not produce an executable proposal. See the
+Phase 5.5 is offline verified with fake/replay models. Finite local Qwen3:8b
+smoke tests now complete B planning, trusted compilation/review and live worker
+execution for a synthetic read/summary goal, with recovery and proposal replay.
+Unsupported explanations and general model quality remain limited. See the
 [live commands and limitations](examples/phase55/README.md#live-ollama-qwen38b).
 The Phase 3.6/3.7 configuration CLIs remain available as the internal A path.
 
