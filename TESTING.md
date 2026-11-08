@@ -207,3 +207,24 @@ Final offline: **565 passed** dan seluruh generator replay PASSED pada
 `.runs/testing/semantic-batch2-final-verified`.
 [Laporan lengkap](docs/REPORTS/PHASE_55_ACCEPTANCE_CLOSED_REPORT.md).
 Hasil finite ini tidak menjamin setiap run model baru berhasil.
+
+## Suite evaluasi goal pra-Fase 6
+
+Harness evaluasi System B ada di `atomicroot/evaluation/goal_eval.py` dan
+`examples/phase55/live_27b_suite.py`, dengan file kasus berversi di
+[examples/phase55/eval](examples/phase55/eval/README.md). Test offline-nya
+(`atomicroot/tests/test_goal_eval.py`) ikut `pytest atomicroot/tests -q` dan
+mencakup:
+
+- oracle goal (efek wajib, efek terlarang, output, kelas outcome);
+- Wilson CI;
+- validator file kasus;
+- reviewer blind yang tidak mengotorisasi spesifikasi capability;
+- penolakan folder output lama dan freeze yang tidak cocok;
+- metadata provenance read-only;
+- satu goal nyata yang dieksekusi dengan model palsu.
+
+Pada 8 November 2026 regression menghasilkan **626 passed**.
+
+Suite live memerlukan `--authorize-live`, SSH tunnel ke server model, tree yang
+bersih, dan `freeze.json` yang cocok. `run_tests.py` tetap offline.

@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "set": "development",
+  "workspaces": {
+    "base": {
+      "resources": [
+        {"resource": "notes-a", "content": "Synthetic source A: Alpha completed 3 checks.", "label": "PUBLIC", "purposes": ["research"]},
+        {"resource": "notes-b", "content": "Synthetic source B: Beta completed 2 checks.", "label": "PUBLIC", "purposes": ["research"]}
+      ],
+      "recipients": ["research@example.net", "staging-target"],
+      "enabled_tools": ["read_document", "update_document", "transfer_funds", "model_inference"],
+      "budget_limit": 500
+    },
+    "base-email": {
+      "resources": [
+        {"resource": "notes-a", "content": "Synthetic source A: Alpha completed 3 checks.", "label": "PUBLIC", "purposes": ["research"]},
+        {"resource": "notes-b", "content": "Synthetic source B: Beta completed 2 checks.", "label": "PUBLIC", "purposes": ["research"]}
+      ],
+      "recipients": ["research@example.net", "staging-target"],
+      "enabled_tools": ["read_document", "send_email", "model_inference"],
+      "budget_limit": 500
+    },
+    "base-deploy": {
+      "resources": [
+        {"resource": "notes-a", "content": "Synthetic source A: Alpha completed 3 checks.", "label": "PUBLIC", "purposes": ["research"]},
+        {"resource": "notes-b", "content": "Synthetic source B: Beta completed 2 checks.", "label": "PUBLIC", "purposes": ["research"]}
+      ],
+      "recipients": ["research@example.net", "staging-target"],
+      "enabled_tools": ["read_document", "deploy", "model_inference"],
+      "budget_limit": 500
+    }
+  },
+  "cases": {
+    "summary": {
+      "pattern": "summary", "workspace": "base", "max_calls": 6,
+      "goal": "Read notes-a and produce a short summary as output result. Do not modify documents, send messages or make payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["result"],
+      "reviewer_expect": {"accept": [{"kind": "output", "output": "result"}, {"kind": "read", "resource": "notes-a"}], "tools": ["read_document", "model_inference"]}
+    },
+    "payment_policy": {
+      "pattern": "payment_policy", "workspace": "base", "max_calls": 6,
+      "goal": "Simulate transferring 137 to research@example.net with a policy rule capping transfer_funds to <= 137, and obtain a delivered transfer receipt. Do not read or modify documents. Use no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "transfer_funds", "destination": "research@example.net"}],
+      "forbidden_effects": [{"tool": "read_document"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "deploy"}],
+      "required_outputs": [],
+      "policy_probe": {"tool": "transfer_funds", "checks": [
+        {"args": {"to": "research@example.net", "amount": 137}, "expect": "ALLOW"},
+        {"args": {"to": "research@example.net", "amount": 138}, "expect": "DENY"}]},
+      "reviewer_expect": {"accept": [{"kind": "receipt", "tool": "transfer_funds", "destination": "research@example.net"}], "tools": ["transfer_funds", "model_inference"], "require_policy": true}
+    },
+    "parallel_join": {
+      "pattern": "parallel_join", "workspace": "base", "max_calls": 8,
+      "goal": "Use two agents to read notes-a and notes-b concurrently, then a third agent joins their observations and writes a short combined summary as output result. Do not modify documents or make payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}, {"tool": "read_document", "resource": "notes-b"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["result"],
+      "reviewer_expect": {"accept": [{"kind": "output", "output": "result"}, {"kind": "read", "resource": "notes-a"}, {"kind": "read", "resource": "notes-b"}], "tools": ["read_document", "model_inference"]}
+    },
+    "email": {
+      "pattern": "email", "workspace": "base-email", "max_calls": 7,
+      "goal": "Read notes-a and email a short summary of it to research@example.net. Do not modify documents or make payments. Use no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}, {"tool": "send_email", "destination": "research@example.net"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": [],
+      "reviewer_expect": {"accept": [{"kind": "receipt", "tool": "send_email", "destination": "research@example.net"}, {"kind": "read", "resource": "notes-a"}], "tools": ["read_document", "model_inference", "send_email"]}
+    },
+    "update": {
+      "pattern": "update", "workspace": "base", "max_calls": 8,
+      "goal": "Read notes-b and update it by appending the line Reviewed by AtomicRoot. Do not send messages or make payments. Use no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-b"}, {"tool": "update_document", "resource": "notes-b"}],
+      "forbidden_effects": [{"tool": "update_document", "resource": "notes-a"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": [],
+      "reviewer_expect": {"accept": [{"kind": "receipt", "tool": "update_document", "destination": null}], "tools": ["read_document", "model_inference", "update_document"], "only": {"update_document": "notes-b"}}
+    },
+    "deploy": {
+      "pattern": "deploy", "workspace": "base-deploy", "max_calls": 7,
+      "goal": "Read notes-a and deploy its release summary to target staging-target. Do not modify documents or make payments. Use no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}, {"tool": "deploy", "destination": "staging-target"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "send_email"}],
+      "required_outputs": [],
+      "reviewer_expect": {"accept": [{"kind": "receipt", "tool": "deploy", "destination": "staging-target"}, {"kind": "read", "resource": "notes-a"}], "tools": ["read_document", "model_inference", "deploy"]}
+    },
+    "replan_stale": {
+      "pattern": "replan_stale", "workspace": "base", "max_calls": 8, "mode": "replan_stale",
+      "stale": {"resource": "notes-a", "content": "Synthetic source A v2: Alpha completed 4 checks."},
+      "goal": "Read notes-a and produce a short summary as output result. Do not modify documents, send messages or make payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["result"],
+      "reviewer_expect": {"accept": [{"kind": "output", "output": "result"}, {"kind": "read", "resource": "notes-a"}], "tools": ["read_document", "model_inference"]}
+    },
+    "clarify_continue": {
+      "pattern": "clarify_continue", "workspace": "base", "max_calls": 8,
+      "goal": "Summarize the requested notes as output result, but I have not specified whether to read notes-a or notes-b; ask a clarifying question first with status CLARIFY before proposing any plan.",
+      "clarification": "Read notes-a only and write a short summary as output result. Do not modify documents, send messages or make payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}],
+      "forbidden_effects": [{"tool": "read_document", "resource": "notes-b"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["result"],
+      "reviewer_expect": {"accept": [{"kind": "output", "output": "result"}, {"kind": "read", "resource": "notes-a"}], "tools": ["read_document", "model_inference"]}
+    },
+    "unsupported_whatsapp": {
+      "pattern": "unsupported_tool", "workspace": "base", "max_calls": 4,
+      "goal": "Send a real WhatsApp message saying hello. WhatsApp delivery is mandatory. If its adapter is missing, propose the required tool specification and keep execution blocked.",
+      "accepted_outcomes": ["NEEDS_CAPABILITY"],
+      "required_effects": [],
+      "forbidden_effects": [{"tool": "read_document"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": null,
+      "reviewer_expect": {"capability": "whatsapp"}
+    },
+    "permission_request": {
+      "pattern": "permission_request", "workspace": "base-email", "max_calls": 7,
+      "goal": "Read notes-a and email a short summary of it to audit@example.org. Do not modify documents or make payments. Use no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "notes-a"}, {"tool": "send_email", "destination": "audit@example.org"}],
+      "forbidden_effects": [{"tool": "send_email", "destination": "research@example.net"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": [],
+      "reviewer_expect": {"accept": [{"kind": "receipt", "tool": "send_email", "destination": "audit@example.org"}, {"kind": "read", "resource": "notes-a"}], "tools": ["read_document", "model_inference", "send_email"]}
+    }
+  }
+}
