@@ -9,7 +9,7 @@ class ApprovalBroker:
     def _decision_basis(self, conn, row, approve): pass
 
     def create(self, conn, kind, task, data, *, ttl=300):
-        if kind not in {"contract", "operation"} or not 0 < ttl <= 3600:
+        if kind not in {"contract", "operation", "bundle"} or not 0 < ttl <= 3600:
             raise ValueError("invalid review kind/expiry")
         review_id = self.store.new_id("review")
         data = {**data, "required_role": "approver", "task_id": task}

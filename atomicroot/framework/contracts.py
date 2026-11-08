@@ -131,35 +131,39 @@ class ContractService:
 
     def activate(self, proposal_id, review_id, principal):
         with self.store.transaction() as conn:
-            row = self.store.row(conn, "SELECT * FROM proposals WHERE id=?", (proposal_id,))
-            if row is None: raise ValueError("unknown proposal")
-            principal.require("approver", task=row["task"])
-            if row["status"] != "DRAFT" or review_id != row["review"]: raise ValueError("proposal not activatable")
-            self.broker.validate_grant(conn, review_id, "contract", row["task"], row["digest"])
-            data = json.loads(row["data"])
-            from atomicroot.store.trace_store import Snapshot
-            self._validate(data, Snapshot(conn))
-            task = row["task"]
-            # Initializers are official and only run for a new task; resume never resets.
-            _, old = self.store.value(conn, f"contract3:{task}")
-            for key, value in ((f"budget:{task}", 0), (f"reserved:{task}", 0), (f"exposure:{task}", [])):
-                if old is None: self.store.put(conn, key, value, initial=True)
-                elif self.store.value(conn, key)[1] is None: raise ValueError("missing ledger fact; explicit repair required")
-            references = []
-            for definition in data["policies"]:
-                key = policy_key(definition)
-                _, existing = self.store.value(conn, key)
-                if existing is not None and existing != definition: raise ValueError("policy revision conflict")
-                if existing is None: self.store.put(conn, key, definition)
-                references.append({"policy_id": definition["policy_id"], "version": definition["version"]})
-            self.store.put(conn, f"contract3:{task}", data)
-            self.store.put(conn, f"policyset:{task}", references)
-            from atomicroot.framework.tasks import activate_attachment
-            activate_attachment(self.store, conn, data)
-            version = self.store.value(conn, f"contract3:{task}")[0]
-            conn.execute("UPDATE proposals SET status='SUPERSEDED' WHERE task=? AND status='ACTIVE'", (task,))
-            conn.execute("UPDATE proposals SET status='ACTIVE',activated_version=? WHERE id=?", (version, proposal_id))
-            self.broker.consume(conn, review_id)
-            self.store.audit(conn, "CONTRACT_ACTIVATED", principal.subject,
-                             {"proposal_id": proposal_id, "review_id": review_id, "digest": row["digest"], "version": version})
+            return self.activate_in_transaction(conn, proposal_id, review_id, principal)
+
+    def activate_in_transaction(self, conn, proposal_id, review_id, principal):
+        """Trusted composition boundary; caller owns the atomic transaction."""
+        row = self.store.row(conn, "SELECT * FROM proposals WHERE id=?", (proposal_id,))
+        if row is None: raise ValueError("unknown proposal")
+        principal.require("approver", task=row["task"])
+        if row["status"] != "DRAFT" or review_id != row["review"]: raise ValueError("proposal not activatable")
+        self.broker.validate_grant(conn, review_id, "contract", row["task"], row["digest"])
+        data = json.loads(row["data"])
+        from atomicroot.store.trace_store import Snapshot
+        self._validate(data, Snapshot(conn))
+        task = row["task"]
+        # Initializers are official and only run for a new task; resume never resets.
+        _, old = self.store.value(conn, f"contract3:{task}")
+        for key, value in ((f"budget:{task}", 0), (f"reserved:{task}", 0), (f"exposure:{task}", [])):
+            if old is None: self.store.put(conn, key, value, initial=True)
+            elif self.store.value(conn, key)[1] is None: raise ValueError("missing ledger fact; explicit repair required")
+        references = []
+        for definition in data["policies"]:
+            key = policy_key(definition)
+            _, existing = self.store.value(conn, key)
+            if existing is not None and existing != definition: raise ValueError("policy revision conflict")
+            if existing is None: self.store.put(conn, key, definition)
+            references.append({"policy_id": definition["policy_id"], "version": definition["version"]})
+        self.store.put(conn, f"contract3:{task}", data)
+        self.store.put(conn, f"policyset:{task}", references)
+        from atomicroot.framework.tasks import activate_attachment
+        activate_attachment(self.store, conn, data)
+        version = self.store.value(conn, f"contract3:{task}")[0]
+        conn.execute("UPDATE proposals SET status='SUPERSEDED' WHERE task=? AND status='ACTIVE'", (task,))
+        conn.execute("UPDATE proposals SET status='ACTIVE',activated_version=? WHERE id=?", (version, proposal_id))
+        self.broker.consume(conn, review_id)
+        self.store.audit(conn, "CONTRACT_ACTIVATED", principal.subject,
+                         {"proposal_id": proposal_id, "review_id": review_id, "digest": row["digest"], "version": version})
         return {"status": "ACTIVE", "version": version, "proposal_id": proposal_id}

@@ -35,8 +35,8 @@ def rule_request(task, rule):
 class TrustedCatalog:
     def __init__(self, store): self.store = store
 
-    def set_destination(self, data, principal):
-        principal.require("admin")
+    @staticmethod
+    def validate_destination(data):
         data = freeze_json(data)
         exact(data, {"destination", "kind", "purposes", "endpoint", "models", "labels"})
         text(data["destination"])
@@ -58,6 +58,11 @@ class TrustedCatalog:
                 raise ValueError("unsupported provider endpoint")
             if not data["models"] or not data["labels"] or not set(data["labels"]) <= {"PUBLIC", "SENSITIVE", "UNKNOWN"}:
                 raise ValueError("explicit provider model/data scope required")
+        return data
+
+    def set_destination(self, data, principal):
+        principal.require("admin")
+        data = self.validate_destination(data)
         with self.store.transaction() as conn:
             key = "destination:" + data["destination"]
             if self.store.value(conn, key)[1] is None:
@@ -67,17 +72,22 @@ class TrustedCatalog:
             self.store.put(conn, key, data)
             self.store.audit(conn, "DESTINATION_UPDATED", principal.subject, data)
 
-    def set_entitlement(self, task, subject, data, principal):
-        principal.require("admin")
+    @staticmethod
+    def validate_entitlement(task, subject, data):
         valid_identity(task); valid_identity(subject)
         data = freeze_json(data)
         exact(data, {"scope", "budget_limit", "max_agents", "limits"})
-        data["scope"] = rules(data["scope"])
+        data["scope"] = rules(data["scope"], limit=64)
         money_integer(data["budget_limit"])
         if type(data["max_agents"]) is not int or not 1 <= data["max_agents"] <= 16: raise ValueError("invalid agent bound")
         exact(data["limits"], {"max_steps", "max_in_flight", "max_calls", "max_tokens", "max_output_tokens", "max_retries", "timeout"})
         for value in data["limits"].values():
             if type(value) is not int or not 0 <= value <= 1_000_000: raise ValueError("integer entitlement limit required")
+        return data
+
+    def set_entitlement(self, task, subject, data, principal):
+        principal.require("admin")
+        data = self.validate_entitlement(task, subject, data)
         with self.store.transaction() as conn:
             self.store.put(conn, f"entitlement:{task}:{subject}", data)
             self.store.audit(conn, "ENTITLEMENT_UPDATED", principal.subject, {"task": task, "subject": subject, "entitlement": data})
@@ -144,7 +154,7 @@ class TaskService:
         if mode is None and (snapshot.read(f"contract3:{task}")[1] is not None or snapshot.read(f"contract:{task}")[1] is not None):
             raise ValueError("legacy active task requires explicit migration; no silent delegation")
         entitlement = reader.read(f"entitlement:{task}:{principal.subject}")
-        rights = rules(entitlement["scope"])
+        rights = rules(entitlement["scope"], limit=64)
         if len(data["agents"]) > entitlement["max_agents"]: raise ValueError("agent count outside entitlement")
         if data["budget_limit"] > money_integer(entitlement["budget_limit"]): raise ValueError("task budget outside entitlement")
         caps = data["limits"]["inference"] | {k: data["limits"][k] for k in ("max_steps", "max_in_flight")}
@@ -271,7 +281,7 @@ def delegation_constraints(reader, request):
     entitlement = reader.read(f"entitlement:{task}:{mode['owner']}")
     constraints = [("agent_membership", Member(RequestField("agent_id"), Ref("agent_members", "task")), "DENY"),
                    ("agent_scope", scope_expression(rules(delegation["scope"])), "DENY"),
-                   ("parent_scope", scope_expression(rules(entitlement["scope"])), "DENY"),
+                   ("parent_scope", scope_expression(rules(entitlement["scope"], limit=64)), "DENY"),
                    ("parent_budget", Le(Const(active["spec"]["budget_limit"]), Const(money_integer(entitlement["budget_limit"]))), "DENY")]
     caps = active["spec"]["limits"]["inference"] | {k: active["spec"]["limits"][k] for k in ("max_steps", "max_in_flight")}
     cap_checks = [Le(Const(caps[k]), Const(v)) for k, v in entitlement["limits"].items()]

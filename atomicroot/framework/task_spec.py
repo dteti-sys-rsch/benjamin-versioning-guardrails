@@ -37,8 +37,8 @@ def unique(items, key):
     if len(ids) != len(set(ids)): raise ValueError("duplicate/conflicting " + key)
 
 
-def rules(value):
-    result = freeze_json(sequence(value, 12))
+def rules(value, limit=12):
+    result = freeze_json(sequence(value, limit))
     for rule in result:
         exact(rule, RULE_FIELDS)
         if type(rule["tool"]) is not str: raise ValueError("tool must be a name")

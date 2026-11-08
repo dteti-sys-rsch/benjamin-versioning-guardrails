@@ -64,7 +64,38 @@ class FrameworkStore(TraceStore):
         """)
 
     @contextmanager
+    def composed_transaction(self):
+        """Trusted service composition only; never include inference or human waits."""
+        if getattr(self._instrumentation, 'composing', False):
+            raise ValueError('composition already active')
+        with self.transaction() as conn:
+            self._instrumentation.composing = True
+            try: yield conn
+            finally: self._instrumentation.composing = False
+
+    @contextmanager
+    def snapshot(self):
+        if getattr(self._instrumentation, 'composing', False):
+            yield Snapshot(self._conn)
+        else:
+            with super().snapshot() as snap: yield snap
+
+    @contextmanager
     def transaction(self):
+        if getattr(self._instrumentation, 'composing', False):
+            # The outer transaction already owns admission and the connection lock.
+            name = 'compose_' + uuid.uuid4().hex
+            offset = len(self._instrumentation.events)
+            self._conn.execute('SAVEPOINT ' + name)
+            try:
+                yield self._conn
+                self._conn.execute('RELEASE SAVEPOINT ' + name)
+            except BaseException:
+                self._conn.execute('ROLLBACK TO SAVEPOINT ' + name)
+                self._conn.execute('RELEASE SAVEPOINT ' + name)
+                del self._instrumentation.events[offset:]
+                raise
+            return
         # Admission always precedes the connection lock; fallback never upgrades
         # from a transaction. Every framework writer uses this same boundary.
         with self.coordinator.acquire(), self._lock:
