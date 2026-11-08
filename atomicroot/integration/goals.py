@@ -19,8 +19,8 @@ from atomicroot.sim.model_tape import ModelTape
 
 INTAKE_FIELDS = {"id", "intake_task", "agent", "context_resource", "provider", "model", "purpose", "subject", "targets",
                  "visible_resources", "visible_destinations", "expires", "max_repairs", "max_replans"}
-# Protocols with the 8192-byte planning context bound and whole-envelope repair drafts.
-COMPACT_DYNAMIC = {'dynamic-proposal-v3', 'dynamic-proposal-v4', 'dynamic-proposal-v5', 'dynamic-proposal-v6', 'dynamic-proposal-v7', 'dynamic-proposal-v8', 'dynamic-proposal-v9'}
+# Protocols with bounded planning context and whole-envelope repair drafts.
+COMPACT_DYNAMIC = {'dynamic-proposal-v3', 'dynamic-proposal-v4', 'dynamic-proposal-v5', 'dynamic-proposal-v6', 'dynamic-proposal-v7', 'dynamic-proposal-v8', 'dynamic-proposal-v9', 'dynamic-proposal-v10'}
 
 
 class GoalService:
@@ -123,8 +123,11 @@ class GoalService:
         with self.store.transaction() as conn:
             conn.execute("UPDATE goal_revisions SET data=? WHERE session=? AND revision=?", (dumps(data), session, data["revision"]))
 
-    def plan(self, session, goal, intake, task, principal, *, context_resources=(), replan=False, recover=False, requirements=None):
+    def plan(self, session, goal, intake, task, principal, *, context_resources=(), replan=False, recover=False, requirements=None, clarification=None):
         valid_identity(session); text(goal, 2048)
+        if clarification is not None:
+            if not replan: raise ValueError("clarification requires replan=True")
+            text(clarification, 2048)
         context_resources = list(context_resources)
         for name in sequence(context_resources): valid_identity(name)
         if len(set(context_resources)) != len(context_resources): raise ValueError("duplicate context source")
@@ -137,6 +140,7 @@ class GoalService:
         with self.store.snapshot() as snap: config = self._intake(intake, task, principal, snap)
         request = {"goal": goal, "context_resources": context_resources}
         previous, recovering = None, None
+        clarifications = []
         if replan and recover: raise ValueError("recover and replan are distinct operations")
         with self.store.transaction() as conn:
             row = self.store.row(conn, "SELECT * FROM goal_sessions WHERE id=?", (session,))
@@ -152,10 +156,14 @@ class GoalService:
                     if recovering["catalog"] != catalog or recovering["intake"] != config:
                         raise ValueError("planning context changed; explicit new revision required")
                     revision = old[0]
+                    clarifications = list(recovering.get("clarifications", []))
                     if recovering["previous_revision"] is not None:
                         previous = json.loads(conn.execute("SELECT data FROM goal_revisions WHERE session=? AND revision=?", (session, recovering["previous_revision"])).fetchone()[0])
                 else:
                     previous = json.loads(old[1]); revision = old[0] + 1
+                    if clarification is not None and previous.get("status") != "CLARIFY":
+                        raise ValueError("clarification requires a previous CLARIFY revision")
+                    clarifications = list(previous.get("clarifications", [])) + ([clarification] if clarification is not None else [])
                 if previous and previous["status"] == "PLANNING": raise ValueError("planning in progress; no concurrent replan")
                 if self.store.value(conn, "goalexecuting:" + task)[1]: raise ValueError("recover running goal before replan")
                 old_run = previous.get("execution", {}).get("run") if previous else None
@@ -169,7 +177,8 @@ class GoalService:
                 conn.execute("INSERT INTO goal_sessions VALUES (?,?,?,?,?)", (session, principal.subject, task, intake, dumps(request)))
             data = recovering or {"revision": revision, "status": "PLANNING", "catalog": catalog, "catalog_digest": args_hash(catalog),
                 "intake": config, "schema_digest": args_hash(self.protocol.proposal_schema()), "prompt_version": self.protocol.PLANNER_VERSION,
-                "registry_digest": REGISTRY_DIGEST, "calls": [], "created": point(), "previous_revision": previous["revision"] if previous else None}
+                "registry_digest": REGISTRY_DIGEST, "calls": [], "created": point(), "previous_revision": previous["revision"] if previous else None,
+                **({"clarifications": clarifications} if clarifications else {})}
             if recovering and data.get("review_check_binding") != self.check_binding:
                 raise ValueError("trusted proposal check changed during recovery")
             data["review_check_binding"] = self.check_binding
@@ -217,7 +226,8 @@ class GoalService:
                 sources.append({"resource": name, "digest": ref["digest"]})
             error, draft = None, None
             for attempt in range(config["max_repairs"] + 1):
-                prompt_catalog = {**catalog, "planning_constraints": data["intake_binding"], **({"authorized_context": contents} if contents else {})}
+                active_catalog = {**catalog, **({"clarifications": clarifications} if clarifications else {})}
+                prompt_catalog = {**active_catalog, "planning_constraints": data["intake_binding"], **({"authorized_context": contents} if contents else {})}
                 if self.check_binding is not None: prompt_catalog["review_checks"] = self.check_binding
                 prompt = self.protocol.messages(goal, task, prompt_catalog, previous=previous.get("proposal") if previous else None, error=error, draft=draft)
                 planning = {"session": session, "revision": revision, "attempt": attempt, "intake": intake,
@@ -230,8 +240,9 @@ class GoalService:
                     conn.execute("INSERT OR IGNORE INTO goal_calls VALUES (?,?)", (operation, dumps(call)))
                 if operation not in data["calls"]: data["calls"].append(operation)
                 self._save(session, data)
-                if self.protocol.PLANNER_VERSION in COMPACT_DYNAMIC and len(dumps(context).encode('utf-8'))>8192:
-                    data.update(status='CONTEXT_LIMIT',error='Planning context exceeds 8192 bytes; no provider call was made for this attempt')
+                max_ctx_bytes = 24576 if self.protocol.PLANNER_VERSION == 'dynamic-proposal-v10' else 8192
+                if self.protocol.PLANNER_VERSION in COMPACT_DYNAMIC and len(dumps(context).encode('utf-8'))>max_ctx_bytes:
+                    data.update(status='CONTEXT_LIMIT',error=f'Planning context exceeds {max_ctx_bytes} bytes; no provider call was made for this attempt')
                     call.update(error='CONTEXT_LIMIT',observed=point())
                     with self.store.transaction() as conn:conn.execute('UPDATE goal_calls SET data=? WHERE operation=?',(dumps(call),operation))
                     break
@@ -245,15 +256,16 @@ class GoalService:
                     executable = type(stated) is dict and type(stated.get('spec')) is dict
                     if getattr(self.protocol,'DYNAMIC',False) and output.get('permission_requests') and not output.get('capability_requests') and executable:
                         from atomicroot.integration.permission_bundle import preview as bundle_preview
-                        self.protocol.parse_dynamic_proposal(output,task,goal,catalog,approved_requirements=requirements)
+                        self.protocol.parse_dynamic_proposal(output,task,goal,active_catalog,approved_requirements=requirements)
                         bundle = bundle_preview(self.runtime,output,session,revision,goal,intake,task,principal,
                             resource_inputs=self.resource_inputs,requirements=requirements,protocol=self.protocol)
                         data.update(status='REVIEW_WAIT',dynamic_proposal=freeze_json(output),**bundle)
                         break
-                    proposal = self._parse_proposal(output, task, goal, catalog)
+                    proposal = self._parse_proposal(output, task, goal, active_catalog)
                     if getattr(self.protocol,'DYNAMIC',False):
-                        self.protocol.parse_dynamic_proposal(output, task, goal, catalog, approved_requirements=requirements)
+                        resolved_dyn = self.protocol.parse_dynamic_proposal(output, task, goal, active_catalog, approved_requirements=requirements)
                         data['dynamic_proposal'] = freeze_json(output)
+                        if 'scope_breakdown' in resolved_dyn: data['scope_breakdown'] = resolved_dyn['scope_breakdown']
                     if proposal["status"] != "PROPOSAL":
                         if proposal['status']=='NEEDS_CAPABILITY':
                             key=f'goalproposal:{session}:{revision}:capability'
@@ -290,6 +302,7 @@ class GoalService:
                     if executing: raise ValueError("resume/reconcile running goal before plan preview")
                     preview = self.runtime.tasks.propose(proposal["spec"], principal,
                         review_bindings={key: args_hash(provenance), "goalhead:" + session: args_hash(head), "goalexecuting:" + task: args_hash(executing)})
+                    if 'scope_breakdown' in data: preview = {**preview, 'scope_breakdown': data['scope_breakdown']}
                     data.update(status="REVIEW_WAIT", proposal=proposal, preview=preview,
                         warnings=["Minimum scope and goal alignment require review; valid DSL is not semantic intent proof."],
                         resolved_digest=valid["digest"])
@@ -582,14 +595,16 @@ class GoalService:
         from atomicroot.integration.planning import previous_context
         parse_dynamic_proposal=self.protocol.parse_dynamic_proposal
         request,original=artifact['request'],artifact['planning']
+        clarifications=original.get('clarifications',[])
         matched=False
         for record in original['model_records'].values():
             binding=record['binding'];context=json.loads(binding['messages'][1]['content'])
             supplied=context['allowed_catalog']
-            catalog={k:v for k,v in supplied.items() if k not in {'planning_constraints','authorized_context','review_checks'}}
+            catalog={k:v for k,v in supplied.items() if k not in {'planning_constraints','authorized_context','review_checks','clarifications'}}
             if (context.get('protocol')!=self.protocol.PLANNER_VERSION or context.get('goal')!=request['goal']
                 or context.get('target_task')!=request['task'] or catalog!=(self.protocol.catalog_for_prompt(original['catalog']) if hasattr(self.protocol,'catalog_for_prompt') else original['catalog'])
                 or context.get('previous')!=previous_context(previous)
+                or context.get('clarifications',[])!=clarifications
                 # v5 prompts omit intake caps; replay() already checks intake_binding.
                 or supplied.get('planning_constraints',original['intake_binding'])!=original['intake_binding']):continue
             tape=ModelTape(provider=original['intake']['provider'],model=original['intake']['model'],
@@ -613,9 +628,11 @@ class GoalService:
             if result['proposal']!=original['proposal']:raise ValueError('dynamic permission projection divergence')
             return dict(match=True,result=dict(status='REVIEW_WAIT',**result,network_calls=0,
                 scope='fresh projected latest revision; historical grants and effects are not restored'))
-        resolved=parse_dynamic_proposal(raw,request['task'],request['goal'],original['catalog'],approved_requirements=required)
+        replay_cat={**original['catalog'],**({'clarifications':clarifications} if clarifications else {})}
+        resolved=parse_dynamic_proposal(raw,request['task'],request['goal'],replay_cat,approved_requirements=required)
         if resolved['proposal']!=original['proposal']:raise ValueError('dynamic proposal divergence')
         if self.proposal_check:self.proposal_check(freeze_json(resolved['proposal']))
         preview=self.runtime.tasks.propose(resolved['proposal']['spec'],principal)
+        if 'scope_breakdown' in resolved:preview={**preview,'scope_breakdown':resolved['scope_breakdown']}
         return dict(match=True,result=dict(status='REVIEW_WAIT',proposal=resolved['proposal'],preview=preview,network_calls=0,
                     scope='frozen latest dynamic revision; fresh review required'))

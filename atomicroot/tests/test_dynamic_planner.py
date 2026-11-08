@@ -310,3 +310,120 @@ def test_new_recipient_bundle_binds_expanded_rules(tmp_path):
         assert [r['max_amount'] for r in scope if r['tool'] == 'transfer_funds'] == [137]
         assert service.status('bundle', user)['status'] == 'ACTIVE'
     finally: runtime.store.close()
+
+
+def test_v10_origin_scope_breakdown_and_anti_hallucination_guards(tmp_path):
+    runtime = FrameworkRuntime(tmp_path/'ledger.sqlite')
+    try:
+        goal = 'Read user-notes and write a summary as output result.'
+        value = environment(); user, _ = ready(runtime, value)
+        catalog = discover(runtime, value, user)
+        raw = wire(value, [('read_document', 'user-notes', None)], required_outputs=['result'], required_reads=['user-notes'])
+        raw['proposal']['origin'] = [dict(requirement='Read user-notes', paths=['/agents', '/workflow'], reason='Single reader worker')]
+        resolved = protocol.parse_dynamic_proposal(raw, value['task_id'], goal, catalog)
+        origins = resolved['proposal']['origin']
+        assert origins[0]['requirement'] == 'Read user-notes' and origins[0]['paths'] == ['/agents', '/workflow']
+        assert any('/scope' in o['paths'] for o in origins)
+        bd = resolved['scope_breakdown']
+        assert [r['tool'] for r in bd['selected_by_model']] == ['read_document']
+        assert [r['tool'] for r in bd['derived_by_host']] == ['model_inference']
+        assert len(bd['host_context_egress']) == 1
+
+        collision = wire(value, [('read_document', 'user-notes', None)], required_outputs=['user-notes'], required_reads=['user-notes'])
+        with pytest.raises(ValueError, match='existing catalog resource'):
+            protocol.parse_dynamic_proposal(collision, value['task_id'], goal, catalog)
+
+        wa_goal = 'Send a WhatsApp message saying hello.'
+        fake_perm = wire(value, [])
+        fake_perm['permission_requests'] = [dict(kind='recipient', reference='whatsapp@example.com', reason='Substituted email')]
+        fake_perm['proposal'].update(status='CLARIFY', spec=None, questions=['Allow email instead?'])
+        with pytest.raises(ValueError, match='not mentioned in the goal; never invent'):
+            protocol.parse_dynamic_proposal(fake_perm, value['task_id'], wa_goal, catalog)
+    finally:
+        runtime.store.close()
+
+
+def test_v10_policy_synthesis_and_z3_enforcement(tmp_path):
+    runtime = FrameworkRuntime(tmp_path/'ledger.sqlite')
+    try:
+        goal = 'Transfer 137 to pay@example.net with a policy rule capping transfer_funds to <= 137.'
+        value = environment(recipient='pay@example.net'); user, approver = ready(runtime, value)
+        catalog = discover(runtime, value, user)
+        no_policy = wire(value, [('transfer_funds', None, 'pay@example.net')],
+                         required_receipts=[dict(tool='transfer_funds', destination='pay@example.net')],
+                         max_amount=137, allowed_recipients=['pay@example.net'], external_release=True)
+        with pytest.raises(ValueError, match='goal requests an explicit policy rule'):
+            protocol.parse_dynamic_proposal(no_policy, value['task_id'], goal, catalog)
+
+        with_policy = deepcopy(no_policy)
+        with_policy['requirements']['max_amount'] = 500
+        with_policy['proposal']['spec']['policies'] = [dict(
+            policy_id='cap-137', version=1, scope='task', applies_to=['transfer_funds'],
+            when=dict(op='const', value=True),
+            constraint=dict(op='le', left=dict(op='amount'), right=dict(op='const', value=137)),
+            on_violation='DENY',
+        )]
+        service = GoalService(runtime, FakeModel(lambda _: with_policy), protocol=protocol)
+        planned = service.plan('pay', goal, 'planning', value['task_id'], user)
+        assert planned['status'] == 'REVIEW_WAIT'
+        assert 'scope_breakdown' in planned['preview']
+        service.decide('pay', 'approve', approver)
+        service.activate('pay', approver)
+        actor = runtime.tasks.principal(value['task_id'], 'worker', user)
+        allow = runtime.authority.authorize(dict(
+            task_id=value['task_id'], agent_id=actor.subject, operation_id='probe-137',
+            purpose=value['purpose'], tool='transfer_funds', args=dict(to='pay@example.net', amount=137),
+        ), actor)
+        deny = runtime.authority.authorize(dict(
+            task_id=value['task_id'], agent_id=actor.subject, operation_id='probe-138',
+            purpose=value['purpose'], tool='transfer_funds', args=dict(to='pay@example.net', amount=138),
+        ), actor)
+        assert allow['decision'] == 'ALLOW'
+        assert deny['decision'] == 'DENY' and deny['policy'] == 'cap-137'
+    finally:
+        runtime.store.close()
+
+
+def test_clarify_continuation_and_six_mode_evaluation_bridge(tmp_path):
+    from atomicroot.evaluation.goal_eval import evaluate_goal_run, aggregate_goal_runs, goal_run_to_workload, run_six_modes
+    runtime = FrameworkRuntime(tmp_path/'ledger.sqlite')
+    try:
+        goal = 'Read the requested notes and produce a short summary as output result.'
+        value = environment(); user, approver = ready(runtime, value)
+        clarify_env = wire(value, [])
+        clarify_env['proposal'].update(status='CLARIFY', spec=None, questions=['Which resource should be summarized?'], origin=[])
+        exec_env = wire(value, [('read_document', 'user-notes', None)], required_outputs=['result'], required_reads=['user-notes'])
+        exec_env['proposal']['origin'] = [dict(requirement='produce a short summary', paths=['/agents', '/workflow'], reason='Summarize user-notes')]
+        responses = [clarify_env, exec_env]
+        planner = FakeModel(lambda _: responses.pop(0))
+        service = GoalService(runtime, planner, protocol=protocol)
+        first = service.plan('clarify-flow', goal, 'planning', value['task_id'], user)
+        assert first['status'] == 'CLARIFY'
+        second = service.plan('clarify-flow', goal, 'planning', value['task_id'], user, replan=True, clarification='Use resource user-notes.')
+        assert second['status'] == 'REVIEW_WAIT' and second['clarifications'] == ['Use resource user-notes.']
+        assert json.loads(planner.calls[1][1]['content'])['clarifications'] == ['Use resource user-notes.']
+        service.decide('clarify-flow', 'approve', approver)
+        service.activate('clarify-flow', approver)
+        ref = next(r for r in second['proposal']['spec']['resources'] if r['resource'] == 'user-notes')
+        def respond(messages):
+            obs = json.loads(messages[-1]['content'])['observations']
+            if not obs:
+                return dict(kind='action', tool='read_document', args=dict(resource='user-notes', digest=ref['digest']))
+            if any(o.get('status') == 'OUTPUT_STORED' for o in obs):
+                return dict(kind='done', summary='Completed')
+            return dict(kind='output', output='result', content='Summary of user-notes')
+        worker = FakeModel(respond); worker.execution_binding = 'clarify-worker-v1'
+        def factory(task, caller, budget):
+            bridge = ModelBridge(runtime, worker, DisabledClassifier(), llm_limits=Limits(**value['limits']['inference']), budget=budget)
+            return ConfigWorkflow(runtime, tmp_path/'checkpoint.sqlite', task=task, caller=caller, bridge=bridge)
+        assert service.execute('clarify-flow', user, factory)['status'] == 'SATISFIED'
+        ev = evaluate_goal_run(runtime, 'clarify-flow', value['task_id'], user, expected_outcome='SATISFIED')
+        assert ev['passed'] and ev['outcome'] == 'SATISFIED' and ev['business_oracle']['accepted_violation_count'] == 0
+        agg = aggregate_goal_runs([ev])
+        assert agg['overall_pass_rate']['value'] == 1.0
+        workload = goal_run_to_workload(runtime, value['task_id'], initial_resources=value['resources'], name='clarify-read')
+        six = run_six_modes(workload)
+        assert len(six['paired']['modes']) == 6
+        assert all(m['oracle']['accepted_violation_count'] == 0 for m in six['paired']['modes'])
+    finally:
+        runtime.store.close()

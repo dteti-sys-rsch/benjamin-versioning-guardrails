@@ -45,7 +45,9 @@ def main(argv=None):
     plan = sub.add_parser('plan'); plan.add_argument('session'); plan.add_argument('intake'); plan.add_argument('task'); plan.add_argument('--goal',required=True); plan.add_argument('--context',action='append',default=[]);plan.add_argument('--requirements')
     for name in ('status','preview','replan','recover-plan','activate'):
         entry=sub.add_parser(name);entry.add_argument('session')
-        if name=='replan':entry.add_argument('--requirements')
+        if name=='replan':
+            entry.add_argument('--requirements')
+            entry.add_argument('--clarification')
     decide = sub.add_parser('decide'); decide.add_argument('session'); decide.add_argument('decision',choices=('approve','reject','pause'))
     export = sub.add_parser('export'); export.add_argument('session'); export.add_argument('output',type=Path)
     replay = sub.add_parser('replay'); replay.add_argument('file')
@@ -133,7 +135,8 @@ def main(argv=None):
             record=service._session(args.session,user)
             service.plan(args.session,record['data']['goal'],record['intake'],record['task'],user,context_resources=record['data']['context_resources'],
                 replan=args.command=='replan',recover=args.command=='recover-plan',
-                requirements=load(args.requirements) if getattr(args,'requirements',None) else None)
+                requirements=load(args.requirements) if getattr(args,'requirements',None) else None,
+                clarification=getattr(args,'clarification',None))
             result=service.status(args.session,user)
         elif args.command in {'status','preview'}: result=service.status(args.session,user,private=args.command=='preview')
         elif args.command=='decide': result=service.decide(args.session,args.decision,approver)

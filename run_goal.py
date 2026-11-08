@@ -70,6 +70,14 @@ def run(environment, goal, directory, *, authorize_live, ask=input, model_factor
             service.decide('goal',decision if decision in {'approve','reject','pause'} else 'pause',approver)
             result=dict(status='NEEDS_CAPABILITY',execution_authorized=False,observed=point())
             save('goal-artifact.json',service.export('goal',user));save('result.json',result);return result
+        if preview['status']=='CLARIFY':
+            answer=ask('Planner requested clarification (enter clarification text, or empty to stop): ').strip()
+            if answer:
+                service.plan('goal',goal,'planning',environment['task_id'],user,replan=True,requirements=requirements,clarification=answer)
+                preview=service.status('goal',user,private=True)
+                save('proposal-preview.json',preview)
+                save('goal-artifact.json',service.export('goal',user))
+                print(json.dumps(preview,indent=2,ensure_ascii=False))
         if preview['status'] != 'REVIEW_WAIT':
             result=dict(status=preview['status'],observed=point()); save('result.json',result); return result
         decision=ask('Approve this exact business proposal? approve/reject/pause: ').strip()
