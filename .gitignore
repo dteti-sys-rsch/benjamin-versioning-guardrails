@@ -60,3 +60,6 @@ CLI_TESTING.md
 .vscode/
 .DS_Store
 Thumbs.db
+
+MEMORY_HANDOFF.md
+.ARSIP/
