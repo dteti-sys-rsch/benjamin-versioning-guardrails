@@ -1,0 +1,30 @@
+{
+  "protocol": "dynamic-proposal-v10",
+  "schema_digest": "sha256:8ed856acaf9ace193a24869a9d90a7b9bee87941987ee81e95133145139f79e9",
+  "registry_digest": "sha256:a67e3f613af225be0b86910b4f5c2c5d882b4b2c2e9c3d203e0368e97dadfecc",
+  "config_worker_version": "config-worker-v4",
+  "sources": {
+    "atomicroot/integration/dynamic_proposal.py": "sha256:1fc5dd176f75c2375ac084cef37eff642b826479c65f7e77239c1c0de6e18adc",
+    "atomicroot/integration/planning.py": "sha256:b5df93bca25562bc2dbecd4275a49fa22b916cd0b482dcba5115fba23b97d680",
+    "atomicroot/integration/goals.py": "sha256:908413ef85bdfa69c71d57c9418b98dd6ad6f1ef26b082c3866a581dea2cb988",
+    "atomicroot/integration/prompts.py": "sha256:806a4bff3e942758756bfb6a29981d1685f1d6a82b0549d7fce8b516435bcbe2",
+    "atomicroot/integration/config_workflow.py": "sha256:3abc3e664d7857a10c1270711a4d97d942a59e49a2be7beabe0602d22adf25a4",
+    "atomicroot/integration/inference.py": "sha256:1ee1f241caf69ba93d6aac9d9bc6a2ec9240c63f98ddac04ad04192cb732d8d3",
+    "atomicroot/integration/providers.py": "sha256:f28fb9d9ca4c3c6b1ca605559c4543ff59270e1ecc70048fba07650827278e2c",
+    "atomicroot/integration/egress.py": "sha256:483b628f2775459166cdfed7bcfc0ea564e214a3fd4027e3832d3f89b38c137c",
+    "atomicroot/evaluation/goal_eval.py": "sha256:9b6809f37b880951b190e7a2cb0421db80377ea8d4425773cc4864ec21285d9f",
+    "examples/phase55/live_27b_suite.py": "sha256:fb35ee23df1f2b3ccf181b9957d47fe1b94b4d596ce124cd86f1fb7208d74ee7",
+    "run_goal.py": "sha256:b54f2961d94cc8b59ae4dccce3f4f9e1bed35266bb928be88a36a7a82fc6d889"
+  },
+  "case_files": {
+    "examples/phase55/eval/adversarial-cases.json": "sha256:7cb7e3b924f6b292baf73174bba4bc8c5ab3310422bec37e1c9e98c5379b7449",
+    "examples/phase55/eval/dev-cases.json": "sha256:177b11040fb72739d725945595429972a9e3ce3ac28af14fe69dea135101214a",
+    "examples/phase55/eval/heldout-cases.json": "sha256:462e8a0d3bf7e3fa9827918c58a8aa1291ca76a96c7b5d270934ec99ddd1bf68"
+  },
+  "base_commit": "a7b041d46f0f347e709a4208645fb6b3f33b099b",
+  "created": {
+    "observed_at_utc": "2026-11-08T15:57:22.113763+00:00",
+    "monotonic_ns": 42210465152400,
+    "process_id": 24708
+  }
+}
