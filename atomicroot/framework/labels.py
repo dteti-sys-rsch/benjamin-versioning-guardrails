@@ -7,9 +7,9 @@ from atomicroot.authority.ticket import freeze_json, args_hash
 from atomicroot.framework.classification import ClassificationProposals
 
 
-def content_digest(content):
-    if type(content) is not str or len(content.encode("utf-8")) > 8192:
-        raise ValueError("content must be a string <=8192 bytes")
+def content_digest(content, *, max_bytes=8192):
+    if type(content) is not str or len(content.encode("utf-8")) > max_bytes:
+        raise ValueError(f"content must be a string <={max_bytes} bytes")
     return "sha256:" + hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
@@ -19,7 +19,8 @@ class StorageService:
     def ingest(self, resource, content, principal, *, source="owner upload"):
         valid_identity(resource)
         principal.require("owner", resource=resource)
-        digest = content_digest(content)
+        max_bytes = 24576 if principal.subject == "model-context-host" else 8192
+        digest = content_digest(content, max_bytes=max_bytes)
         if source not in {"owner upload", "trusted metadata", "external document"}:
             raise ValueError("unregistered provenance source")
         with self.store.transaction() as conn:
@@ -29,7 +30,8 @@ class StorageService:
 
 def write_content(store, conn, resource, content, actor, *, source="guarded update", sensitive=False):
     """Shared state transition; caller owns authorization and transaction scope."""
-    digest = content_digest(content)
+    max_bytes = 24576 if actor == "model-context-host" else 8192
+    digest = content_digest(content, max_bytes=max_bytes)
     _, old = store.value(conn, f"document:{resource}")
     data = {"resource": resource, "digest": digest, "version": (old["version"] if old else 0) + 1,
             "content": content, "source": source, "stored_by": actor,

@@ -1,4 +1,6 @@
 """Versioned trusted instructions; observations remain untrusted user data."""
+import json
+import re
 from atomicroot.framework.schema import schema
 from atomicroot.framework.storage import dumps
 from atomicroot.framework.registry import FACT_REGISTRY, TOOLS
@@ -6,17 +8,45 @@ from atomicroot.framework.dsl import BINARY
 from atomicroot.integration.guarded import WORKER_TOOLS
 
 AUTHOR_VERSION, WORKER_VERSION = "author-v2", "worker-v3"
-CONFIG_WORKER_VERSION = "config-worker-v3"
+CONFIG_WORKER_VERSION = "config-worker-v4"
 
 
 # Generation-only narrowing the host may apply after a no-progress repeat; never a grant.
 OMITTABLE = ("read_document",)
 
 
-def config_response_schema(agent, outputs, completed_outputs=(), omit=()):
+def config_response_schema(agent, outputs, completed_outputs=(), omit=(), resources=()):
     if not set(omit) <= set(OMITTABLE): raise ValueError("unsupported grammar narrowing")
     contract = {"allowed_tools": [r["tool"] for r in agent["scope"] if r["tool"] not in omit]}
     choices = worker_response_schema(contract)["oneOf"][:-1]
+    digests = {r["resource"]: r["digest"] for r in resources if type(r) is dict and r.get("binding") != "host_context"}
+    if digests or resources:
+        pinned = []
+        for branch in choices:
+            tool = branch.get("properties", {}).get("tool", {}).get("const")
+            if not tool:
+                pinned.append(branch)
+                continue
+            scoped = [r for r in agent["scope"] if r["tool"] == tool]
+            destinations = sorted({r["destination"] for r in scoped if r.get("destination")})
+            if TOOLS[tool].resource:
+                pairs = sorted({(r["resource"], digests[r["resource"]]) for r in scoped if r.get("resource") in digests})
+                for res, dig in (pairs or [(None, None)]):
+                    b = json.loads(dumps(branch))
+                    props = b["properties"]["args"]["properties"]
+                    if res is not None:
+                        props["resource"] = {"const": res}
+                        props["digest"] = {"const": dig}
+                    if destinations and "to" in props:
+                        props["to"] = {"enum": destinations}
+                    pinned.append(b)
+            else:
+                b = json.loads(dumps(branch))
+                props = b["properties"]["args"]["properties"]
+                if destinations and "to" in props:
+                    props["to"] = {"enum": destinations}
+                pinned.append(b)
+        choices = pinned
     remaining = [o["id"] for o in outputs if o["id"] not in completed_outputs]
     if remaining:
         choices.append({"type": "object", "properties": {"kind": {"const": "output"},
@@ -25,7 +55,7 @@ def config_response_schema(agent, outputs, completed_outputs=(), omit=()):
     return {"oneOf": choices}
 
 
-def config_schema_matches(value, agent, outputs):
+def config_schema_matches(value, agent, outputs, resources=()):
     """Only reviewed output IDs may be omitted; every other grammar field is exact.
 
     The immutable host job binds this generation subset, so concurrent output
@@ -39,8 +69,20 @@ def config_schema_matches(value, agent, outputs):
     remaining = output_field.get("enum")
     allowed = {o["id"] for o in outputs}
     if type(remaining) is not list or any(type(v) is not str or v not in allowed for v in remaining): return False
+    candidates = [resources] if resources else [()]
+    if not resources:
+        scoped_res = {r["resource"] for r in agent["scope"] if r.get("resource")}
+        extracted = []
+        for c in value["oneOf"]:
+            props = c.get("properties", {}).get("args", {}).get("properties", {}) if type(c) is dict else {}
+            res = props.get("resource", {}).get("const") if type(props.get("resource")) is dict else None
+            dig = props.get("digest", {}).get("const") if type(props.get("digest")) is dict else None
+            if res and dig and res in scoped_res and re.fullmatch(r"sha256:[0-9a-f]{64}", str(dig)):
+                extracted.append({"resource": res, "digest": dig})
+        candidates.append(extracted or [{"resource": r, "digest": "sha256:" + "0" * 64} for r in sorted(scoped_res)])
     # Omitting an already-delivered read branch only narrows generation.
-    return any(value == config_response_schema(agent, outputs, allowed - set(remaining), omit) for omit in ((), OMITTABLE))
+    return any(value == config_response_schema(agent, outputs, allowed - set(remaining), omit, res)
+               for omit in ((), OMITTABLE) for res in candidates)
 
 
 def compact_observations(observations):
@@ -80,7 +122,7 @@ def config_messages(spec, agent, node, step, observations, catalog, counters, pr
         "Never set identity, grant, operation, labels or facts. No contract authoring or scope expansion. "
         "Model inference/classification are guarded host operations, not worker actions. "
         "All business effects are simulated. Do not repeat a RELEASED action. "
-        "Return one JSON object using this grammar: " + dumps(config_response_schema(agent, spec["outputs"], completed, omit)))},
+        "Return one JSON object using this grammar: " + dumps(config_response_schema(agent, spec["outputs"], completed, omit, spec["resources"])))},
         {"role": "user", "content": dumps({"objective": spec["objective"], "delegation": agent,
             "node": node, "step": step, "acceptance": spec["acceptance"], "outputs": spec["outputs"],
             "catalog": catalog, "counters": counters, "node_progress": progress or {},

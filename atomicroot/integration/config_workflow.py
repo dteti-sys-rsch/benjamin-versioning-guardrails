@@ -155,9 +155,9 @@ class ConfigWorkflow:
             driver["classifier"].update(criteria_version=CRITERIA_VERSION, criteria_hash=args_hash(CRITERIA))
             if not bridge.receiver.classifier.live and driver["classifier"]["fixture"] is None:
                 raise ValueError("offline classifier requires explicit fixture binding")
-        self.binding_data = {"resolved": active["binding"], "driver": driver, "executor": "config-executor-v3",
+        self.binding_data = {"resolved": active["binding"], "driver": driver, "executor": "config-executor-v4",
             "checkpoint": str(self.path), "prompt": CONFIG_WORKER_VERSION,
-            "schemas": {a["id"]: config_response_schema(a, self.spec["outputs"]) for a in self.agents.values()}}
+            "schemas": {a["id"]: config_response_schema(a, self.spec["outputs"], resources=self.spec["resources"]) for a in self.agents.values()}}
         self.binding = args_hash(self.binding_data)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(self.path), check_same_thread=False)
@@ -436,6 +436,8 @@ class ConfigWorkflow:
             from atomicroot.integration.inference import InferenceUnavailable
             if isinstance(exc, InferenceUnavailable):
                 ob = exc.observation
+                if exc.cap_exhausted:
+                    return {**data, "phase": "CAP_EXHAUSTED", "reason": "inference_cap_exhausted"}
                 if ob.status == "COMMITTED" and ob.detail["delivery"] in {"UNKNOWN", "PENDING", "RELEASING"}:
                     return {**data, "phase": "INFERENCE_WAIT" if ob.detail["attempts"] < 3 else "DELIVERY_UNKNOWN",
                             "reason": "delivery_pending" if ob.detail["attempts"] < 3 else "delivery_retry_exhausted"}

@@ -211,3 +211,48 @@ def test_structured_schema_omits_published_output_and_rejects_expanded_grammar(t
         forged["oneOf"].append({"type": "object", "properties": {"kind": {"const": "admin"}}})
         assert not config_schema_matches(forged, agent, spec["outputs"])
     finally: f.close(); s.runtime.store.close()
+
+
+def test_inference_cap_exhausted_returns_cap_exhausted_not_delivery_unknown(tmp_path):
+    s = ConfigSystem(tmp_path / "ledger.sqlite")
+    spec = model_spec(s)
+    spec["limits"]["inference"]["max_calls"] = 1
+    s.activate(spec)
+    model = FakeModel(lambda messages: read_response(s.refs[0]), provider="ollama")
+    model.execution_binding = "cap-exhausted-v1"
+    limits = Limits(**TaskSpec.parse(spec).data["limits"]["inference"])
+    f = ConfigWorkflow(s.runtime, tmp_path / "g.sqlite", task="t", caller=s.user,
+                       bridge=ModelBridge(s.runtime, model, DisabledClassifier(), llm_limits=limits))
+    try:
+        result = f.start("cap")
+        assert result["status"] != "DELIVERY_UNKNOWN", result
+        assert result["nodes"]["a"]["phase"] == "CAP_EXHAUSTED"
+        assert result["nodes"]["a"]["reason"] == "inference_cap_exhausted"
+        rows = [r for r in s.runtime.store.inspect_outbox() if json.loads(r["payload"])["tool"] == "model_inference"]
+        assert len(rows) == 2 and sorted(r["status"] for r in rows) == ["FAILED", "RELEASED"]
+        failed = next(r for r in rows if r["status"] == "FAILED")
+        assert json.loads(failed["receipt"])["absence_proven"] is True
+    finally:
+        f.close(); s.runtime.store.close()
+
+
+def test_worker_grammar_pins_resource_digests_and_destinations(tmp_path):
+    from atomicroot.integration.prompts import config_response_schema, config_schema_matches
+    s = ConfigSystem(tmp_path / "ledger.sqlite")
+    spec = model_spec(s)
+    s.activate(spec)
+    try:
+        agent = spec["agents"][0]
+        schema = config_response_schema(agent, spec["outputs"], resources=spec["resources"])
+        read_branch = next(c for c in schema["oneOf"] if c["properties"].get("tool") == {"const": "read_document"})
+        props = read_branch["properties"]["args"]["properties"]
+        assert props["resource"] == {"const": "d1"}
+        assert props["digest"] == {"const": s.refs[0]["digest"]}
+        send_branch = next(c for c in schema["oneOf"] if c["properties"].get("tool") == {"const": "send_email"})
+        assert send_branch["properties"]["args"]["properties"]["to"] == {"enum": ["alice@corp.id"]}
+        assert config_schema_matches(schema, agent, spec["outputs"], spec["resources"])
+        tampered = json.loads(dumps(schema))
+        tampered["oneOf"][0]["properties"]["args"]["properties"]["digest"] = {"const": "sha256:" + "f" * 64}
+        assert not config_schema_matches(tampered, agent, spec["outputs"], spec["resources"])
+    finally:
+        s.runtime.store.close()

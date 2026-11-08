@@ -49,7 +49,7 @@ class Limits:
     def __post_init__(self):
         if any(type(v) is not int for v in (self.max_calls, self.max_tokens, self.max_output_tokens, self.max_retries)):
             raise ValueError("integer inference caps required")
-        if not 1 <= self.max_calls <= 12 or not 0 <= self.max_retries <= 2 or not 0 < self.timeout <= 120:
+        if not 1 <= self.max_calls <= 12 or not 0 <= self.max_retries <= 2 or not 0 < self.timeout <= 300:
             raise ValueError("invalid call/retry/timeout cap")
         if not 1 <= self.max_output_tokens <= self.max_tokens: raise ValueError("invalid token cap")
         if self.spend_cap_usd is not None:
@@ -112,7 +112,7 @@ class OpenAIModel:
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 DEFAULT_OLLAMA_MODEL = "qwen3:8b"
 OLLAMA_ENDPOINT = "http://localhost:11434/api"
-OLLAMA_CONTEXT = 16384
+OLLAMA_CONTEXT = 32768
 MODEL_PROVIDERS = ("openai", "groq", "9router", "ollama")
 
 

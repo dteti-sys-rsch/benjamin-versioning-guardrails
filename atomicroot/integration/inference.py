@@ -6,7 +6,7 @@ from atomicroot.authority.ticket import args_hash, freeze_json
 from atomicroot.framework.storage import dumps
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.classification import ClassificationProposals
-from atomicroot.integration.memo import InferenceMemo, InferenceInProgress
+from atomicroot.integration.memo import InferenceMemo, InferenceInProgress, InferenceCapReached
 from atomicroot.integration.providers import CRITERIA, CRITERIA_VERSION, OPTIONS, Limits, validate_choice
 from atomicroot.integration.guarded import GuardedTools
 from atomicroot.integration.prompts import AUTHOR_VERSION, WORKER_VERSION, CONFIG_WORKER_VERSION, worker_response_schema, config_response_schema
@@ -17,6 +17,13 @@ class InferenceUnavailable(ValueError):
     def __init__(self, observation):
         self.observation = observation
         super().__init__("model egress blocked/unavailable: " + dumps(observation.json()))
+
+    @property
+    def cap_exhausted(self):
+        """Committed intent settled FAILED by the receiver's proven-absence cap receipt."""
+        detail = self.observation.detail
+        return (self.observation.status == "COMMITTED" and detail.get("delivery") == "FAILED"
+                and (detail.get("receipt") or {}).get("reason") == "INFERENCE_CAP_REACHED")
 
 
 class InferenceReceiver:
@@ -58,7 +65,20 @@ class InferenceReceiver:
             if "planning" in context and getattr(self.model, "structured_worker_output", False):
                 from atomicroot.integration.planning import planner_response_schema
                 memo_payload = {**context, "response_schema": planner_response_schema(context["messages"])}
-            result = await self.memo.run(operation, job["budget"], "LLM", self.model.model, memo_payload, self.llm_limits, generate)
+            try:
+                result = await self.memo.run(operation, job["budget"], "LLM", self.model.model, memo_payload, self.llm_limits, generate)
+            except InferenceCapReached:
+                # The memo rejected before recording an attempt or opening a connection,
+                # so absence is proven. A durable FAILED receipt settles the intent as
+                # FAILED instead of UNKNOWN; lost acks keep the UNKNOWN path.
+                receipt = {"outcome": "FAILED", "absence_proven": True, "reason": "INFERENCE_CAP_REACHED",
+                           "receipt_id": store.new_id("receipt")}
+                with store.transaction() as conn:
+                    previous = store.row(conn, "SELECT * FROM receiver_receipts WHERE task=? AND operation=?", (task, operation))
+                    if previous: return json.loads(previous["receipt"])
+                    conn.execute("INSERT INTO receiver_receipts(task,operation,digest,receipt) VALUES (?,?,?,?)", (task, operation, digest, dumps(receipt)))
+                    store.audit(conn, "INFERENCE_CAP_REACHED", "InferenceReceiver", {"task": task, "operation": operation})
+                return receipt
         else:
             if payload["args"]["to"] != self.classifier.provider or job["model"] != self.classifier.model:
                 raise ValueError("classifier provider/model changed; new intent required")
@@ -136,7 +156,7 @@ class ModelBridge:
                     for output, digest, raw in snap._conn.execute("SELECT id,digest,data FROM execution_outputs WHERE task=? AND run=?", (task, execution["run"])):
                         record = json.loads(raw)
                         if args_hash(record) == digest and record["binding"] == execution["binding"]: completed.append(output)
-                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"], completed, omit)
+                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"], completed, omit, active["spec"]["resources"])
                 else: context["response_schema"] = worker_response_schema(contract)
         job = self.memo.job(key)
         if job:

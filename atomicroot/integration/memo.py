@@ -10,6 +10,10 @@ from atomicroot.integration.progress import emit
 class InferenceInProgress(RuntimeError): pass
 
 
+class InferenceCapReached(ValueError):
+    """Raised before any attempt row or network call: absence of the call is proven."""
+
+
 class InferenceMemo:
     def __init__(self, store, *, progress=None, aggregate_budget=None):
         self.store = store
@@ -66,10 +70,12 @@ class InferenceMemo:
                 attempts, tokens, cost = conn.execute("SELECT count(*),coalesce(sum(reserved_tokens),0),coalesce(sum(reserved_cost),0) "
                                                      "FROM inference_attempts WHERE budget=? AND (kind=? OR ?)", (budget, kind, budget == self.aggregate_budget)).fetchone()
                 per_call = conn.execute("SELECT count(*) FROM inference_attempts WHERE call_id=?", (key,)).fetchone()[0]
-                if per_call >= limits.max_retries + 1 or attempts >= limits.max_calls or tokens + allowance > limits.max_tokens:
+                if per_call >= limits.max_retries + 1:
                     raise ValueError("inference call/token/retry cap reached")
+                if attempts >= limits.max_calls or tokens + allowance > limits.max_tokens:
+                    raise InferenceCapReached("inference call/token/retry cap reached")
                 if limits.spend_cap_usd is not None and cost + price > limits.spend_cap_usd:
-                    raise ValueError("inference spend cap reached")
+                    raise InferenceCapReached("inference spend cap reached")
                 attempt = self.store.new_id("attempt")
                 conn.execute("INSERT INTO inference_attempts VALUES (?,?,?,?,?,?,'STARTED',NULL,NULL,?,?)",
                              (attempt, key, budget, kind, model, self.store.now(), allowance, price))

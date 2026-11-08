@@ -20,7 +20,7 @@ IDENTITY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 MAX_INTEGER = (1 << 63) - 1
 MAX_AST_NODES = 256
 MAX_AST_DEPTH = 32
-MAX_STATE_BYTES = 16_384
+MAX_STATE_BYTES = 8_192
 MAX_SOLVER_TIMEOUT_MS = 1000
 SOLVER_RESOURCE_LIMIT = 100_000
 DATA_CLASSES = frozenset({"finance", "sensitive", "internal", "public"})
@@ -300,7 +300,9 @@ class StatusReader:
             raise EvaluationError(f"missing fact: {key}")
         if type(version) is not int or version < 0:
             raise EvaluationError("invalid fact version")
-        if len(json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) > MAX_STATE_BYTES:
+        is_host = (type(value) is dict and value.get("stored_by") == "model-context-host") or key.startswith(("goalproposal:", "workspace:"))
+        limit = 32_768 if is_host else MAX_STATE_BYTES
+        if len(json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) > limit:
             raise EvaluationError("fact exceeds size limit")
         self.reads[key] = version
         self.values[key] = value

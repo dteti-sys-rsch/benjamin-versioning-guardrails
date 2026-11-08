@@ -167,7 +167,9 @@ class FrameworkStore(TraceStore):
 
     def put(self, conn, key, value, *, initial=False):
         encoded = dumps(value)
-        if len(encoded.encode("utf-8")) > MAX_STATE_BYTES:
+        is_host = (type(value) is dict and value.get("stored_by") == "model-context-host") or key.startswith(("goalproposal:", "workspace:"))
+        limit = 32_768 if is_host else MAX_STATE_BYTES
+        if len(encoded.encode("utf-8")) > limit:
             raise ValueError("fact exceeds state size limit")
         if initial:
             inserted = conn.execute("INSERT OR IGNORE INTO conflict_keys(key,version,value) VALUES (?,0,?)", (key, encoded))
