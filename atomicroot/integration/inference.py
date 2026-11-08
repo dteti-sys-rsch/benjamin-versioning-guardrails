@@ -116,14 +116,15 @@ class ModelBridge:
         return asyncio.run(self.memo.run(key, budget, "LLM", self.model.model, {"messages": messages, "provider": self.model.provider,
                                   "prompt_version": AUTHOR_VERSION}, self.llm_limits, lambda: self.model.generate(messages)))["output"]
 
-    def worker(self, key, budget, *, messages, sources, context_resource, principal, task, purpose, execution=None, planning=None):
+    def worker(self, key, budget, *, messages, sources, context_resource, principal, task, purpose, execution=None, planning=None, omit=()):
         budget = self.budget or budget
         context = {"messages": messages, "sources": sources, "provider": self.model.provider,
                    "model": self.model.model, "prompt_version": CONFIG_WORKER_VERSION if execution else WORKER_VERSION}
         if execution: context["execution"] = freeze_json(execution)
         if planning:
-            from atomicroot.integration.planning import PLANNER_VERSION
-            context.update(prompt_version=PLANNER_VERSION, planning=freeze_json(planning))
+            from atomicroot.integration.planning import protocol_for_digest
+            protocol = protocol_for_digest(planning['schema_digest'])
+            context.update(prompt_version=protocol.PLANNER_VERSION, planning=freeze_json(planning))
         if not planning and getattr(self.model, "structured_worker_output", False):
             with self.runtime.store.snapshot() as snap:
                 contract = snap.read(f"contract3:{task}")[1]
@@ -135,7 +136,7 @@ class ModelBridge:
                     for output, digest, raw in snap._conn.execute("SELECT id,digest,data FROM execution_outputs WHERE task=? AND run=?", (task, execution["run"])):
                         record = json.loads(raw)
                         if args_hash(record) == digest and record["binding"] == execution["binding"]: completed.append(output)
-                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"], completed)
+                    context["response_schema"] = config_response_schema(agent, active["spec"]["outputs"], completed, omit)
                 else: context["response_schema"] = worker_response_schema(contract)
         job = self.memo.job(key)
         if job:

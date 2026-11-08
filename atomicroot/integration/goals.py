@@ -9,7 +9,9 @@ from atomicroot.framework.storage import dumps
 from atomicroot.framework.task_spec import exact, sequence, text
 from atomicroot.framework.tasks import REGISTRY_DIGEST
 from atomicroot.integration.inference import ModelBridge
-from atomicroot.integration.planning import PLANNER_VERSION, ARTIFACT_FIELDS, parse_proposal, proposal_schema, messages
+from atomicroot.integration.planning import ARTIFACT_FIELDS
+from atomicroot.integration import planning as legacy_planning
+parse_proposal = legacy_planning.parse_proposal
 from atomicroot.integration.providers import DisabledClassifier, Limits
 from atomicroot.integration.progress import emit
 from atomicroot.observability import point, Stopwatch
@@ -17,13 +19,23 @@ from atomicroot.sim.model_tape import ModelTape
 
 INTAKE_FIELDS = {"id", "intake_task", "agent", "context_resource", "provider", "model", "purpose", "subject", "targets",
                  "visible_resources", "visible_destinations", "expires", "max_repairs", "max_replans"}
+# Protocols with the 8192-byte planning context bound and whole-envelope repair drafts.
+COMPACT_DYNAMIC = {'dynamic-proposal-v3', 'dynamic-proposal-v4', 'dynamic-proposal-v5', 'dynamic-proposal-v6', 'dynamic-proposal-v7', 'dynamic-proposal-v8', 'dynamic-proposal-v9'}
 
 
 class GoalService:
-    def __init__(self, runtime, model=None, *, records=None, progress=None):
+    def _parse_proposal(self, *args):
+        parser = parse_proposal if self.protocol is legacy_planning else self.protocol.parse_proposal
+        return parser(*args)
+
+    def __init__(self, runtime, model=None, *, records=None, progress=None, proposal_check=None, protocol=None, resource_inputs=None):
         if getattr(runtime, "evaluation_only", False): raise ValueError("goal service requires safe main runtime")
         self.runtime, self.store, self.model, self.progress = runtime, runtime.store, model, progress
+        self.protocol = protocol or legacy_planning
+        self.resource_inputs = freeze_json(resource_inputs or {})
         self.records = records
+        self.proposal_check = proposal_check
+        self.check_binding = freeze_json(proposal_check.binding) if proposal_check else None
         with self.store._lock:
             self.store._conn.executescript("""
                 CREATE TABLE IF NOT EXISTS goal_sessions(id TEXT PRIMARY KEY,owner TEXT NOT NULL,task TEXT NOT NULL,intake TEXT NOT NULL,data TEXT NOT NULL);
@@ -85,7 +97,9 @@ class GoalService:
                 if doc and label: resources.append({"resource": name, "digest": doc["digest"], "version": doc["version"], "label": label["label"]})
             destinations = [snap.read("destination:" + name)[1] for name in sorted({r["destination"] for r in scope if r["destination"]})]
             if any(d is None for d in destinations): raise ValueError("catalog destination unavailable")
-            return {"scope": scope, "resources": resources, "destinations": destinations, "budget_limit": rights["budget_limit"],
+            host_contexts = snap.read('hostcontexts:'+task)[1]
+            return {**({'host_contexts':host_contexts} if getattr(self.protocol,'DYNAMIC',False) and host_contexts else {}),
+                "scope": scope, "resources": resources, "destinations": destinations, "budget_limit": rights["budget_limit"],
                 "max_agents": rights["max_agents"], "limits": rights["limits"], "registry_digest": REGISTRY_DIGEST,
                 "visibility": "authorized metadata only; content requires an explicit guarded read"}
 
@@ -109,12 +123,17 @@ class GoalService:
         with self.store.transaction() as conn:
             conn.execute("UPDATE goal_revisions SET data=? WHERE session=? AND revision=?", (dumps(data), session, data["revision"]))
 
-    def plan(self, session, goal, intake, task, principal, *, context_resources=(), replan=False, recover=False):
+    def plan(self, session, goal, intake, task, principal, *, context_resources=(), replan=False, recover=False, requirements=None):
         valid_identity(session); text(goal, 2048)
         context_resources = list(context_resources)
         for name in sequence(context_resources): valid_identity(name)
         if len(set(context_resources)) != len(context_resources): raise ValueError("duplicate context source")
         catalog = self.discover(intake, task, principal)
+        if getattr(self.protocol,'DYNAMIC',False):
+            from atomicroot.integration.dynamic_proposal import validate_requirements
+            existing = self.store.get_state('goalrequirements:' + task)
+            requirements = validate_requirements(requirements) if requirements is not None else existing
+            if requirements is not None: catalog = {**catalog, 'approved_requirements': requirements}
         with self.store.snapshot() as snap: config = self._intake(intake, task, principal, snap)
         request = {"goal": goal, "context_resources": context_resources}
         previous, recovering = None, None
@@ -125,6 +144,7 @@ class GoalService:
                 if (row["owner"], row["task"], row["intake"], row["data"]) != (principal.subject, task, intake, dumps(request)):
                     raise ValueError("session binding changed; original goal/context cannot be replaced")
                 old = conn.execute("SELECT revision,data FROM goal_revisions WHERE session=? ORDER BY revision DESC LIMIT 1", (session,)).fetchone()
+                if json.loads(old[1])['prompt_version']!=self.protocol.PLANNER_VERSION:raise ValueError('planner protocol differs from stored session')
                 if not replan and not recover: return json.loads(old[1])
                 if recover:
                     recovering = json.loads(old[1])
@@ -148,8 +168,11 @@ class GoalService:
                 revision = 0
                 conn.execute("INSERT INTO goal_sessions VALUES (?,?,?,?,?)", (session, principal.subject, task, intake, dumps(request)))
             data = recovering or {"revision": revision, "status": "PLANNING", "catalog": catalog, "catalog_digest": args_hash(catalog),
-                "intake": config, "schema_digest": args_hash(proposal_schema()), "prompt_version": PLANNER_VERSION,
+                "intake": config, "schema_digest": args_hash(self.protocol.proposal_schema()), "prompt_version": self.protocol.PLANNER_VERSION,
                 "registry_digest": REGISTRY_DIGEST, "calls": [], "created": point(), "previous_revision": previous["revision"] if previous else None}
+            if recovering and data.get("review_check_binding") != self.check_binding:
+                raise ValueError("trusted proposal check changed during recovery")
+            data["review_check_binding"] = self.check_binding
             if not recovering:
                 conn.execute("INSERT INTO goal_revisions VALUES (?,?,?)", (session, revision, dumps(data)))
                 self.store.put(conn, "goalhead:" + session, {"revision": revision, "goal_digest": args_hash(request)})
@@ -178,7 +201,7 @@ class GoalService:
                         row = snap._conn.execute("SELECT data FROM goal_calls WHERE operation=?", (operation,)).fetchone()
                         if row: saved_records.update(json.loads(row[0]).get("model_records", {}))
             tape = self.model if isinstance(self.model, ModelTape) else ModelTape(provider=self.model.provider, model=self.model.model,
-                prompt_version=PLANNER_VERSION, delegate=self.model, records=saved_records)
+                prompt_version=self.protocol.PLANNER_VERSION, delegate=self.model, records=saved_records)
             bridge = ModelBridge(self.runtime, tape, DisabledClassifier(), llm_limits=limits, progress=self.progress, budget="goal:" + session)
             agent = self.runtime.tasks.principal(config["intake_task"], config["agent"], principal)
             sources, contents = [], []
@@ -195,38 +218,69 @@ class GoalService:
             error, draft = None, None
             for attempt in range(config["max_repairs"] + 1):
                 prompt_catalog = {**catalog, "planning_constraints": data["intake_binding"], **({"authorized_context": contents} if contents else {})}
-                prompt = messages(goal, task, prompt_catalog, previous=previous.get("proposal") if previous else None, error=error, draft=draft)
+                if self.check_binding is not None: prompt_catalog["review_checks"] = self.check_binding
+                prompt = self.protocol.messages(goal, task, prompt_catalog, previous=previous.get("proposal") if previous else None, error=error, draft=draft)
                 planning = {"session": session, "revision": revision, "attempt": attempt, "intake": intake,
-                    "intake_digest": args_hash(config), "schema_digest": args_hash(proposal_schema())}
+                    "intake_digest": args_hash(config), "schema_digest": args_hash(self.protocol.proposal_schema())}
                 operation = "plan-" + args_hash(planning)[7:47]
                 context = {"messages": prompt, "sources": sources, "provider": self.model.provider,
-                    "model": self.model.model, "prompt_version": PLANNER_VERSION, "planning": planning}
+                    "model": self.model.model, "prompt_version": self.protocol.PLANNER_VERSION, "planning": planning}
                 call = {"planning": planning, "context_hash": args_hash(context), "context": context}
                 with self.store.transaction() as conn:
                     conn.execute("INSERT OR IGNORE INTO goal_calls VALUES (?,?)", (operation, dumps(call)))
                 if operation not in data["calls"]: data["calls"].append(operation)
                 self._save(session, data)
+                if self.protocol.PLANNER_VERSION in COMPACT_DYNAMIC and len(dumps(context).encode('utf-8'))>8192:
+                    data.update(status='CONTEXT_LIMIT',error='Planning context exceeds 8192 bytes; no provider call was made for this attempt')
+                    call.update(error='CONTEXT_LIMIT',observed=point())
+                    with self.store.transaction() as conn:conn.execute('UPDATE goal_calls SET data=? WHERE operation=?',(dumps(call),operation))
+                    break
                 output = bridge.worker(operation, "goal:" + session, messages=prompt, sources=sources,
                     context_resource=config["context_resource"], principal=agent, task=config["intake_task"], purpose=config["purpose"], planning=planning)
                 call.update(output=output, model_records=tape.records, observed=point())
                 with self.store.transaction() as conn: conn.execute("UPDATE goal_calls SET data=? WHERE operation=?", (dumps(call), operation))
                 try:
-                    proposal = parse_proposal(output, task, goal)
+                    # Only an executable plan can be projected; a stopped proposal's requests stay a NEEDS_PERMISSION stop.
+                    stated = output.get('proposal') if type(output) is dict else None
+                    executable = type(stated) is dict and type(stated.get('spec')) is dict
+                    if getattr(self.protocol,'DYNAMIC',False) and output.get('permission_requests') and not output.get('capability_requests') and executable:
+                        from atomicroot.integration.permission_bundle import preview as bundle_preview
+                        self.protocol.parse_dynamic_proposal(output,task,goal,catalog,approved_requirements=requirements)
+                        bundle = bundle_preview(self.runtime,output,session,revision,goal,intake,task,principal,
+                            resource_inputs=self.resource_inputs,requirements=requirements,protocol=self.protocol)
+                        data.update(status='REVIEW_WAIT',dynamic_proposal=freeze_json(output),**bundle)
+                        break
+                    proposal = self._parse_proposal(output, task, goal, catalog)
+                    if getattr(self.protocol,'DYNAMIC',False):
+                        self.protocol.parse_dynamic_proposal(output, task, goal, catalog, approved_requirements=requirements)
+                        data['dynamic_proposal'] = freeze_json(output)
                     if proposal["status"] != "PROPOSAL":
+                        if proposal['status']=='NEEDS_CAPABILITY':
+                            key=f'goalproposal:{session}:{revision}:capability'
+                            with self.store.transaction() as conn:
+                                self.store.put(conn,key,proposal)
+                                footprint={key:self.store.value(conn,key)[0], 'goalhead:'+session:self.store.value(conn,'goalhead:'+session)[0]}
+                                review=self.runtime.broker.create(conn,'bundle',task,dict(digest=args_hash(proposal),footprint=footprint,
+                                    preview=proposal,agent_id=principal.subject))
+                            data['capability_review']=dict(review_id=review,status='PENDING',execution_authorized=False)
                         data.update(status=proposal["status"], proposal=proposal); break
                     if not {r["resource"] for r in proposal["spec"]["resources"]} <= {r["resource"] for r in catalog["resources"]}:
                         raise ValueError("proposal resource outside discovered catalog")
                     fields = ("tool", "resource", "destination", "purpose")
                     if any(not any(all(r[k] == allowed[k] for k in fields) for allowed in catalog["scope"]) for r in proposal["spec"]["scope"]):
                         raise ValueError("proposal outside discovered scope")
-                    if previous and previous.get("proposal", {}).get("spec"):
+                    if previous and previous.get("proposal", {}).get("spec") and (previous['status']=='ACTIVE' or requirements is None):
                         old = previous["proposal"]["spec"]
                         if any(c not in proposal["spec"]["acceptance"] for c in old["acceptance"]): raise ValueError("replan cannot remove original completion requirements")
                         if any(p not in proposal["spec"]["policies"] for p in old["policies"]): raise ValueError("replan cannot remove approved goal policy")
                     valid = self.runtime.tasks.validate(proposal["spec"], principal)
                     if not valid["valid"]: raise ValueError("; ".join(valid["unsupported"]))
+                    # Host-owned review diagnostics cannot grant authority or
+                    # mutate the candidate. Failures feed the existing bounded repair.
+                    if self.proposal_check: self.proposal_check(freeze_json(proposal))
                     # Every material plan is explicitly reviewed, including extra scope.
-                    provenance = {"proposal": proposal, "goal_digest": args_hash(request), "catalog_digest": data["catalog_digest"], "prompt": PLANNER_VERSION}
+                    provenance = {"proposal": proposal, "goal_digest": args_hash(request), "catalog_digest": data["catalog_digest"], "prompt": self.protocol.PLANNER_VERSION}
+                    if 'dynamic_proposal' in data: provenance['dynamic_proposal'] = data['dynamic_proposal']
                     with self.store.transaction() as conn:
                         key = f"goalproposal:{session}:{revision}"
                         self.store.put(conn, key, provenance)
@@ -249,11 +303,12 @@ class GoalService:
                     break
                 except (ValueError, KeyError, TypeError) as exc:
                     error = str(exc)[:256]
-                    raw = output.get("spec") if type(output) is dict else None
+                    raw = (output.get('proposal', output)).get("spec") if type(output) is dict else None
                     # Replan already carries the complete prior proposal. Avoid
                     # duplicating it in diagnostic hints under the content cap.
-                    draft = {k: raw[k] for k in ("resources", "scope", "agents", "workflow", "provider", "outputs", "acceptance")
+                    draft = {k: raw[k] for k in ("resources", "scope", "agents", "workflow", "provider", "outputs", "acceptance", "policies")
                         if k in raw} if type(raw) is dict and previous is None else None
+                    if self.protocol.PLANNER_VERSION in COMPACT_DYNAMIC:draft=freeze_json(output)
                     data.setdefault("validation_errors", []).append({"attempt": attempt, "error": error})
                     if attempt == config["max_repairs"]: data.update(status="INVALID_PROPOSAL", error=error)
             data["model_records"] = tape.records
@@ -287,6 +342,12 @@ class GoalService:
         with self.store.snapshot() as snap: row = self.store.row(snap._conn, "SELECT task FROM goal_sessions WHERE id=?", (session,))
         if not row: raise ValueError("unknown goal")
         principal.require("approver", task=row["task"])
+        if data['status']=='NEEDS_CAPABILITY':
+            if decision=='pause':return dict(status='PAUSED',execution_authorized=False)
+            result=self.runtime.broker.decide(data['capability_review']['review_id'],decision=='approve',principal)
+            data['capability_review'].update(status=result['status'],execution_authorized=False)
+            self._save(session,data)
+            return dict(result,execution_authorized=False)
         if data["status"] != "REVIEW_WAIT": raise ValueError("goal is not awaiting review")
         review = data["preview"]["review_id"]
         if decision == "pause": return {"status": "PAUSED", "review_id": review}
@@ -296,9 +357,31 @@ class GoalService:
 
     def activate(self, session, principal):
         data = self._revision(session)
+        if data['prompt_version']!=self.protocol.PLANNER_VERSION:raise ValueError('planner protocol differs from stored session')
+        if getattr(self.protocol,'DYNAMIC',False) and data['status']=='ACTIVE':
+            task=data['proposal']['spec']['task_id'];principal.require('approver',task=task)
+            if self.store.get_version('contract3:'+task)!=data['active']['version']:
+                raise ValueError('active contract changed; inspect current state')
+            return data['active']
         preview = data.get("preview")
         if data["status"] != "REVIEW_WAIT" or not preview: raise ValueError("goal has no activatable preview")
-        self._continuation(session, data)
+        if getattr(self.protocol,'DYNAMIC',False):
+            with self.store.composed_transaction() as conn:
+                self._continuation(session,data)
+                if data.get('bundle'):
+                    from atomicroot.integration.permission_bundle import activate as activate_bundle
+                    caller = self.store.row(conn,'SELECT owner,task FROM goal_sessions WHERE id=?',(session,))
+                    principal.require('approver',task=caller['task'])
+                    user = Principal(caller['owner'],frozenset({'user'}),principal.tasks)
+                    result = activate_bundle(self.runtime,data['bundle'],preview['review_id'],user,principal)
+                else:
+                    result = self.runtime.contracts.activate_in_transaction(conn, preview['proposal_id'], preview['review_id'], principal)
+                task = data['proposal']['spec']['task_id']
+                self.store.put(conn, 'goalrequirements:' + task, data['dynamic_proposal']['requirements'])
+                data.update(status='ACTIVE',active=result)
+                conn.execute('UPDATE goal_revisions SET data=? WHERE session=? AND revision=?', (dumps(data),session,data['revision']))
+            return result
+        self._continuation(session,data)
         result = self.runtime.contracts.activate(preview["proposal_id"], preview["review_id"], principal)
         data.update(status="ACTIVE", active=result); self._save(session, data)
         return result
@@ -406,11 +489,20 @@ class GoalService:
         if artifact.get("schema_version") != 1 or artifact.get("digest") != args_hash({k: v for k, v in artifact.items() if k != "digest"}):
             raise ValueError("goal replay artifact binding mismatch")
         request, original = artifact["request"], artifact["planning"]
+        if original['prompt_version']!=self.protocol.PLANNER_VERSION:
+            from atomicroot.integration.planning import protocol_for_version
+            return GoalService(self.runtime,progress=self.progress,proposal_check=self.proposal_check,
+                protocol=protocol_for_version(original['prompt_version']),resource_inputs=self.resource_inputs).replay(artifact,principal)
+        if original.get("review_check_binding") != self.check_binding:
+            raise ValueError("replay trusted proposal check divergence")
         with self.store.snapshot() as snap:
             if snap._conn.execute("SELECT 1 FROM goal_sessions WHERE id=?", (request["session"],)).fetchone():
                 raise ValueError("replay requires a fresh prepared database/session, never a cached result")
-        if original["catalog"] != self.discover(request["intake"], request["task"], principal): raise ValueError("replay catalog/environment divergence")
-        if original["schema_digest"] != args_hash(proposal_schema()) or original["registry_digest"] != REGISTRY_DIGEST or original["prompt_version"] != PLANNER_VERSION:
+        current_catalog=self.discover(request['intake'],request['task'],principal)
+        if getattr(self.protocol,'DYNAMIC',False) and 'approved_requirements' in original['catalog']:
+            current_catalog['approved_requirements']=original['catalog']['approved_requirements']
+        if original["catalog"] != current_catalog: raise ValueError("replay catalog/environment divergence")
+        if original["schema_digest"] != args_hash(self.protocol.proposal_schema()) or original["registry_digest"] != REGISTRY_DIGEST or original["prompt_version"] != self.protocol.PLANNER_VERSION:
             raise ValueError("replay schema/registry/prompt divergence")
         with self.store.snapshot() as snap: config = self._intake(request["intake"], request["task"], principal, snap)
         if config != original["intake"]: raise ValueError("replay intake scope/expiry divergence")
@@ -421,12 +513,17 @@ class GoalService:
             if binding != original["intake_binding"]: raise ValueError("replay intake plan/endpoint/caps divergence")
         if original["revision"] != 0: return self._replay_revision(artifact, principal)
         tape = ModelTape(provider=original["intake"]["provider"], model=original["intake"]["model"],
-            prompt_version=PLANNER_VERSION, records=original["model_records"])
-        service = GoalService(self.runtime, tape, progress=self.progress)
+            prompt_version=self.protocol.PLANNER_VERSION, records=original["model_records"])
+        resource_inputs=self.resource_inputs
+        if original.get('bundle'):
+            resource_inputs={r['resource']:r for r in original['preview']['preview']['changes']['resources']}
+        service = GoalService(self.runtime, tape, progress=self.progress, proposal_check=self.proposal_check, protocol=self.protocol,
+                              resource_inputs=resource_inputs)
         repeated = service.plan(request["session"], request["goal"], request["intake"], request["task"], principal,
-            context_resources=request["context_resources"])
+            context_resources=request["context_resources"],requirements=original['catalog'].get('approved_requirements'))
         expected = "REVIEW_WAIT" if original["status"] in {"ACTIVE", "REJECTED"} else original["status"]
-        return {"match": repeated.get("proposal") == original.get("proposal") and repeated["status"] == expected, "result": repeated}
+        return {"match": repeated.get("proposal") == original.get("proposal") and repeated["status"] == expected
+                and repeated.get('dynamic_proposal') == original.get('dynamic_proposal'), "result": repeated}
 
     def _replay_revision(self, artifact, principal):
         """Replay bound responses against a matching prepared current snapshot.
@@ -443,8 +540,10 @@ class GoalService:
         if not original.get("proposal") or original["proposal"]["status"] != "PROPOSAL":
             raise ValueError("frozen revision resolution requires an executable proposal; failure recording remains available")
         previous = history[-2].get("proposal")
+        if getattr(self.protocol,'DYNAMIC',False):
+            return self._replay_dynamic_revision(artifact,principal,previous)
         tape = ModelTape(provider=original["intake"]["provider"], model=original["intake"]["model"],
-            prompt_version=PLANNER_VERSION, records=original["model_records"])
+            prompt_version=self.protocol.PLANNER_VERSION, records=original["model_records"])
         matched = False
         for record in sorted(tape.records.values(), key=lambda r: (r["binding"]["context_digest"], r["binding"]["ordinal"])):
             binding = record["binding"]
@@ -452,14 +551,15 @@ class GoalService:
             supplied = context["allowed_catalog"]
             if supplied.get("planning_constraints") != original.get("intake_binding"):
                 raise ValueError("frozen intake endpoint/caps binding mismatch")
-            catalog = {k: v for k, v in supplied.items() if k not in {"authorized_context", "planning_constraints"}}
+            catalog = {k: v for k, v in supplied.items() if k not in {"authorized_context", "planning_constraints", "review_checks"}}
             try: response = asyncio.run(tape.generate(binding["messages"], response_schema=binding["response_schema"]))
             except RuntimeError:
                 if "error" in record: continue
                 raise
-            if context["goal"] != request["goal"] or context["target_task"] != request["task"] or catalog != original["catalog"] or context.get("previous") != previous:
+            from atomicroot.integration.planning import previous_context
+            if context["goal"] != request["goal"] or context["target_task"] != request["task"] or catalog != original["catalog"] or context.get("previous") != previous_context(previous):
                 continue  # An archive may also contain validated responses from earlier revisions.
-            try: candidate = parse_proposal(response["output"], request["task"], request["goal"])
+            try: candidate = self._parse_proposal(response["output"], request["task"], request["goal"], catalog)
             except (ValueError, TypeError, KeyError): continue  # Recorded invalid repair attempt remains in the artifact.
             if candidate == original["proposal"]: matched = True
         if not matched: raise ValueError("no exact recorded response for this proposal")
@@ -469,9 +569,53 @@ class GoalService:
                 if any(item not in proposal["spec"][field] for item in previous["spec"][field]): raise ValueError("replayed revision removed a requirement")
         valid = self.runtime.tasks.validate(proposal["spec"], principal)
         if not valid["valid"]: raise ValueError("replay resolution rejected: " + "; ".join(valid["unsupported"]))
+        if self.proposal_check: self.proposal_check(freeze_json(proposal))
         key = f"goalproposal:replay-{request['session']}:{revision}"
         evidence = {"artifact_digest": artifact["digest"], "proposal": proposal, "mode": "frozen revision resolution"}
         with self.store.transaction() as conn: self.store.put(conn, key, evidence)
         preview = self.runtime.tasks.propose(proposal["spec"], principal, review_bindings={key: args_hash(evidence)})
         return {"match": True, "result": {"status": "REVIEW_WAIT", "proposal": proposal, "preview": preview,
             "scope": "frozen latest revision via A; historical grants/effects are not replayed as new actions", "network_calls": 0}}
+
+    def _replay_dynamic_revision(self, artifact, principal, previous):
+        import asyncio
+        from atomicroot.integration.planning import previous_context
+        parse_dynamic_proposal=self.protocol.parse_dynamic_proposal
+        request,original=artifact['request'],artifact['planning']
+        matched=False
+        for record in original['model_records'].values():
+            binding=record['binding'];context=json.loads(binding['messages'][1]['content'])
+            supplied=context['allowed_catalog']
+            catalog={k:v for k,v in supplied.items() if k not in {'planning_constraints','authorized_context','review_checks'}}
+            if (context.get('protocol')!=self.protocol.PLANNER_VERSION or context.get('goal')!=request['goal']
+                or context.get('target_task')!=request['task'] or catalog!=(self.protocol.catalog_for_prompt(original['catalog']) if hasattr(self.protocol,'catalog_for_prompt') else original['catalog'])
+                or context.get('previous')!=previous_context(previous)
+                # v5 prompts omit intake caps; replay() already checks intake_binding.
+                or supplied.get('planning_constraints',original['intake_binding'])!=original['intake_binding']):continue
+            tape=ModelTape(provider=original['intake']['provider'],model=original['intake']['model'],
+                prompt_version=self.protocol.PLANNER_VERSION,records=original['model_records'])
+            try:response=asyncio.run(tape.generate(binding['messages'],response_schema=binding['response_schema']))
+            except RuntimeError:
+                if 'error' in record:continue
+                raise
+            if response.get('output')==original.get('dynamic_proposal'):matched=True
+        if not matched:raise ValueError('no exact recorded dynamic response for latest revision')
+        raw=original['dynamic_proposal'];required=original['catalog'].get('approved_requirements')
+        if previous and previous.get('spec') and artifact['history'][-2]['status']=='ACTIVE':
+            for field in ('acceptance','policies'):
+                if any(item not in original['proposal']['spec'][field] for item in previous['spec'][field]):
+                    raise ValueError('replayed revision removed an approved requirement')
+        if raw['permission_requests']:
+            from atomicroot.integration.permission_bundle import preview as bundle_preview
+            inputs={r['resource']:r for r in original['preview']['preview']['changes']['resources']}
+            result=bundle_preview(self.runtime,raw,'replay-'+request['session'],original['revision'],request['goal'],
+                request['intake'],request['task'],principal,resource_inputs=inputs,requirements=required,protocol=self.protocol)
+            if result['proposal']!=original['proposal']:raise ValueError('dynamic permission projection divergence')
+            return dict(match=True,result=dict(status='REVIEW_WAIT',**result,network_calls=0,
+                scope='fresh projected latest revision; historical grants and effects are not restored'))
+        resolved=parse_dynamic_proposal(raw,request['task'],request['goal'],original['catalog'],approved_requirements=required)
+        if resolved['proposal']!=original['proposal']:raise ValueError('dynamic proposal divergence')
+        if self.proposal_check:self.proposal_check(freeze_json(resolved['proposal']))
+        preview=self.runtime.tasks.propose(resolved['proposal']['spec'],principal)
+        return dict(match=True,result=dict(status='REVIEW_WAIT',proposal=resolved['proposal'],preview=preview,network_calls=0,
+                    scope='frozen latest dynamic revision; fresh review required'))
