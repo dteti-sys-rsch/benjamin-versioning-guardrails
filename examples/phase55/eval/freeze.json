@@ -17,14 +17,14 @@
     "run_goal.py": "sha256:b54f2961d94cc8b59ae4dccce3f4f9e1bed35266bb928be88a36a7a82fc6d889"
   },
   "case_files": {
-    "examples/phase55/eval/adversarial-cases.json": "sha256:7cb7e3b924f6b292baf73174bba4bc8c5ab3310422bec37e1c9e98c5379b7449",
+    "examples/phase55/eval/adversarial-cases.json": "sha256:a3867e702b5db253c7afe03598d02d10a2ab31dfd84747f99e510d827200923b",
     "examples/phase55/eval/dev-cases.json": "sha256:177b11040fb72739d725945595429972a9e3ce3ac28af14fe69dea135101214a",
     "examples/phase55/eval/heldout-cases.json": "sha256:462e8a0d3bf7e3fa9827918c58a8aa1291ca76a96c7b5d270934ec99ddd1bf68"
   },
-  "base_commit": "d57a04cf9ebf14986e36d12815d162e7e42977e5",
+  "base_commit": "7cb5a84020e00d8341a977d0ccb46306875753ff",
   "created": {
-    "observed_at_utc": "2026-11-09T05:10:21.494049+00:00",
-    "monotonic_ns": 8197694898900,
-    "process_id": 37984
+    "observed_at_utc": "2026-11-09T06:34:25.305890+00:00",
+    "monotonic_ns": 13241507623800,
+    "process_id": 3756
   }
 }
