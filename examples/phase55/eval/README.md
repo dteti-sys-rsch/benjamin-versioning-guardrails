@@ -74,11 +74,11 @@ ssh -N -L 11434:localhost:11434 <user>@10.42.28.14
 
 # 3. Live (budget total disetujui: <= 250 call)
 .\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-cases.json --reviewer blind --max-total-calls 120 --declared-host 10.42.28.14 --output .runs/pre-phase6-heldout --authorize-live
-.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-cases.json --reviewer blind --max-total-calls 40 --declared-host 10.42.28.14 --output .runs/pre-phase6-adversarial --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-cases.json --reviewer blind --max-total-calls 60 --declared-host 10.42.28.14 --output .runs/pre-phase6-adversarial --authorize-live
 .\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-cases.json --cases h-summary-base h-summary-alt h-payment-base h-parallel-alt h-email-base h-update-alt h-deploy-base h-clarify-alt h-permission-base h-policy2-base --repetitions 2 --reviewer blind --max-total-calls 90 --declared-host 10.42.28.14 --output .runs/pre-phase6-determinism --authorize-live
 ```
 
-Pembagian cap 120 + 40 + 90 = 250 sesuai batas yang disetujui. Set determinisme
+Pembagian cap 120 + 40 + 90 = 250 sesuai batas yang disetujui. Amandemen A2: adversarial 11 kasus dengan cap 60; held-out memakai 85 call, sehingga total 235 ≤ 250. Set determinisme
 memakai 10 kasus × 2 ulangan agar `identical_response_rate` dihitung di dalam
 satu run suite. Bila kasus
 held-out gagal, hasil itu dilaporkan apa adanya. Protokol atau kasus tidak
