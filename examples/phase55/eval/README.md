@@ -12,6 +12,9 @@ terpisah.
 | `dev-cases.json` | 10 kasus pengembangan (identik dengan goal suite v10). Dipakai untuk menyetel protokol v5–v10, jadi bukan bukti generalisasi. |
 | `heldout-cases.json` | 22 kasus held-out: 2 parafrase per pola, separuh di workspace `alt` (nama resource/recipient lain, katalog 5 resource × 4 recipient), dan 2 policy multi-predikat. Ditulis sebelum run apa pun. |
 | `adversarial-cases.json` | 9 goal negatif: budget terlampaui, eskalasi budget, goal kontradiktif, recipient ambigu, prompt injection di dokumen, release SENSITIVE, dan tool tak terdaftar (hapus, SQL, scraping). |
+| `heldout-v2-cases.json` | 16 kasus held-out untuk protokol v11, dengan workspace, resource, dan recipient baru. Ditulis sebelum v11 dijalankan. Set v1 (`heldout`, `adversarial`) sudah dipakai untuk merancang v11, sehingga untuk v11 statusnya regresi pengembangan, bukan held-out. |
+| `adversarial-v2-cases.json` | 8 kasus adversarial untuk v11: recipient ambigu, kontradiksi, over-budget, indirect injection (email, pembayaran, deploy), exfil SENSITIVE, dan upload tak terdaftar. |
+| `whitebox_adversary.py` | 26 serangan scripted tanpa LLM (worker yang menuruti injeksi dan planner adversarial) lewat jalur B nyata. Ini bukti mekanisme keamanan; berjalan offline. |
 | `freeze.py` / `freeze.json` | Identitas protokol, schema, registry, versi worker, source kunci, dan file kasus. Suite menolak berjalan bila identitas saat ini berbeda. |
 
 ## Skema kasus
@@ -87,3 +90,27 @@ held-out baru.
 
 Untuk mereproduksi suite v10 lama: tambahkan `--cases-file examples/phase55/eval/dev-cases.json --reviewer case --no-freeze-check`.
 Penilaian kini juga memakai oracle goal, jadi angkanya tidak harus identik dengan `.runs/dynamic-live-v10-27b`.
+
+## Protokol v11 (amandemen A3, 9 November 2026)
+
+v11 (`dynamic-proposal-v11`) menggantikan v10 sebagai planner aktif. v10 tetap bisa di-replay.
+Perubahannya:
+
+- CLARIFY wajib berisi pertanyaan.
+- Recipient yang disebut di goal tetapi tidak ada di katalog menjadi PROPOSAL dengan bundle izin.
+- Recipient efek eksternal harus disebut di goal atau di klarifikasi pengguna.
+- Contoh policy multi-predikat ditambahkan ke prompt.
+
+Freeze juga meng-hash core authorization, dan `base_commit` harus merupakan ancestor HEAD.
+Urutan run v11 (Ollama di `localhost:11434`, tree bersih, freeze cocok):
+
+```powershell
+.\.venv\Scripts\python.exe examples/phase55/eval/whitebox_adversary.py --output .runs/v11-whitebox-adversary
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-v2-cases.json --reviewer blind --max-total-calls 80 --output .runs/v11-heldout-v2 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-v2-cases.json --reviewer blind --max-total-calls 40 --output .runs/v11-adversarial-v2 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-cases.json --reviewer blind --max-total-calls 110 --output .runs/v11-regression-heldout-v1 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-cases.json --reviewer blind --max-total-calls 50 --output .runs/v11-regression-adversarial-v1 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-v2-cases.json --cases v2-summary v2-parallel v2-email v2-update v2-payment-policy v2-policy-multi v2-deploy v2-permission v2-clarify v2-replan --repetitions 2 --reviewer blind --max-total-calls 110 --output .runs/v11-determinism --authorize-live
+```
+
+Total cap live v11: 80 + 40 + 110 + 50 + 110 = 390 call. Pemakaian yang diperkirakan dari run pra-Fase 6 adalah sekitar 250 call; cap memberi ruang untuk aturan `total + 2 × max_calls`.

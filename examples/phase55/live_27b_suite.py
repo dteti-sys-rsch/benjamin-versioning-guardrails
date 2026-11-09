@@ -313,7 +313,11 @@ def check_freeze(freeze_file: Path, case_files: list[Path]) -> dict:
     current = freeze_state(case_files)
     differences = sorted(k for k in current if frozen.get(k) != current[k])
     if differences: raise RuntimeError("freeze mismatch; tuning after freeze is not allowed: " + ", ".join(differences))
-    return {"freeze_file": str(freeze_file), "base_commit": frozen.get("base_commit"), "matched": True}
+    # The freeze must describe an ancestor of the evaluated commit, not an unrelated branch.
+    base = frozen.get("base_commit")
+    if base and subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], cwd=ROOT).returncode != 0:
+        raise RuntimeError(f"freeze base_commit {base} is not an ancestor of HEAD")
+    return {"freeze_file": str(freeze_file), "base_commit": base, "matched": True}
 
 
 def run_suite(output_dir: Path, *, cases_file: Path, model: str, repetitions: int, selected_cases: list[str] | None,

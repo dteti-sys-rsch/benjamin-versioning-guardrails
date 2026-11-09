@@ -1,7 +1,7 @@
 """User-authored local workspace configuration, independent of experiment fixtures."""
 from copy import deepcopy
 
-from atomicroot.authority.policy_engine import valid_identity, money_integer
+from atomicroot.authority.policy_engine import valid_identity, money_integer, MAX_SCOPE_RULES
 from atomicroot.authority.ticket import args_hash, freeze_json
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.labels import content_digest
@@ -95,7 +95,7 @@ def prepare_environment(value):
     provider, purpose = data["provider"], data["purpose"]
     rule = lambda resource: dict(tool="model_inference", resource=resource,
         destination=provider["destination"], purpose=purpose, max_amount=0)
-    business_scope = rules([*data["scope"], *(rule(name) for name in contexts)],limit=64)
+    business_scope = rules([*data["scope"], *(rule(name) for name in contexts)],limit=MAX_SCOPE_RULES)
     if any(r['purpose'] != purpose or r['max_amount'] > data['budget_limit'] for r in business_scope):
         raise ValueError("scope exceeds environment purpose/budget")
     if any(r['resource'] is not None and r['resource'] not in {v['resource'] for v in resources} | set(contexts) for r in business_scope):

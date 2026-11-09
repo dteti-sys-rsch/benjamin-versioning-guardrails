@@ -24,7 +24,7 @@ Jalankan dari root repository memakai interpreter venv proyek.
 
 ```powershell
 # Windows / PowerShell
-.\.venv\Scripts\python.exe run_tests.py all
+..venvScriptspython.exe run_tests.py all
 ```
 
 ```bash
@@ -49,20 +49,20 @@ path interpreter dipakai langsung. Setup dependency tetap mengikuti README.
 | `all` | Seluruh regression, generator/replay Fase 4, 5, dan dua goal B serta negative artifacts Fase 5.5. |
 
 ```powershell
-.\.venv\Scripts\python.exe run_tests.py quick
-.\.venv\Scripts\python.exe run_tests.py phase4
-.\.venv\Scripts\python.exe run_tests.py phase5
-.\.venv\Scripts\python.exe run_tests.py phase55
-.\.venv\Scripts\python.exe run_tests.py regression
-.\.venv\Scripts\python.exe run_tests.py scenarios
+..venvScriptspython.exe run_tests.py quick
+..venvScriptspython.exe run_tests.py phase4
+..venvScriptspython.exe run_tests.py phase5
+..venvScriptspython.exe run_tests.py phase55
+..venvScriptspython.exe run_tests.py regression
+..venvScriptspython.exe run_tests.py scenarios
 
 # Satu skenario, semua mode dan replay tiap mode
-.\.venv\Scripts\python.exe run_tests.py scenarios --scenario budget
+..venvScriptspython.exe run_tests.py scenarios --scenario budget
 
 # Satu skenario dan mode
-.\.venv\Scripts\python.exe run_tests.py scenarios --scenario stale_write --mode atomicroot
+..venvScriptspython.exe run_tests.py scenarios --scenario stale_write --mode atomicroot
 
-.\.venv\Scripts\python.exe run_tests.py --help
+..venvScriptspython.exe run_tests.py --help
 ```
 
 Daftar nama scenario/mode tersedia lewat `phase5_cli.py list`. `--scenario` dan
@@ -93,7 +93,7 @@ folder yang sudah ada ditolak agar bukti lama tidak tertimpa. Generator asli
 juga mendukung `--output`, misalnya:
 
 ```powershell
-.\.venv\Scripts\python.exe examples/phase5/generate.py --output .runs/my-new-evidence
+..venvScriptspython.exe examples/phase5/generate.py --output .runs/my-new-evidence
 ```
 
 Runner otomatis mengarahkan generator ke folder run baru, sehingga tidak
@@ -165,7 +165,7 @@ benchmark performa terkontrol atau pembuktian liveness/universal safety.
 Pada 27 Oktober 2026, command berikut selesai dengan status `PASSED`:
 
 ```powershell
-.\.venv\Scripts\python.exe run_tests.py all --output .runs/testing/timestamps-verification
+..venvScriptspython.exe run_tests.py all --output .runs/testing/timestamps-verification
 ```
 
 Hasil: 512 test lulus, 35 exact replay Fase 4 (34 scenario dan satu fallback),
@@ -224,7 +224,23 @@ mencakup:
 - metadata provenance read-only;
 - satu goal nyata yang dieksekusi dengan model palsu.
 
-Pada 8 November 2026 regression menghasilkan **626 passed**.
+Test terkait lainnya:
 
-Suite live memerlukan `--authorize-live`, SSH tunnel ke server model, tree yang
+- `atomicroot/tests/test_whitebox_adversary.py` menjalankan 26 serangan white-box scripted
+  (`examples/phase55/eval/whitebox_adversary.py`) lewat jalur B nyata. Setiap serangan wajib terbukti
+  mencapai validasi atau authority, dan mekanisme penolakannya dipin di test.
+- `atomicroot/tests/test_dynamic_proposal_v11.py` menguji planner v11: CLARIFY wajib memuat pertanyaan,
+  recipient efek eksternal harus grounded di goal atau klarifikasi, dan bundle izin untuk recipient yang
+  disebut di goal tetapi belum ada di katalog. Test ini juga memastikan v10 tetap bisa di-replay.
+- `load_cases` menolak kasus yang efek wajibnya tidak bisa disediakan workspace (tool tidak aktif,
+  resource tidak ada, atau recipient di luar katalog selain pola `permission_request`).
+
+Pada 9 November 2026 regression menghasilkan **633 passed**. Bukti white-box (tanpa LLM) dapat
+dibuat ulang dengan:
+
+```powershell
+.\.venv\Scripts\python.exe examples/phase55/eval/whitebox_adversary.py --output .runs/<folder-baru>
+```
+
+Suite live memerlukan `--authorize-live`, endpoint Ollama di `localhost:11434` (lokal atau lewat SSH tunnel), tree yang
 bersih, dan `freeze.json` yang cocok. `run_tests.py` tetap offline.

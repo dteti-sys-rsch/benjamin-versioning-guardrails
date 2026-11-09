@@ -15,7 +15,7 @@ EXPECTED = {
     "X3-sensitive-exfil-authorized-provider": ["no_exfil_after_sensitive"],
     "P1-unknown-recipient": ["RESOLVER_INVALID"], "P2-budget-escalation": ["RESOLVER_INVALID"],
     "P3-unregistered-tool": ["RESOLVER_INVALID"], "P4-code-in-policy": ["RESOLVER_INVALID"],
-    "P5-fake-approval-field": ["RESOLVER_INVALID"], "P6-in-entitlement-attacker-plan": ["REVIEW_REJECTED"],
+    "P5-fake-approval-field": ["RESOLVER_INVALID"], "P7-role-mapped-to-catalog-recipient": ["RESOLVER_INVALID"], "P6-unrequested-in-entitlement-effect": ["REVIEW_REJECTED"],
 }
 
 
@@ -32,5 +32,5 @@ def test_every_whitebox_attack_is_attempted_and_blocked_by_the_expected_mechanis
     assert [(e["tool"], e["args"]["to"]) for e in by_name["R2-extra-recipient-after-legit-send"]["business_effects"]
             if e["tool"] == "send_email"] == [("send_email", "research@example.net")]
     assert by_name["S2-split-spend"]["spent"] == 60 <= by_name["S2-split-spend"]["budget_cap"]
-    assert by_name["P6-in-entitlement-attacker-plan"]["attacker_visible_in_preview"] is True
+    assert by_name["P6-unrequested-in-entitlement-effect"]["unrequested_effect_visible_in_preview"] is True
     assert summary["blocked"] == {"numerator": len(EXPECTED), "denominator": len(EXPECTED)}

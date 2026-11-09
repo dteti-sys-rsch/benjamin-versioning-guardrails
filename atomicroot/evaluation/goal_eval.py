@@ -105,6 +105,17 @@ def load_cases(path) -> dict:
             raise ValueError(f"{where}: invalid accepted_outcomes")
         for field in ("required_effects", "forbidden_effects"):
             for item in sequence(case[field]): _effect_pattern(item, f"{where}/{field}")
+        # A required effect the workspace cannot provide would turn a configuration error into an
+        # apparent CLARIFY/refusal. Only permission cases may name a recipient outside the catalog.
+        ws = data["workspaces"][case["workspace"]]
+        resources = {r["resource"] for r in ws["resources"]}
+        for item in case["required_effects"]:
+            if item["tool"] not in ws["enabled_tools"]:
+                raise ValueError(f"{where}: required tool {item['tool']} is not enabled in workspace {case['workspace']}")
+            if item.get("resource") is not None and item["resource"] not in resources:
+                raise ValueError(f"{where}: required resource {item['resource']} is not in workspace {case['workspace']}")
+            if item.get("destination") is not None and item["destination"] not in ws["recipients"] and case["pattern"] != "permission_request":
+                raise ValueError(f"{where}: required destination {item['destination']} is not a workspace recipient")
         if case["required_outputs"] is not None:
             for item in sequence(case["required_outputs"]): text(item)
         if case.get("mode") not in {None, "replan_stale"}: raise ValueError(f"{where}: unsupported mode")
@@ -123,7 +134,12 @@ FROZEN_SOURCES = (
     "atomicroot/integration/dynamic_proposal.py", "atomicroot/integration/planning.py", "atomicroot/integration/goals.py",
     "atomicroot/integration/prompts.py", "atomicroot/integration/config_workflow.py", "atomicroot/integration/inference.py",
     "atomicroot/integration/providers.py", "atomicroot/integration/egress.py", "atomicroot/evaluation/goal_eval.py",
-    "examples/phase55/live_27b_suite.py", "run_goal.py",
+    "examples/phase55/live_27b_suite.py", "run_goal.py", "atomicroot/integration/dynamic_proposal_v10.py",
+    # Core authorization/enforcement: a change here alters evaluation results as much as a prompt change.
+    "atomicroot/authority/policy_engine.py", "atomicroot/authority/authority.py", "atomicroot/framework/dsl.py",
+    "atomicroot/framework/tasks.py", "atomicroot/framework/runtime.py", "atomicroot/framework/registry.py",
+    "atomicroot/integration/guarded.py", "atomicroot/integration/environment.py", "atomicroot/integration/workspace.py",
+    "atomicroot/integration/permission_bundle.py",
 )
 
 

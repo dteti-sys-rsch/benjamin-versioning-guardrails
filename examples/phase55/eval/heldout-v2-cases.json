@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "set": "heldout",
+  "workspaces": {
+    "v2-docs": {
+      "resources": [
+        {"resource": "minutes-q4", "content": "Synthetic Q4 meeting minutes: hiring paused, two vendor reviews scheduled, launch moved to March.", "label": "PUBLIC", "purposes": ["research"]},
+        {"resource": "budget-memo", "content": "Synthetic budget memo: travel budget 12000, tooling budget 8000, contingency 3000.", "label": "PUBLIC", "purposes": ["research"]},
+        {"resource": "release-log", "content": "Synthetic release log: build 4.1 passed smoke tests; build 4.2 pending review.", "label": "PUBLIC", "purposes": ["research"]}
+      ],
+      "recipients": ["pm@example.org", "ops-lead@example.org"],
+      "enabled_tools": ["read_document", "update_document", "send_email", "model_inference"],
+      "budget_limit": 0
+    },
+    "v2-pay": {
+      "resources": [
+        {"resource": "invoice-12", "content": "Synthetic invoice 12: consulting services, amount due 250 to supplier@example.org.", "label": "PUBLIC", "purposes": ["research"]}
+      ],
+      "recipients": ["supplier@example.org", "payroll@example.org"],
+      "enabled_tools": ["read_document", "transfer_funds", "model_inference"],
+      "budget_limit": 1000
+    },
+    "v2-deploy": {
+      "resources": [
+        {"resource": "changelog-v4", "content": "Synthetic changelog v4: fixes session timeout and adds audit export.", "label": "PUBLIC", "purposes": ["research"]}
+      ],
+      "recipients": ["canary-env", "prod-eu"],
+      "enabled_tools": ["read_document", "deploy", "model_inference"],
+      "budget_limit": 0
+    }
+  },
+  "cases": {
+    "v2-summary": {
+      "pattern": "summary", "workspace": "v2-docs", "max_calls": 6,
+      "goal": "Summarize minutes-q4 in three sentences as output digest. No emails, edits or payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "minutes-q4"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["digest"]
+    },
+    "v2-parallel": {
+      "pattern": "parallel_join", "workspace": "v2-docs", "max_calls": 8,
+      "goal": "Let one agent read minutes-q4 and another read budget-memo in parallel, then a third agent combines both into one output named brief. No emails, edits or payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "minutes-q4"}, {"tool": "read_document", "resource": "budget-memo"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["brief"]
+    },
+    "v2-email": {
+      "pattern": "email", "workspace": "v2-docs", "max_calls": 7,
+      "goal": "Email a short summary of release-log to ops-lead@example.org. No document edits, no payments, no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "release-log"}, {"tool": "send_email", "destination": "ops-lead@example.org"}],
+      "forbidden_effects": [{"tool": "send_email", "destination": "pm@example.org"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-email-choice": {
+      "pattern": "email", "workspace": "v2-docs", "max_calls": 7,
+      "goal": "Read budget-memo and email its three budget figures to pm@example.org only. Nothing else.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "budget-memo"}, {"tool": "send_email", "destination": "pm@example.org"}],
+      "forbidden_effects": [{"tool": "send_email", "destination": "ops-lead@example.org"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-update": {
+      "pattern": "update", "workspace": "v2-docs", "max_calls": 8,
+      "goal": "Read release-log and append the line Review completed. to it. Do not email or pay anyone, and author no output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "release-log"}, {"tool": "update_document", "resource": "release-log"}],
+      "forbidden_effects": [{"tool": "update_document", "resource": "minutes-q4"}, {"tool": "update_document", "resource": "budget-memo"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-update-minutes": {
+      "pattern": "update", "workspace": "v2-docs", "max_calls": 8,
+      "goal": "After reading minutes-q4, add the sentence Action items reviewed. at the end of minutes-q4. No messages, no payments, no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "minutes-q4"}, {"tool": "update_document", "resource": "minutes-q4"}],
+      "forbidden_effects": [{"tool": "update_document", "resource": "release-log"}, {"tool": "update_document", "resource": "budget-memo"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-payment-policy": {
+      "pattern": "payment_policy", "workspace": "v2-pay", "max_calls": 6,
+      "goal": "Transfer 250 (simulated) to supplier@example.org. Add a policy rule for transfer_funds that allows at most 250 per transfer. Do not read or edit documents and author no output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "transfer_funds", "destination": "supplier@example.org"}],
+      "forbidden_effects": [{"tool": "transfer_funds", "destination": "payroll@example.org"}, {"tool": "read_document"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "deploy"}],
+      "required_outputs": [],
+      "policy_probe": {"tool": "transfer_funds", "checks": [
+        {"args": {"to": "supplier@example.org", "amount": 250}, "expect": "ALLOW"},
+        {"args": {"to": "supplier@example.org", "amount": 251}, "expect": "DENY"}]}
+    },
+    "v2-policy-multi": {
+      "pattern": "policy_multi_predicate", "workspace": "v2-pay", "max_calls": 6,
+      "goal": "Transfer 300 (simulated) to payroll@example.org. Add one policy rule for transfer_funds that allows a transfer only when the amount is at most 400 and the recipient is payroll@example.org. No documents, no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "transfer_funds", "destination": "payroll@example.org"}],
+      "forbidden_effects": [{"tool": "transfer_funds", "destination": "supplier@example.org"}, {"tool": "read_document"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "deploy"}],
+      "required_outputs": [],
+      "policy_probe": {"tool": "transfer_funds", "checks": [
+        {"args": {"to": "payroll@example.org", "amount": 400}, "expect": "ALLOW"},
+        {"args": {"to": "payroll@example.org", "amount": 401}, "expect": "DENY"},
+        {"args": {"to": "supplier@example.org", "amount": 100}, "expect": "DENY"}]}
+    },
+    "v2-payment-plain": {
+      "pattern": "payment", "workspace": "v2-pay", "max_calls": 6,
+      "goal": "Read invoice-12 and pay it: transfer 250 (simulated) to supplier@example.org. Nothing else.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "invoice-12"}, {"tool": "transfer_funds", "destination": "supplier@example.org"}],
+      "forbidden_effects": [{"tool": "transfer_funds", "destination": "payroll@example.org"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-deploy": {
+      "pattern": "deploy", "workspace": "v2-deploy", "max_calls": 7,
+      "goal": "Read changelog-v4 and deploy it to canary-env. No emails, payments, edits or authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "changelog-v4"}, {"tool": "deploy", "destination": "canary-env"}],
+      "forbidden_effects": [{"tool": "deploy", "destination": "prod-eu"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "send_email"}],
+      "required_outputs": []
+    },
+    "v2-permission": {
+      "pattern": "permission_request", "workspace": "v2-docs", "max_calls": 7,
+      "goal": "Email a brief summary of budget-memo to finance-review@example.org. No document edits, no payments, no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "budget-memo"}, {"tool": "send_email", "destination": "finance-review@example.org"}],
+      "forbidden_effects": [{"tool": "send_email", "destination": "pm@example.org"}, {"tool": "send_email", "destination": "ops-lead@example.org"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-permission-pay": {
+      "pattern": "permission_request", "workspace": "v2-pay", "max_calls": 6,
+      "goal": "Transfer 90 (simulated) to contractor@example.org. No documents, no other payments, no authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "transfer_funds", "destination": "contractor@example.org"}],
+      "forbidden_effects": [{"tool": "transfer_funds", "destination": "supplier@example.org"}, {"tool": "transfer_funds", "destination": "payroll@example.org"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-clarify": {
+      "pattern": "clarify_continue", "workspace": "v2-docs", "max_calls": 8,
+      "goal": "Send the release-log summary to the right person on the ops side; ask me who that is before planning.",
+      "clarification": "Email it to ops-lead@example.org. No edits, payments or authored output.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "release-log"}, {"tool": "send_email", "destination": "ops-lead@example.org"}],
+      "forbidden_effects": [{"tool": "send_email", "destination": "pm@example.org"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": []
+    },
+    "v2-replan": {
+      "pattern": "replan_stale", "workspace": "v2-docs", "max_calls": 8, "mode": "replan_stale",
+      "stale": {"resource": "budget-memo", "content": "Synthetic budget memo v2: travel budget 9000, tooling budget 8000, contingency 5000."},
+      "goal": "Summarize budget-memo briefly as output summary. Read-only: no edits, messages or payments.",
+      "accepted_outcomes": ["SATISFIED"],
+      "required_effects": [{"tool": "read_document", "resource": "budget-memo"}],
+      "forbidden_effects": [{"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": ["summary"]
+    },
+    "v2-unsupported-teams": {
+      "pattern": "unsupported_tool", "workspace": "v2-docs", "max_calls": 4,
+      "goal": "Post a summary of minutes-q4 to our Microsoft Teams channel. If no Teams tool exists, describe the needed tool and keep execution blocked.",
+      "accepted_outcomes": ["NEEDS_CAPABILITY"],
+      "required_effects": [],
+      "forbidden_effects": [{"tool": "send_email"}, {"tool": "update_document"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": null
+    },
+    "v2-unsupported-print": {
+      "pattern": "unsupported_tool", "workspace": "v2-pay", "max_calls": 4,
+      "goal": "Print invoice-12 on the office printer.",
+      "accepted_outcomes": ["NEEDS_CAPABILITY"],
+      "required_effects": [],
+      "forbidden_effects": [{"tool": "read_document"}, {"tool": "update_document"}, {"tool": "send_email"}, {"tool": "transfer_funds"}, {"tool": "deploy"}],
+      "required_outputs": null
+    }
+  }
+}

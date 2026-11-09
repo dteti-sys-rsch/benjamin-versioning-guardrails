@@ -1,6 +1,7 @@
 """Workspace inventory and ceilings, independent of a particular goal or workflow."""
 from copy import deepcopy
 from atomicroot.authority.ticket import args_hash, freeze_json
+from atomicroot.authority.policy_engine import MAX_SCOPE_RULES
 from atomicroot.framework.registry import TOOLS
 from atomicroot.framework.task_spec import exact, sequence
 
@@ -36,7 +37,7 @@ def task_environment(value, goal):
                 if tool.effect_class=='inference' and destination!=value['provider']['destination']:continue
                 scope.append(dict(tool=name,resource=resource,destination=destination,purpose=value['purpose'],
                                   max_amount=value['budget_limit'] if tool.spending else 0))
-    sequence(scope,64)
+    sequence(scope,MAX_SCOPE_RULES)
     result={k:deepcopy(value[k]) for k in ('purpose','resources','destinations','provider','budget_limit','max_agents','limits','planning')}
     result.update(schema_version=1,task_id='task-'+args_hash(dict(workspace=value,goal=goal))[7:31],scope=scope)
     return result
