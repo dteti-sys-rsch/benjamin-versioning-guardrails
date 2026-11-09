@@ -235,7 +235,10 @@ Test terkait lainnya:
 - `load_cases` menolak kasus yang efek wajibnya tidak bisa disediakan workspace (tool tidak aktif,
   resource tidak ada, atau recipient di luar katalog selain pola `permission_request`).
 
-Pada 9 November 2026 regression menghasilkan **633 passed**. Bukti white-box (tanpa LLM) dapat
+- `atomicroot/tests/test_dynamic_proposal_v12.py` memastikan setiap string teks bebas yang sah menurut
+  grammar planner v12 (64 karakter, termasuk karakter 4-byte) lolos validator byte.
+
+Pada 9 November 2026 regression menghasilkan **639 passed** (planner aktif `dynamic-proposal-v12`). Bukti white-box (tanpa LLM) dapat
 dibuat ulang dengan:
 
 ```powershell
