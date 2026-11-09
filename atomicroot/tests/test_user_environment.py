@@ -206,3 +206,35 @@ def test_one_shot_no_model_before_permission_review(tmp_path,stage):
     def forbidden(*args): raise AssertionError('model created before permission approval')
     result=run(value,'User goal',tmp_path/'rejected',authorize_live=True,ask=lambda _:next(answers),model_factory=forbidden)
     assert result['status']==('ENVIRONMENT_REJECTED' if stage=='environment' else 'INTAKE_REJECTED')
+
+
+def test_large_parent_entitlement_resolves_and_executes_offline(tmp_path):
+    # Regression (pre-Phase 6 held-out): >15 entitlement rules overflowed the
+    # 256-node engine bound, so every valid scope failed closed as EVALUATION_ERROR.
+    runtime=FrameworkRuntime(tmp_path/'ledger.sqlite')
+    try:
+        value=environment('large-entitlement')
+        extra=[f'extra-{i}' for i in range(11)]
+        value['resources']+= [dict(resource=name, content='Synthetic '+name, label='PUBLIC', purposes=['user-purpose']) for name in extra]
+        value['scope']+= [dict(tool=tool, resource=name, destination='openai' if tool=='model_inference' else None,
+            purpose='user-purpose', max_amount=0) for name in extra for tool in ('read_document','model_inference')]
+        user,approver=ready(runtime,value)
+        goal='Read my user-notes resource'
+        proposal=candidate(runtime,value,user,goal)
+        assert len(GoalService(runtime).discover('planning',value['task_id'],user)['scope'])>15
+        spec=proposal['spec']
+        keep=lambda name: name=='user-notes' or name.startswith('worker-')
+        spec['resources']=[r for r in spec['resources'] if keep(r['resource'])]
+        spec['scope']=spec['agents'][0]['scope']=[r for r in spec['scope'] if keep(r['resource'])]
+        service=GoalService(runtime,FakeModel(lambda _:proposal))
+        assert service.plan('large',goal,'planning',value['task_id'],user)['status']=='REVIEW_WAIT'
+        service.decide('large','approve',approver); service.activate('large',approver)
+        def respond(messages):
+            if json.loads(messages[-1]['content'])['observations']: return dict(kind='done',summary='Read')
+            return dict(kind='action',tool='read_document',args=dict(resource='user-notes',digest=spec['resources'][0]['digest']))
+        worker=FakeModel(respond); worker.execution_binding='user-environment-test-v1'
+        def factory(task,caller,budget):
+            bridge=ModelBridge(runtime,worker,DisabledClassifier(),llm_limits=Limits(**value['limits']['inference']),budget=budget)
+            return ConfigWorkflow(runtime,tmp_path/'checkpoint.sqlite',task=task,caller=caller,bridge=bridge)
+        assert service.execute('large',user,factory)['status']=='SATISFIED'
+    finally: runtime.store.close()

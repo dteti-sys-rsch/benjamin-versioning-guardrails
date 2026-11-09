@@ -328,3 +328,21 @@ def test_all_policies_run_even_if_first_denies(runtime):
     assert result["decision"] == "EVALUATION_ERROR"
     assert result["policy"] == "budget_monotone"  # second policy was evaluated
     assert "ticket_id" not in result
+
+
+def test_engine_admits_max_entitlement_scope_but_dsl_bound_is_unchanged(runtime):
+    store = runtime[0]
+    from atomicroot.authority.policy_engine import MAX_DSL_AST_NODES, MAX_SCOPE_RULES, EvaluationError
+    from atomicroot.framework.tasks import scope_expression, rule_request
+    from atomicroot.framework.task_spec import rules
+    from atomicroot.framework.dsl import parse_expr
+    scope = rules([dict(tool="read_document", resource=f"doc-{i}", destination=None, purpose="p", max_amount=0)
+                   for i in range(MAX_SCOPE_RULES)], limit=MAX_SCOPE_RULES)
+    with pytest.raises(ValueError): rules(scope + [dict(tool="read_document", resource="doc-x", destination=None, purpose="p", max_amount=0)], limit=MAX_SCOPE_RULES)
+    with store.snapshot() as snap:
+        inside = solve("parent_scope", scope_expression(scope), rule_request("t1", scope[-1]), StatusReader(snap), [])
+        outside = solve("parent_scope", scope_expression(scope),
+                        rule_request("t1", dict(scope[0], resource="doc-x")), StatusReader(snap), [])
+    assert (inside.decision, outside.decision) == ("ALLOW", "DENY")
+    oversized = {"op": "and", "children": [{"op": "const", "value": True}] * MAX_DSL_AST_NODES}
+    with pytest.raises(EvaluationError): parse_expr(oversized)

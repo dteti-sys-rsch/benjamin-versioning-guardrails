@@ -18,7 +18,14 @@ class EvaluationError(ValueError):
 
 IDENTITY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 MAX_INTEGER = (1 << 63) - 1
-MAX_AST_NODES = 256
+# Untrusted JSON DSL (LLM/user-proposed policies) stays bounded at 256 nodes in
+# framework/dsl.py. The engine bound also covers trusted host-built constraints:
+# scope_expression encodes each correlated scope rule as 16 nodes, and parent
+# entitlements may hold MAX_SCOPE_RULES rules, so the engine bound must admit
+# 1 + 16 * MAX_SCOPE_RULES or valid entitlements fail closed as EVALUATION_ERROR.
+MAX_DSL_AST_NODES = 256
+MAX_SCOPE_RULES = 64
+MAX_AST_NODES = 1 + 16 * MAX_SCOPE_RULES
 MAX_AST_DEPTH = 32
 MAX_STATE_BYTES = 8_192
 MAX_SOLVER_TIMEOUT_MS = 1000

@@ -2,7 +2,7 @@
 from atomicroot.authority.policy_engine import (
     Ref, Const, SetConst, RequestAmount, RequestField, Add, Sub, Eq, Le, Lt,
     Not, And, Or, If, Member, Subset, ast_type, dependencies, solve, EvaluationError,
-    valid_identity, MAX_AST_NODES, MAX_AST_DEPTH,
+    valid_identity, MAX_DSL_AST_NODES, MAX_AST_DEPTH,
 )
 from atomicroot.framework.registry import SOURCES, TOOLS
 
@@ -19,7 +19,7 @@ def parse_expr(data):
     def visit(node, depth):
         nonlocal count
         count += 1
-        if count > MAX_AST_NODES or depth > MAX_AST_DEPTH or type(node) is not dict:
+        if count > MAX_DSL_AST_NODES or depth > MAX_AST_DEPTH or type(node) is not dict:
             raise EvaluationError("invalid or oversized JSON AST")
         op = node.get("op")
         fields = {"const": {"value"}, "set": {"values"}, "ref": {"fact", "scope"},
@@ -38,7 +38,7 @@ def parse_expr(data):
         if op in BINARY: return BINARY[op](visit(node["left"], depth + 1), visit(node["right"], depth + 1))
         if op == "not": return Not(visit(node["child"], depth + 1))
         if op in ("and", "or"):
-            if type(node["children"]) is not list or len(node["children"]) > MAX_AST_NODES:
+            if type(node["children"]) is not list or len(node["children"]) > MAX_DSL_AST_NODES:
                 raise EvaluationError("invalid children")
             return (And if op == "and" else Or)(tuple(visit(c, depth + 1) for c in node["children"]))
         return If(*(visit(node[k], depth + 1) for k in ("condition", "yes", "no")))

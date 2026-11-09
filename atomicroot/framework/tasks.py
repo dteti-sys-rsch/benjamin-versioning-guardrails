@@ -5,6 +5,7 @@ from dataclasses import asdict
 from atomicroot.authority.ticket import args_hash, freeze_json
 from atomicroot.authority.policy_engine import (
     And, Or, Eq, Le, Const, SetConst, Member, Subset, Ref, RequestField, RequestAmount, StatusReader, solve, money_integer, valid_identity,
+    MAX_SCOPE_RULES,
 )
 from atomicroot.framework.identity import Principal
 from atomicroot.framework.registry import TOOLS, SOURCES, RESOLUTION_RECORDS
@@ -77,7 +78,7 @@ class TrustedCatalog:
         valid_identity(task); valid_identity(subject)
         data = freeze_json(data)
         exact(data, {"scope", "budget_limit", "max_agents", "limits"})
-        data["scope"] = rules(data["scope"], limit=64)
+        data["scope"] = rules(data["scope"], limit=MAX_SCOPE_RULES)
         money_integer(data["budget_limit"])
         if type(data["max_agents"]) is not int or not 1 <= data["max_agents"] <= 16: raise ValueError("invalid agent bound")
         exact(data["limits"], {"max_steps", "max_in_flight", "max_calls", "max_tokens", "max_output_tokens", "max_retries", "timeout"})
@@ -154,7 +155,7 @@ class TaskService:
         if mode is None and (snapshot.read(f"contract3:{task}")[1] is not None or snapshot.read(f"contract:{task}")[1] is not None):
             raise ValueError("legacy active task requires explicit migration; no silent delegation")
         entitlement = reader.read(f"entitlement:{task}:{principal.subject}")
-        rights = rules(entitlement["scope"], limit=64)
+        rights = rules(entitlement["scope"], limit=MAX_SCOPE_RULES)
         if len(data["agents"]) > entitlement["max_agents"]: raise ValueError("agent count outside entitlement")
         if data["budget_limit"] > money_integer(entitlement["budget_limit"]): raise ValueError("task budget outside entitlement")
         caps = data["limits"]["inference"] | {k: data["limits"][k] for k in ("max_steps", "max_in_flight")}
@@ -281,7 +282,7 @@ def delegation_constraints(reader, request):
     entitlement = reader.read(f"entitlement:{task}:{mode['owner']}")
     constraints = [("agent_membership", Member(RequestField("agent_id"), Ref("agent_members", "task")), "DENY"),
                    ("agent_scope", scope_expression(rules(delegation["scope"])), "DENY"),
-                   ("parent_scope", scope_expression(rules(entitlement["scope"], limit=64)), "DENY"),
+                   ("parent_scope", scope_expression(rules(entitlement["scope"], limit=MAX_SCOPE_RULES)), "DENY"),
                    ("parent_budget", Le(Const(active["spec"]["budget_limit"]), Const(money_integer(entitlement["budget_limit"]))), "DENY")]
     caps = active["spec"]["limits"]["inference"] | {k: active["spec"]["limits"][k] for k in ("max_steps", "max_in_flight")}
     cap_checks = [Le(Const(caps[k]), Const(v)) for k, v in entitlement["limits"].items()]
@@ -312,8 +313,9 @@ def delegation_constraints(reader, request):
             Eq(Const(doc["version"]), Const(doc["version"] if host_context else (ref or {}).get("version", 0))))), "DENY"))
         if resource != request["resource"]:
             # Model sources require correlated inference scope for this agent and parent.
-            for name, scope in (("source_agent_scope", delegation["scope"]), ("source_parent_scope", entitlement["scope"])):
-                constraints.append((name + ":" + resource, scope_expression(rules(scope), resource=resource), "DENY"))
+            for name, scope, limit in (("source_agent_scope", delegation["scope"], 12),
+                                       ("source_parent_scope", entitlement["scope"], MAX_SCOPE_RULES)):
+                constraints.append((name + ":" + resource, scope_expression(rules(scope, limit=limit), resource=resource), "DENY"))
     if request["tool"] in {"model_inference", "classify_document"}:
         setting = active["spec"]["provider"] if request["tool"] == "model_inference" else active["spec"]["classifier"]
         constraints.append(("resolved_provider", And((Const(setting is not None),
