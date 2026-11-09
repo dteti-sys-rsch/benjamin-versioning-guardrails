@@ -1,30 +1,43 @@
 {
-  "protocol": "dynamic-proposal-v10",
-  "schema_digest": "sha256:8ed856acaf9ace193a24869a9d90a7b9bee87941987ee81e95133145139f79e9",
+  "protocol": "dynamic-proposal-v11",
+  "schema_digest": "sha256:60183699d2fd484cdbf86948e44d5ebc35a7b270bfdfdaeee8b001fc7289a424",
   "registry_digest": "sha256:a67e3f613af225be0b86910b4f5c2c5d882b4b2c2e9c3d203e0368e97dadfecc",
   "config_worker_version": "config-worker-v4",
   "sources": {
-    "atomicroot/integration/dynamic_proposal.py": "sha256:1fc5dd176f75c2375ac084cef37eff642b826479c65f7e77239c1c0de6e18adc",
-    "atomicroot/integration/planning.py": "sha256:b5df93bca25562bc2dbecd4275a49fa22b916cd0b482dcba5115fba23b97d680",
-    "atomicroot/integration/goals.py": "sha256:908413ef85bdfa69c71d57c9418b98dd6ad6f1ef26b082c3866a581dea2cb988",
+    "atomicroot/integration/dynamic_proposal.py": "sha256:8504b0170f9e926fc5c4bd2554586de45786adc9f2597db01c3b96189277a7eb",
+    "atomicroot/integration/planning.py": "sha256:755e26c133dbad5a95d72373c9b87086f9ee3b5ac5bd24b2ddabd67413615254",
+    "atomicroot/integration/goals.py": "sha256:81b781cf4e45d6ab61ddff7d9eb677b6899ac346e34077dde2d73d0cd0b68268",
     "atomicroot/integration/prompts.py": "sha256:806a4bff3e942758756bfb6a29981d1685f1d6a82b0549d7fce8b516435bcbe2",
     "atomicroot/integration/config_workflow.py": "sha256:3abc3e664d7857a10c1270711a4d97d942a59e49a2be7beabe0602d22adf25a4",
     "atomicroot/integration/inference.py": "sha256:1ee1f241caf69ba93d6aac9d9bc6a2ec9240c63f98ddac04ad04192cb732d8d3",
     "atomicroot/integration/providers.py": "sha256:f28fb9d9ca4c3c6b1ca605559c4543ff59270e1ecc70048fba07650827278e2c",
-    "atomicroot/integration/egress.py": "sha256:483b628f2775459166cdfed7bcfc0ea564e214a3fd4027e3832d3f89b38c137c",
-    "atomicroot/evaluation/goal_eval.py": "sha256:9b6809f37b880951b190e7a2cb0421db80377ea8d4425773cc4864ec21285d9f",
-    "examples/phase55/live_27b_suite.py": "sha256:fb35ee23df1f2b3ccf181b9957d47fe1b94b4d596ce124cd86f1fb7208d74ee7",
-    "run_goal.py": "sha256:b54f2961d94cc8b59ae4dccce3f4f9e1bed35266bb928be88a36a7a82fc6d889"
+    "atomicroot/integration/egress.py": "sha256:54b4a3c74f992b8ac307ceca07cb9c306c0a92cf1dcfb50351c940fb6f79bc56",
+    "atomicroot/evaluation/goal_eval.py": "sha256:b450c45c0e6d2accc725e2ef7ecf08874a5f7119bdca47b65e0b6b344f350fe2",
+    "examples/phase55/live_27b_suite.py": "sha256:9f60fc237237baa9bb9088316407b046519ace42ae9516f6c4f34dd0482528bb",
+    "run_goal.py": "sha256:b54f2961d94cc8b59ae4dccce3f4f9e1bed35266bb928be88a36a7a82fc6d889",
+    "atomicroot/integration/dynamic_proposal_v10.py": "sha256:1fc5dd176f75c2375ac084cef37eff642b826479c65f7e77239c1c0de6e18adc",
+    "atomicroot/authority/policy_engine.py": "sha256:0411bd6df3472d2c616153277381ba6c3a983bbb4f52e5a3b61c446c7a7d7e44",
+    "atomicroot/authority/authority.py": "sha256:034f2cd0eb7dede6b21b27d23ca4b41ffe952b131400b951dcb7150a62a1fb9f",
+    "atomicroot/framework/dsl.py": "sha256:cacaf4997e8a320ab4c89fc0dd09d8de7a929e0579cc28573e3951a0e1f9ff64",
+    "atomicroot/framework/tasks.py": "sha256:05244560a9a053a804d76b37288424f6b2c18b5f32181fa61ce5d988d938b093",
+    "atomicroot/framework/runtime.py": "sha256:d9e9db5022b272792e362a64e169aa99a892d1c081277825d91e2b0c034873f4",
+    "atomicroot/framework/registry.py": "sha256:f1ff994a60dce8070ad9c146a0ea3bdfbd74ccdd69e9a2c445ade5faf96bd2b7",
+    "atomicroot/integration/guarded.py": "sha256:4128413d3ebad82463d1a86300d1193006b05cae85821a768a61193425097e53",
+    "atomicroot/integration/environment.py": "sha256:893dd72abd9d16ef80fb9e06150f48b6833d0b7a5fcad9f5e70682341bf3a6e2",
+    "atomicroot/integration/workspace.py": "sha256:ce73bab3b24b2b8053e34a4c3dfe3f70d6c95ed8ffff1f707fd0c72b56ce0ce9",
+    "atomicroot/integration/permission_bundle.py": "sha256:8dd08eda466e0ebfff78ce82c30bee9458105ab9439d5d71393ac3986e3c4370"
   },
   "case_files": {
     "examples/phase55/eval/adversarial-cases.json": "sha256:a3867e702b5db253c7afe03598d02d10a2ab31dfd84747f99e510d827200923b",
+    "examples/phase55/eval/adversarial-v2-cases.json": "sha256:3481d427135832ae31d75975c8e9b7989b25281db5d5b948e5a4c1f411c35fe0",
     "examples/phase55/eval/dev-cases.json": "sha256:177b11040fb72739d725945595429972a9e3ce3ac28af14fe69dea135101214a",
-    "examples/phase55/eval/heldout-cases.json": "sha256:462e8a0d3bf7e3fa9827918c58a8aa1291ca76a96c7b5d270934ec99ddd1bf68"
+    "examples/phase55/eval/heldout-cases.json": "sha256:462e8a0d3bf7e3fa9827918c58a8aa1291ca76a96c7b5d270934ec99ddd1bf68",
+    "examples/phase55/eval/heldout-v2-cases.json": "sha256:08eca915cf7a30a96d8cd1d1f4ef89bf8098eb9d099d7f9b366b494c33d2a12b"
   },
-  "base_commit": "7cb5a84020e00d8341a977d0ccb46306875753ff",
+  "base_commit": "922db5e1d690f0fdb5926b63a01abd4aff2eb8ba",
   "created": {
-    "observed_at_utc": "2026-11-09T06:34:25.305890+00:00",
-    "monotonic_ns": 13241507623800,
-    "process_id": 3756
+    "observed_at_utc": "2026-11-09T12:17:02.875682+00:00",
+    "monotonic_ns": 33799077284500,
+    "process_id": 5176
   }
 }
