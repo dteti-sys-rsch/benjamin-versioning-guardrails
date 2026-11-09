@@ -20,7 +20,7 @@ from atomicroot.sim.model_tape import ModelTape
 INTAKE_FIELDS = {"id", "intake_task", "agent", "context_resource", "provider", "model", "purpose", "subject", "targets",
                  "visible_resources", "visible_destinations", "expires", "max_repairs", "max_replans"}
 # Protocols with bounded planning context and whole-envelope repair drafts.
-COMPACT_DYNAMIC = {'dynamic-proposal-v3', 'dynamic-proposal-v4', 'dynamic-proposal-v5', 'dynamic-proposal-v6', 'dynamic-proposal-v7', 'dynamic-proposal-v8', 'dynamic-proposal-v9', 'dynamic-proposal-v10', 'dynamic-proposal-v11'}
+COMPACT_DYNAMIC = {'dynamic-proposal-v3', 'dynamic-proposal-v4', 'dynamic-proposal-v5', 'dynamic-proposal-v6', 'dynamic-proposal-v7', 'dynamic-proposal-v8', 'dynamic-proposal-v9', 'dynamic-proposal-v10', 'dynamic-proposal-v11', 'dynamic-proposal-v12'}
 
 
 class GoalService:
@@ -240,7 +240,7 @@ class GoalService:
                     conn.execute("INSERT OR IGNORE INTO goal_calls VALUES (?,?)", (operation, dumps(call)))
                 if operation not in data["calls"]: data["calls"].append(operation)
                 self._save(session, data)
-                max_ctx_bytes = 24576 if self.protocol.PLANNER_VERSION in {'dynamic-proposal-v10', 'dynamic-proposal-v11'} else 8192
+                max_ctx_bytes = 24576 if self.protocol.PLANNER_VERSION in {'dynamic-proposal-v10', 'dynamic-proposal-v11', 'dynamic-proposal-v12'} else 8192
                 if self.protocol.PLANNER_VERSION in COMPACT_DYNAMIC and len(dumps(context).encode('utf-8'))>max_ctx_bytes:
                     data.update(status='CONTEXT_LIMIT',error=f'Planning context exceeds {max_ctx_bytes} bytes; no provider call was made for this attempt')
                     call.update(error='CONTEXT_LIMIT',observed=point())

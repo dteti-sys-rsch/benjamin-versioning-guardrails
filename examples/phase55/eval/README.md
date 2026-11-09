@@ -102,15 +102,26 @@ Perubahannya:
 - Contoh policy multi-predikat ditambahkan ke prompt.
 
 Freeze juga meng-hash core authorization, dan `base_commit` harus merupakan ancestor HEAD.
-Urutan run v11 (Ollama di `localhost:11434`, tree bersih, freeze cocok):
+### v12 (amandemen A4)
+
+v12 (`dynamic-proposal-v12`) sama dengan v11, kecuali satu hal: grammar planner membatasi setiap field
+teks penjelasan menjadi 64 karakter, dan `origin.requirement` menjadi 512 karakter.
+
+- Alasannya: v11 membatasi field itu 256 **karakter** di grammar, sedangkan validator membatasinya 256
+  **byte**. Teks sah yang memuat karakter non-ASCII pun ditolak (`v2-replan`).
+- Dengan 4 byte per karakter (maksimum UTF-8), setiap string yang sah menurut grammar kini selalu lolos
+  validator.
+- Run v11 tetap disimpan sebagai riwayat.
+
+Urutan run v12 (Ollama di `localhost:11434`, tree bersih, freeze cocok):
 
 ```powershell
-.\.venv\Scripts\python.exe examples/phase55/eval/whitebox_adversary.py --output .runs/v11-whitebox-adversary
-.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-v2-cases.json --reviewer blind --max-total-calls 80 --output .runs/v11-heldout-v2 --authorize-live
-.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-v2-cases.json --reviewer blind --max-total-calls 40 --output .runs/v11-adversarial-v2 --authorize-live
-.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-cases.json --reviewer blind --max-total-calls 110 --output .runs/v11-regression-heldout-v1 --authorize-live
-.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-cases.json --reviewer blind --max-total-calls 50 --output .runs/v11-regression-adversarial-v1 --authorize-live
-.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-v2-cases.json --cases v2-summary v2-parallel v2-email v2-update v2-payment-policy v2-policy-multi v2-deploy v2-permission v2-clarify v2-replan --repetitions 2 --reviewer blind --max-total-calls 110 --output .runs/v11-determinism --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/eval/whitebox_adversary.py --output .runs/v12-whitebox-adversary
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-v2-cases.json --reviewer blind --max-total-calls 80 --output .runs/v12-heldout-v2 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-v2-cases.json --reviewer blind --max-total-calls 40 --output .runs/v12-adversarial-v2 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-cases.json --reviewer blind --max-total-calls 110 --output .runs/v12-regression-heldout-v1 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/adversarial-cases.json --reviewer blind --max-total-calls 50 --output .runs/v12-regression-adversarial-v1 --authorize-live
+.\.venv\Scripts\python.exe examples/phase55/live_27b_suite.py --cases-file examples/phase55/eval/heldout-v2-cases.json --cases v2-summary v2-parallel v2-email v2-update v2-payment-policy v2-policy-multi v2-deploy v2-permission v2-clarify v2-replan --repetitions 2 --reviewer blind --max-total-calls 110 --output .runs/v12-determinism --authorize-live
 ```
 
-Total cap live v11: 80 + 40 + 110 + 50 + 110 = 390 call. Pemakaian yang diperkirakan dari run pra-Fase 6 adalah sekitar 250 call; cap memberi ruang untuk aturan `total + 2 × max_calls`.
+Total cap live v12: 80 + 40 + 110 + 50 + 110 = 390 call. Pemakaian yang diperkirakan dari run pra-Fase 6 adalah sekitar 250 call; cap memberi ruang untuk aturan `total + 2 × max_calls`.

@@ -12,7 +12,7 @@ def validate_model_context(reader, document, request):
     if configured: fields = fields | {"execution"}
     from atomicroot.integration.planning import PLANNER_VERSION, validate_planning_context
     from atomicroot.integration.dynamic_proposal import VERSION as DYNAMIC_VERSION
-    planning = context.get("prompt_version") in {PLANNER_VERSION, DYNAMIC_VERSION,'dynamic-proposal-v2','dynamic-proposal-v3','dynamic-proposal-v4','dynamic-proposal-v5','dynamic-proposal-v6','dynamic-proposal-v7','dynamic-proposal-v8','dynamic-proposal-v9','dynamic-proposal-v10'} if type(context) is dict else False
+    planning = context.get("prompt_version") in {PLANNER_VERSION, DYNAMIC_VERSION,'dynamic-proposal-v2','dynamic-proposal-v3','dynamic-proposal-v4','dynamic-proposal-v5','dynamic-proposal-v6','dynamic-proposal-v7','dynamic-proposal-v8','dynamic-proposal-v9','dynamic-proposal-v10','dynamic-proposal-v11'} if type(context) is dict else False
     if planning: fields = fields | {"planning"}
     if type(context) is not dict or set(context) not in (fields, fields | {"response_schema"}):
         raise ValueError("invalid server model context")

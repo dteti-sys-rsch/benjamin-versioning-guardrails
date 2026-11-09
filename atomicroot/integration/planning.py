@@ -188,7 +188,7 @@ def planner_response_schema(messages=None):
     schema digest bind reconstruction; memo budgeting includes these actual bytes.
     """
     # messages[1] is the bound planning context; later turns may carry a repair diagnostic.
-    if messages is not None and json.loads(messages[1]['content']).get('protocol') in {'dynamic-proposal-v2','dynamic-proposal-v3','dynamic-proposal-v4','dynamic-proposal-v5','dynamic-proposal-v6','dynamic-proposal-v7','dynamic-proposal-v8','dynamic-proposal-v9','dynamic-proposal-v10','dynamic-proposal-v11'}:
+    if messages is not None and json.loads(messages[1]['content']).get('protocol') in {'dynamic-proposal-v2','dynamic-proposal-v3','dynamic-proposal-v4','dynamic-proposal-v5','dynamic-proposal-v6','dynamic-proposal-v7','dynamic-proposal-v8','dynamic-proposal-v9','dynamic-proposal-v10','dynamic-proposal-v11','dynamic-proposal-v12'}:
         protocol=protocol_for_version(json.loads(messages[1]['content'])['protocol'])
         return protocol.response_schema(messages) if protocol.PLANNER_VERSION not in {'dynamic-proposal-v2','dynamic-proposal-v3'} else protocol.response_schema()
     result = deepcopy(proposal_schema())
@@ -248,16 +248,16 @@ def planner_response_schema(messages=None):
 
 def protocol_for_digest(digest):
     import sys
-    from atomicroot.integration import dynamic_proposal, dynamic_proposal_v2, dynamic_proposal_v3, dynamic_proposal_v4, dynamic_proposal_v5, dynamic_proposal_v6, dynamic_proposal_v7, dynamic_proposal_v8, dynamic_proposal_v9, dynamic_proposal_v10
-    for protocol in (sys.modules[__name__], dynamic_proposal_v2, dynamic_proposal_v3, dynamic_proposal_v4, dynamic_proposal_v5, dynamic_proposal_v6, dynamic_proposal_v7, dynamic_proposal_v8, dynamic_proposal_v9, dynamic_proposal_v10, dynamic_proposal):
+    from atomicroot.integration import dynamic_proposal, dynamic_proposal_v2, dynamic_proposal_v3, dynamic_proposal_v4, dynamic_proposal_v5, dynamic_proposal_v6, dynamic_proposal_v7, dynamic_proposal_v8, dynamic_proposal_v9, dynamic_proposal_v10, dynamic_proposal_v11
+    for protocol in (sys.modules[__name__], dynamic_proposal_v2, dynamic_proposal_v3, dynamic_proposal_v4, dynamic_proposal_v5, dynamic_proposal_v6, dynamic_proposal_v7, dynamic_proposal_v8, dynamic_proposal_v9, dynamic_proposal_v10, dynamic_proposal_v11, dynamic_proposal):
         if digest == args_hash(protocol.proposal_schema()): return protocol
     raise ValueError('planner schema changed')
 
 
 def protocol_for_version(version):
     import sys
-    from atomicroot.integration import dynamic_proposal, dynamic_proposal_v2, dynamic_proposal_v3, dynamic_proposal_v4, dynamic_proposal_v5, dynamic_proposal_v6, dynamic_proposal_v7, dynamic_proposal_v8, dynamic_proposal_v9, dynamic_proposal_v10
-    for protocol in (sys.modules[__name__],dynamic_proposal_v2,dynamic_proposal_v3,dynamic_proposal_v4,dynamic_proposal_v5,dynamic_proposal_v6,dynamic_proposal_v7,dynamic_proposal_v8,dynamic_proposal_v9,dynamic_proposal_v10,dynamic_proposal):
+    from atomicroot.integration import dynamic_proposal, dynamic_proposal_v2, dynamic_proposal_v3, dynamic_proposal_v4, dynamic_proposal_v5, dynamic_proposal_v6, dynamic_proposal_v7, dynamic_proposal_v8, dynamic_proposal_v9, dynamic_proposal_v10, dynamic_proposal_v11
+    for protocol in (sys.modules[__name__],dynamic_proposal_v2,dynamic_proposal_v3,dynamic_proposal_v4,dynamic_proposal_v5,dynamic_proposal_v6,dynamic_proposal_v7,dynamic_proposal_v8,dynamic_proposal_v9,dynamic_proposal_v10,dynamic_proposal_v11,dynamic_proposal):
         if protocol.PLANNER_VERSION==version:return protocol
     raise ValueError('unsupported planner protocol version')
 

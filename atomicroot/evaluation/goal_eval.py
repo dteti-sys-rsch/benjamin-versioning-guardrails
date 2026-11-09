@@ -134,7 +134,7 @@ FROZEN_SOURCES = (
     "atomicroot/integration/dynamic_proposal.py", "atomicroot/integration/planning.py", "atomicroot/integration/goals.py",
     "atomicroot/integration/prompts.py", "atomicroot/integration/config_workflow.py", "atomicroot/integration/inference.py",
     "atomicroot/integration/providers.py", "atomicroot/integration/egress.py", "atomicroot/evaluation/goal_eval.py",
-    "examples/phase55/live_27b_suite.py", "run_goal.py", "atomicroot/integration/dynamic_proposal_v10.py",
+    "examples/phase55/live_27b_suite.py", "run_goal.py", "atomicroot/integration/dynamic_proposal_v10.py", "atomicroot/integration/dynamic_proposal_v11.py",
     # Core authorization/enforcement: a change here alters evaluation results as much as a prompt change.
     "atomicroot/authority/policy_engine.py", "atomicroot/authority/authority.py", "atomicroot/framework/dsl.py",
     "atomicroot/framework/tasks.py", "atomicroot/framework/runtime.py", "atomicroot/framework/registry.py",

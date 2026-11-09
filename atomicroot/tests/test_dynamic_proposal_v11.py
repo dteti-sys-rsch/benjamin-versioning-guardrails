@@ -2,7 +2,7 @@
 from atomicroot.authority.ticket import args_hash
 from atomicroot.framework.app import FrameworkRuntime
 from atomicroot.framework.identity import Principal
-from atomicroot.integration import dynamic_proposal as v11
+from atomicroot.integration import dynamic_proposal_v11 as v11
 from atomicroot.integration import dynamic_proposal_v10 as v10
 from atomicroot.integration.goals import GoalService
 from atomicroot.integration.planning import protocol_for_digest, protocol_for_version
@@ -26,6 +26,7 @@ def scripted(*responses):
 
 def test_versions_are_distinct_and_v10_stays_replayable():
     assert v11.VERSION == 'dynamic-proposal-v11' and protocol_for_version('dynamic-proposal-v10') is v10
+    assert protocol_for_version('dynamic-proposal-v11') is v11
     assert args_hash(v11.proposal_schema()) != args_hash(v10.proposal_schema())
     assert protocol_for_digest(args_hash(v11.proposal_schema())) is v11
     assert protocol_for_digest(args_hash(v10.proposal_schema())) is v10
