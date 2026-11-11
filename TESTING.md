@@ -1,30 +1,19 @@
 # Testing AtomicRoot sekali jalan
 
-Implementasi dinamis terintegrasi: **599 tests passed**, artifact fase 4/5/5.5
-PASSED pada `.runs/testing/dynamic-accepted-all`. Live memakai **12/24 calls**;
-acceptance live belum tercapai (CONTEXT_LIMIT dan requirement mismatch), sedangkan
-replay hasil gagal lintas versi **12/12 match**. Lihat
-[report integrasi dinamis](docs/REPORTS/DYNAMIC_GOAL_IMPLEMENTATION_REPORT.md).
+Implementasi dinamis terintegrasi (`dynamic-proposal-v12` / `config-executor-v4`): **647 tests passed** pada regression offline (`639` test inti + `8` test di `test_universal_goal.py`), serta terverifikasi live pada `qwen3.8:27b-q8_0` di seluruh suite pra-Fase 6 (`.runs/v12-heldout-v2` **16/16**, `.runs/v12-adversarial-v2` **7/8** dengan 0 forbidden effect, `.runs/v12-regression-heldout-v1` **22/22**, `.runs/v12-regression-adversarial-v1-b` **10/11**, `.runs/v12-determinism` **20/20** dan identik **10/10**, serta `.runs/v12-whitebox-adversary` **26/26** terblok; seluruhnya 0 pelanggaran invariant). Lihat [laporan kesiapan pra-Fase 6](docs/REPORTS/PRE_PHASE6_READINESS_REPORT.md) dan [pre-registrasi Fase 6](docs/REPORTS/PHASE6_PREREGISTRATION.md) (catatan historis awal tersedia di [report integrasi dinamis](docs/REPORTS/DYNAMIC_GOAL_IMPLEMENTATION_REPORT.md)).
 
-Jalur penggunaan dinamis tersedia melalui `run_goal.py`: konfigurasi lingkungan
+Jalur penggunaan dinamis formal tersedia melalui `run_goal.py`: konfigurasi lingkungan
 dan goal pengguna, review intake, proposal LLM, review bisnis, lalu eksekusi.
-Lihat [panduan workspace pengguna](examples/workspace/README.md). Harness lama
-tetap untuk eksperimen/replay. Runner baru offline verified; audit live Qwen
-memakai 10 calls, satu read assisted berhasil, recovery tanpa operasi tambahan,
-dan replay planning 6/6 cocok. Goal biasa belum andal; lihat
-[audit dan gap live](docs/REPORTS/PHASE_55_WORKSPACE_LIVE_AUDIT_REPORT.md).
-Regression perubahan workspace sebelumnya: **581 passed**,
-beserta artifact fase 4/5/5.5 PASSED di
-`.runs/testing/user-environment-verified/summary.json`.
+Lihat [panduan workspace pengguna](examples/workspace/README.md). Untuk demo interaktif tanpa file konfigurasi workspace (*zero-config*), gunakan `run_universal.py` (lihat batasan evaluasinya di `README.md`). Harness lama tetap dipertahankan untuk eksperimen/replay.
 
-Gunakan sekarang untuk verifikasi Fase 1–5.5. Runner ini tidak menjalankan Fase
+Gunakan `run_tests.py` untuk verifikasi offline Fase 1–5.5. Runner ini tidak menjalankan Fase
 6, benchmark/adaptive search baru, atau provider/effects live. Python dipakai
 agar alur yang sama berjalan dari PowerShell maupun Bash, tanpa dependency baru.
 Jalankan dari root repository memakai interpreter venv proyek.
 
 ```powershell
 # Windows / PowerShell
-..venvScriptspython.exe run_tests.py all
+.\.venv\Scripts\python.exe run_tests.py all
 ```
 
 ```bash
@@ -49,20 +38,25 @@ path interpreter dipakai langsung. Setup dependency tetap mengikuti README.
 | `all` | Seluruh regression, generator/replay Fase 4, 5, dan dua goal B serta negative artifacts Fase 5.5. |
 
 ```powershell
-..venvScriptspython.exe run_tests.py quick
-..venvScriptspython.exe run_tests.py phase4
-..venvScriptspython.exe run_tests.py phase5
-..venvScriptspython.exe run_tests.py phase55
-..venvScriptspython.exe run_tests.py regression
-..venvScriptspython.exe run_tests.py scenarios
+.\.venv\Scripts\python.exe run_tests.py quick
+.\.venv\Scripts\python.exe run_tests.py phase4
+.\.venv\Scripts\python.exe run_tests.py phase5
+.\.venv\Scripts\python.exe run_tests.py phase55
+.\.venv\Scripts\python.exe run_tests.py regression
+.\.venv\Scripts\python.exe run_tests.py scenarios
 
 # Satu skenario, semua mode dan replay tiap mode
-..venvScriptspython.exe run_tests.py scenarios --scenario budget
+.\.venv\Scripts\python.exe run_tests.py scenarios --scenario budget
 
 # Satu skenario dan mode
-..venvScriptspython.exe run_tests.py scenarios --scenario stale_write --mode atomicroot
+.\.venv\Scripts\python.exe run_tests.py scenarios --scenario stale_write --mode atomicroot
 
-..venvScriptspython.exe run_tests.py --help
+.\.venv\Scripts\python.exe run_tests.py --help
+
+# Verifikasi freeze, adversary white-box, dan test universal goal
+.\.venv\Scripts\python.exe examples/phase55/eval/freeze.py --check
+.\.venv\Scripts\python.exe examples/phase55/eval/whitebox_adversary.py --output .runs/whitebox-check
+.\.venv\Scripts\python.exe -m pytest atomicroot/tests/test_universal_goal.py -q
 ```
 
 Daftar nama scenario/mode tersedia lewat `phase5_cli.py list`. `--scenario` dan

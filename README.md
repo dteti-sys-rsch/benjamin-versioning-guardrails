@@ -47,9 +47,25 @@ activated atomically; missing executable tools remain blocked specifications.
 .\.venv\Scripts\python.exe run_goal.py --environment examples/workspace/workspace-v2.json --goal "Read notes-a and produce a summary named result." --output .runs/dynamic-goal --authorize-live
 ```
 
-The integrated mechanisms are offline verified. Current Qwen live acceptance
-is **not met**: recorded proposals failed requirement consistency or exceeded
-the bounded repair context. See the [implementation and live report](docs/REPORTS/DYNAMIC_GOAL_IMPLEMENTATION_REPORT.md).
+The integrated mechanisms are offline verified (`647 passed` across `atomicroot/tests`) and live verified under the frozen `dynamic-proposal-v12` (`config-executor-v4`) protocol with `qwen3.8:27b-q8_0` (`temperature=0`, `num_ctx=32768`):
+- **Held-out v2 (`.runs/v12-heldout-v2`):** `16/16` pass, `0/16` forbidden effects, `0/23` violations.
+- **Adversarial v2 (`.runs/v12-adversarial-v2`):** `7/8` pass, `0/8` forbidden effects, `0/6` violations (1 worker over-refusal on embedded prompt injection).
+- **Determinism v2 (`.runs/v12-determinism`):** `20/20` pass (`10/10` identical planner output digests across repetitions), `0/20` forbidden effects, `0/32` violations.
+- **v1 Development Regression (`.runs/v12-regression-heldout-v1` & `.runs/v12-regression-adversarial-v1-b`):** `22/22` and `10/11` pass, `0` forbidden effects, `0` violations.
+- **White-box Adversary (`.runs/v12-whitebox-adversary`, deterministic without LLM):** `26/26` attacks blocked (`7` mutation leaks detected when guards are disabled).
+
+See the [pre-Phase 6 readiness report](docs/REPORTS/PRE_PHASE6_READINESS_REPORT.md), [Phase 6 preregistration](docs/REPORTS/PHASE6_PREREGISTRATION.md), and [v10 27B report](docs/REPORTS/DYNAMIC_PROTOCOL_V10_27B_REPORT.md) (historical October report: [dynamic goal implementation report](docs/REPORTS/DYNAMIC_GOAL_IMPLEMENTATION_REPORT.md)).
+
+### Zero-config interactive wrapper and inspection dashboard
+
+For interactive zero-config demonstrations where the user types a free-form natural-language goal (Indonesian or English) without authoring a `workspace.json` file first, use `run_universal.py`. It wraps `dynamic-proposal-v12` with canonical tool/argument alias normalization (`atomicroot/integration/universal.py`) and synthesizes a minimal workspace while preserving the same Z3 policy authority, Ed25519 single-use tickets, atomic CAS commit, and effect outbox:
+
+```powershell
+.\.venv\Scripts\python.exe run_universal.py --goal "Bayar pesanan tiket bioskop 150 ke cinema@example.com dan kirim bukti ke alice@example.com" --output .runs/universal
+.\.venv\Scripts\python.exe dashboard.py
+```
+
+**Scope and evaluation boundary:** `run_goal.py` with an explicit workspace (`workspace-v2.json` / `examples/phase55/eval/*-cases.json`) is the **formal evaluation path** because parent entitlements, budget ceilings, and authoritative `PUBLIC`/`SENSITIVE` labels must be defined independently of the untrusted goal text (`AGENTS.md` §4 & §6). `run_universal.py` is an **ergonomic zero-config convenience wrapper** for interactive use and does not replace the frozen `v12` evaluation protocol.
 
 For an interactive run from a user-authored environment and goal, use
 `run_goal.py`. It requires explicit environment permission review, intake review,
